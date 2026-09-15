@@ -1,4 +1,0 @@
-[Serializable]
-public struct GameplayLayoutSettings
-{
-}
