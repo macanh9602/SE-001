@@ -124,3 +124,8 @@ Xem `handoff/ROADMAP.md`. Không nhảy story khi foundation trước chưa đ�
 
 - Path:
 - Rules: đọc để tham khảo architecture/style · **không copy namespace** · không sửa trừ khi story yêu cầu.
+
+## 10. Particle System / VFX contract
+
+Rule runtime cho Particle System/VFX nằm tại `Docs/particle-system-rule.md`.
+Flow mặc định: `EffectsProfile` → `ObjectPool` → `Effect` → `MainParticleSystem` → recycle.
