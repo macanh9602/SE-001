@@ -17,7 +17,7 @@
 
 | # | Tên | Size | Trạng thái | Phụ thuộc | Decision |
 |---|---|---|---|---|---|
-| 000 | Project contract + bootstrap ready | M | TODO | User Setup Gate | Identity / architecture |
+| 000 | Project contract + bootstrap ready | M | DONE | User Setup Gate | Identity / architecture |
 | 001 | Powder sand technical slice proves feel + budget | M | TODO | 000 | Sand feasibility |
 | 002 | Production sand simulation core | M | TODO | 001 | Simulation contract |
 | 003 | Powder renderer + profiles | M | TODO | 002 | Visual/data |

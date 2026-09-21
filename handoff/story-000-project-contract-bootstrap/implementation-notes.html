@@ -26,3 +26,11 @@ Measurement: Device gate thuộc Story 001/014.</pre>
 </table>
 <h2>Semantic deviations</h2>
 <p>Scene ownership changed from the original Story 000 recommendation <code>MainScene → GameScene</code> to user-approved <code>GameScene</code>-only flow. Recorded as D-002 and reflected in canonical docs.</p>
+<h2>Closure update</h2>
+<ul>
+  <li>Post-change Unity compile completed through the active Unity MCP session with no console errors or warnings.</li>
+  <li>EditMode verification: succeeded, job <code>5fd824cefda74c64a216869d8f834b02</code>; observed test <code>CakeRoll</code> passed.</li>
+  <li>PlayMode verification: succeeded, job <code>3251bd211f7647adbacee62da1fd1f53</code>; observed test <code>CakeRoll</code> passed.</li>
+  <li>Unity CLI Pipeline prerequisite is present as <code>com.unity.pipeline 0.7.0-exp.1</code>; device gates remain deferred to Story 014.</li>
+</ul>
+<p>Closure status: DONE. Device and feel review evidence are explicitly deferred under D-004.</p>

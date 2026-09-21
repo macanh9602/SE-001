@@ -2,6 +2,20 @@
 
 > Append-only. Decision mới đặt ở trên cùng. Project-level decision ghi ở đây; micro-decision ghi trong story implementation notes.
 
+## D-004 — Device gates deferred to Story 014
+
+Status: Accepted — 2026-09-22
+
+### Chốt
+
+- Mọi acceptance cần đo trên device thật trong Story 001–013 (p95, Redmi 9A, device smoke, video) được thay bằng Editor proxy và đánh dấu `DEFERRED-DEVICE → 014`; không chặn Story DONE.
+- Editor proxy dùng Burst-enabled Profiler để ghi sim ms avg/p95, xác nhận GC Alloc = `0 B/frame` sau warm-up bằng ProfilerRecorder hoặc PlayMode test, và đo draw call bằng Frame Debugger/Stats.
+- Visual/feel acceptance (khớp visualizer, fine powder) ghi `PENDING FEEL REVIEW (user)` và không chặn Story DONE.
+
+### Phạm vi
+
+Áp dụng cho Story 001–013. Story 014 là gate tập trung cho device performance, quality scaling và device evidence.
+
 ## D-003 — Giữ `Assets/_Core/4_Scripts` làm canonical script structure
 
 Status: Accepted — 2026-09-22

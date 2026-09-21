@@ -16,7 +16,7 @@
 1. Đọc `Docs/USER-SETUP-GATE.md`.
 2. Chốt target low-end device + identity/contracts.
 3. Chạy Story 000.
-4. Sau Story 000, chạy tuần tự 001 → 014 theo `handoff/ROADMAP.proposed.md`.
+4. Sau Story 000, chạy tuần tự 001 → 014 theo `handoff/ROADMAP.md`.
 
 ## Story dependency
 
