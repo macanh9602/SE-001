@@ -31,8 +31,9 @@ tiên được phép quyết.
 | **Save / Progress** | `MDATools/Save` (`StaticVariables`, PlayerPrefs-backed) | progress, unlock, setting người chơi | làm source of truth cho gameplay trong 1 ván |
 | **Spawner / Level loader** | `System/Creation` | load + validate data → tạo RuntimeState → gọi Factory đúng thứ tự → cleanup level cũ | tự quyết rule |
 | **Factory** | `<Feature>/Creation` | tạo/reuse entity, validate `ICreateParameters`, gọi `OnCreated` | chứa gameplay rule |
-| **Domain** | `<Feature>/Domain` | state + rule gameplay, phát event | chạm Mesh/Renderer/Collider/Physics, tự đi tìm dependency |
+| **Domain** | `<Feature>/Domain` | state + rule gameplay, phát event | chạm Mesh/Renderer/Collider/Physics trực tiếp; tự đi tìm dependency |
 | **RuntimeState** | `System/Management` | index theo stable ID, occupancy/graph/reservation, query O(1) | là global singleton |
+| **Simulation** *(optional)* | `<Feature>/Simulation` | sở hữu Rigidbody/Rigidbody2D, Collider/Collider2D, Joint/Joint2D, contact state, continuous physical pose, settle state; phát semantic signal | tự invent gameplay rule ngoài contract; làm raw Physics state rò rỉ khắp Domain |
 | **Scheduler** | `System/Management` | giữ nhịp domain bằng `Tick(dt)` + delayed action | biết gì về animation |
 | **Visual** | `<Feature>/Visual` | render + animate từ data, tween, VFX, SFX cue | quyết định gameplay, đọc rule |
 | **Bridge** | `Bridge/` | dịch giữa gameplay ↔ HUD / meta / analytics | 2 chiều tuỳ tiện — chỉ một hướng rõ |
@@ -41,7 +42,7 @@ tiên được phép quyết.
 
 Luật rút gọn, thuộc lòng:
 
-- **Domain không phụ thuộc Visual.** Visual không quyết gameplay.
+- **Domain không phụ thuộc Visual.** Visual không quyết gameplay. Với game có Physics, Simulation là layer optional và Domain nhận semantic command/signal thay vì query Rigidbody/Collider ad hoc.
 - **RuntimeState per-level**, tạo mới mỗi lần load, truyền qua parameters — không static.
 - **Editor phụ thuộc Runtime, không bao giờ ngược lại.**
 - **Xoá sạch tầng Visual thì Domain vẫn chạy hết ván và ra đúng kết cục.** Đây là phép thử duy nhất
@@ -256,7 +257,8 @@ Reserved cũng phải **vẽ ra được** — nó là trạng thái thật, kh�
   `RaycastNonAlloc` cấp phát sẵn.
 - `RaycastNonAlloc` **không sắp theo khoảng cách**. Chọn winner bằng **tiêu chí của luật**
   (stack order / layer / order key), không tin thứ tự PhysX trả về.
-- Physics chỉ để *nhận diện* object được chạm. Hợp lệ hay không vẫn quyết bằng RuntimeState.
+- Presentation mode: Physics được phép phục vụ picking, bounce, roll, jiggle, secondary physical motion và presentation simulation; Physics result không quyết gameplay semantics/outcome, hợp lệ hay không vẫn quyết bằng RuntimeState.
+- Hybrid / Simulation-driven: Unity Physics được encapsulate bởi Simulation/component owner; Domain nhận semantic state/event, không query Rigidbody/Collider ad hoc.
 
 ### Chồng nhịp
 
@@ -305,7 +307,7 @@ Reserved cũng phải **vẽ ra được** — nó là trạng thái thật, kh�
   - **Generated / baked** — mesh, footprint, graph, cache; regenerate được
   - **Runtime state** — occupancy, reservation; sinh khi load, chết khi unload
 
-Không bao giờ coi Mesh / Collider / Scene hierarchy là source of truth.
+Không bao giờ coi Mesh / Collider / Scene hierarchy là authoring source of truth. Dynamic physical pose/contact có thể là authoritative runtime simulation state khi project chọn Hybrid hoặc Simulation-driven.
 
 ### Editor view state ≠ level data
 

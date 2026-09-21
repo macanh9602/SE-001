@@ -61,8 +61,22 @@ Primary platform: Mobile
 | Test framework | Unity Test Framework | |
 | Máy target (low-end) | | |
 | Frame budget | 60fps mid / 30fps low | |
+| Physics authority mode (Presentation / Hybrid / Simulation-driven) | | 🔒 |
+| Physics dimension (None / 2D / 3D / Mixed) | | 🔒 |
+| Physics determinism requirement (Exact / Tolerance-based / Not required) | | 🔒 |
 | Unity MCP có bật không | | |
 | Code cũ được phép tham khảo | `Assets/Legacy/...` | |
+
+## Frontier collaboration
+
+| Fact | Value | Contract |
+|---|---|---|
+| Frontier collaboration mode | AUTO | AUTO / OFF / REQUIRED |
+| Frontier provider | codex-with-chatgpt | provider adapter trong `workflow/providers/` |
+| Readability sentinel | `AGENTS.md` | phải đọc thành công |
+| Identity sentinel | `Docs/project-context.md` | internal name/project identity phải match |
+
+Project chỉ lưu mode/provider/sentinels. Không lưu connector name; C2C tự map current workspace tới exact connector và verify identity theo `workflow/frontier-collaboration.md`.
 
 ## 4. Development philosophy
 

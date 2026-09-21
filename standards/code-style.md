@@ -31,7 +31,7 @@ public interface IPendingCleanup    { bool IsPendingCleanup { get; } void Cleanu
 ## 2. Ba lớp component
 
 - **Domain** — gameplay rule/state: occupancy, move plan, reserve target, xử lý event.
-  Không dựng mesh/material, không đọc Renderer/Collider/Physics.
+  Không dựng mesh/material, không đọc raw Renderer/Collider/Physics state trực tiếp; dùng semantic adapter/signal khi Physics mode cho phép.
 - **Visual** — CHỈ render/animate từ data: `Render(data, adapter)` · `SetCounter(n)` ·
   `PlayMoveAsync(ct)` · `StopAllTweens()`. Không query pathfinding/occupancy/gameplay decision.
 - **Decorator** — state phụ (hidden/locked/frozen) gắn cùng entity: đổi interaction + presentation,
@@ -45,6 +45,13 @@ public interface IPendingCleanup    { bool IsPendingCleanup { get; } void Cleanu
 - Component tự quản lý **HOW** thuộc ownership của nó: tween, child renderer, local cache, cancellation, cleanup, visual state trung gian.
 - Caller **không micromanage** child object/tween/internal flag của component. Nếu caller phải set 4–5 field nội bộ theo đúng thứ tự thì API đang sai ownership.
 - Self-contained component **không có nghĩa** được tự quyết gameplay/domain semantics. Domain vẫn quyết WHAT; Visual/Component chỉ thực hiện HOW.
+
+### Physics ownership (optional)
+
+- Component/Simulation owner quyết HOW: `physicsBody.EnableSimulation()`, `physicsBody.ApplyKick(command)`, `physicsBody.Freeze()`, `physicsBody.Release()` là các ví dụ intent API, không phải required interface.
+- Caller/Domain quyết WHAT; Physics component không tự quyết Win/Lose ngoài contract và phát semantic signal thay vì làm raw Unity Physics state thành dependency chung.
+- Friction, restitution, damping, force, torque, spring và settle thresholds là tunables trong component/Profile/level data theo phạm vi sở hữu; không hardcode trong domain.
+- Pooling luôn có Release/Despawn reset đầy đủ và Acquire/Bind reapply đầy đủ state.
 - Khi ownership của một visual chuyển từ component A → B, B phải `Bind/Adopt` và **normalize toàn bộ state mà B sở hữu**; không tin state presentation do A để lại.
 
 ---

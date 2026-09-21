@@ -36,6 +36,15 @@ playbook tương ứng trong `playbooks/`.
 
 `skills/` là canonical skill source dùng chung mọi agent. Agent-specific config chỉ route/sync tới đây; không fork nội dung skill theo từng host.
 
+## 2.1 Frontier collaboration router
+
+Trước implementation của mọi task, đọc `Frontier collaboration mode` trong `Docs/project-context.md`.
+
+- Task local/reversible, không đổi architecture/contract và không có unresolved multi-hypothesis → làm local, không gọi frontier.
+- Task architecture, high-risk, Story L hoặc còn nhiều hypothesis quan trọng chưa phân giải → đọc và áp dụng `workflow/frontier-collaboration.md`, kể cả task đến trực tiếp từ chat chưa có story.
+- Story override `INHERIT` dùng project default; `AUTO`, `OFF`, `REQUIRED` override trong phạm vi story.
+- Không lưu hoặc hỏi user connector name. Provider tự map current workspace; wrong workspace phải fail trước PLAN/REVIEW.
+
 ## 3. Quyền tự chủ trong story
 
 Agent tự quyết, không cần hỏi:
@@ -66,7 +75,7 @@ Agent tự quyết, không cần hỏi:
 - Không đổi layer contract trong `standards/system-design.md`.
 - Không đổi source of truth của data (khai ở `Docs/data-model.md`).
 - Không đổi serialization contract có ảnh hưởng story sau.
-- Không dùng Mesh / Renderer / Collider / Physics làm gameplay source of truth.
+- Mesh / Collider / Scene hierarchy không phải AUTHORING source of truth. Presentation mode không dùng Physics làm gameplay authority. Ở Hybrid / Simulation-driven, dynamic physical pose/contact có thể là authoritative RUNTIME simulation state nếu `Docs/project-context.md` đã chọn mode đó; Domain chỉ nhận semantic signal qua Simulation/component ownership, không query raw Rigidbody/Collider/Physics tùy tiện.
 - Không tạo abstraction chỉ để "phòng xa".
 
 ### Số liệu & asset — **luật cứng**
@@ -83,9 +92,12 @@ Agent tự quyết, không cần hỏi:
 - Không `Instantiate` / `Destroy` trong gameplay interaction — dùng `VTLTools.ObjectPool`.
 - Không clone Material per-instance; dùng shared material + `MaterialPropertyBlock`.
 - Không rebuild procedural mesh mỗi frame.
-- Không Physics query / polygon intersection để quyết định gameplay rule.
-  (Ngoại lệ duy nhất được phép: **một** raycast ở frame có tap để *nhận diện* object được chạm —
-  đó là input resolution, không phải gameplay rule. Kết quả pick vẫn phải quyết bằng RuntimeState.)
+- Domain / Visual / HUD không tự ad-hoc query raw Rigidbody/Collider/Collision state để quyết gameplay.
+  Presentation mode được phép dùng Physics cho picking, bounce, roll, jiggle và secondary motion;
+  Physics result không phải gameplay authority, picking vẫn resolve bằng RuntimeState/domain contract.
+  Hybrid / Simulation-driven cho phép Simulation owner dùng Physics query/contact/collision/constraint
+  theo declared Physics contract rồi phát semantic state/signal cho Domain. Raw Physics state không leak
+  thành general dependency; Domain không query Rigidbody/Collider/Physics ad hoc.
 - Không tạo một GameObject/Transform cho mỗi segment/patch/cell.
 - Không allocation lặp trong hot path.
 
@@ -131,6 +143,8 @@ Không Console spam, không log mỗi frame, không yêu cầu dev copy log nế
 - Test đã định nghĩa pass — hoặc ghi rõ lý do chưa chạy được, **không claim pass**.
 - Acceptance criteria đánh dấu **kèm evidence**: log · screenshot · số đo · tên test.
 - `implementation-notes.html` đã cập nhật.
+- Story Closure gate đã evaluate; implementation finished != story DONE.
+- ROADMAP chỉ chuyển DONE sau khi mọi required closure gate pass.
 - Project-level decision đã vào `Docs/decision-log.md`.
 - Summary: files changed · architecture · performance · deviations · open risks.
 - **Harvest**: pattern nào generic → đề xuất đẩy về `knowledge/` hoặc skill (`workflow/harvest.md`).

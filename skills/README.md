@@ -1,10 +1,16 @@
 # Skills — bảng tra
 
+Physics route: `physics-behaviour/` for physics, fall, roll, bounce, collision, stack, rigidbody, joint, granular, and suction.
+
+Physics compositions: fruit fall/roll + `game-feel-motion`; unstable stack + `debug-audit`; many rigidbodies + `technical-slice`; pooled body velocity + `presentation-lifecycle` + `debug-audit`.
+
 > `skills/` là **canonical source of truth dùng chung mọi agent**. Không maintain một bản Codex và một bản Claude riêng.
 > `AGENTS.md` / `CLAUDE.md` chỉ làm adapter + routing; nếu một host cần native skill directory thì sync/symlink/generate từ đây, không sửa generated copy.
 > Agent đọc file này để biết **load skill nào**, không load hết. Mỗi skill là một thư mục: `SKILL.md` với frontmatter `name` + `description`; `description` là trigger metadata cho router/host hỗ trợ skill discovery. `refs/` giữ phần dài, chỉ load khi task chạm đúng phần đó.
 
 ## Luôn áp dụng (không phải skill — là hằng số)
+
+Trước khi thêm hoặc restructure một skill → đọc `skills/AUTHORING.md`.
 
 | File | Khi nào |
 |---|---|
@@ -25,6 +31,7 @@
 | "animation này chưa đã" · chuyển động · tween · juice · có video ref | `game-feel-motion/` |
 | độ khó · level generation · DDA · difficulty curve · booster trigger · "level dễ quá / khó quá" | `difficulty-design/` |
 | giải thích cơ chế cho GD · viết tooltip · chốt open question với GD · GD đọc số liệu sai | `gd-communication/` |
+| có model rồi · "đưa asset vào Unity" · sai scale/pivot · kiểm tra tri budget · export Blender → Unity · asset artist vừa giao | `asset-intake/` |
 | bug lặp lại · fix rồi vẫn lỗi · cần data thật | `debug-audit/` |
 | pooled visual · tween/async chồng nhau · queue/slot shift · handoff · stale callback · overlap khi tap nhanh | `presentation-lifecycle/` |
 

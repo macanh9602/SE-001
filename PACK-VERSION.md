@@ -1,5 +1,22 @@
 # Pack version
 
+## v4.5 — 2026-09-21
+
+**Frontier Collaboration + Connector Preflight**
+- Added global Frontier auto-routing for direct prompts, stories, architecture/high-risk work, and Story L.
+- Added provider-managed workspace mapping with readability and project-identity sentinels.
+- Added `INHERIT` story override, PLAN/REVIEW budgets, preflight repair/retry, and honest fallback evidence.
+- Added the `codex-with-chatgpt` provider adapter while keeping Codex as executor.
+
+## v4.4 — 2026-09-21
+
+**Skill Progressive Disclosure + Physics Foundation**
+- Added worker packet workflow and generic skill authoring contract.
+- Migrated existing skill detail into refs/recipes while preserving routing and semantics.
+- Added optional Simulation layer and Physics authority modes.
+- Added `physics-behaviour`, `knowledge/physics`, and dependency-free template lint.
+- Added Executable Story workflow and Story Closure protocol with Harvest-before-Close ordering.
+
 ## v4.3 — 2026-09-15
 
 **Claude / cross-agent execution adapter**

@@ -17,6 +17,7 @@
 | Spawner | |
 | Factory | |
 | Domain | |
+| Simulation (optional) | |
 | RuntimeState | |
 | Scheduler | |
 | Visual | |
@@ -85,8 +86,19 @@
 
 -
 
-## 9. Supersede log
+## 9. Physics / Simulation contract
 
+- Physics authority mode:
+- Physics dimension:
+- Fixed timestep:
+- Determinism requirement:
+- Simulation owner/components:
+- Domain → Simulation commands:
+- Simulation → Domain semantic signals:
+- Settled definition:
+- Runtime pose authoritative?:
+
+## 10. Supersede log
 > Khi một decision sau ghi đè mô tả ở trên, ghi một dòng ở đây kèm `D-xxx`. Không xoá mô tả cũ khỏi
 > decision log.
 

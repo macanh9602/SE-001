@@ -1,5 +1,12 @@
 # Harvest — rút kinh nghiệm về pack
 
+Physics harvest routing:
+
+- Physics vocabulary / generic tuning pattern → `knowledge/physics/`
+- Reusable Physics decision workflow → `skills/physics-behaviour/`
+- Production helper proven reusable → consider `Assets/_Core` only after real evidence
+- Physics bug that actually occurred → `standards/anti-patterns.md`
+
 > Không sửa file này khi làm game mới.
 > Mục đích: pattern học được ở project này không chết trong project này.
 

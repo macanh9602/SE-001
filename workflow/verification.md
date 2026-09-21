@@ -134,6 +134,9 @@ của mọi level đổi mà không ai được báo.
 [ ] Khối Performance đủ 5 dòng, dòng Measurement không trống
 [ ] Story có UI: đã đi hết luồng bằng tay
 [ ] implementation-notes.html cập nhật
+[ ] Nếu có frontier call: preflight/result/provider/workspace identity đã ghi evidence; fallback/BLOCKED có reason
 [ ] Project-level decision đã vào decision-log
 [ ] Harvest đã trả lời 4 câu (workflow/harvest.md)
+[ ] Story Closure trong story đã được evaluate
+[ ] ROADMAP chỉ được chuyển DONE sau closure gate
 ```

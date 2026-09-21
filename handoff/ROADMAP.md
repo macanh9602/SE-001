@@ -21,6 +21,9 @@
 Trạng thái theo `workflow/verification.md` — **DONE nghĩa là đã kiểm chứng thật**, không phải
 "code xong".
 
+Story chỉ chuyển sang DONE sau Story Closure gate. Implementation finished nhưng còn verification/PENDING
+thì vẫn DOING; contract blocker thì BLOCKED.
+
 **Story bị CUT phải ghi lý do cắt.** Cắt mà không ghi lý do thì 2 tháng sau sẽ có người làm lại.
 
 ---

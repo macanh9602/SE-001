@@ -56,6 +56,9 @@ VIỆC ĐẦU TIÊN:
 **Dự án mới hoàn toàn** ⇒ việc đầu tiên là:
 
 ```
+Chạy handoff/PROJECT-READINESS-PROMPT.md trước để audit Template/workflow readiness và
+Project-specific readiness. Chỉ tiếp tục khi prompt kết luận READY FOR STORY 001: YES.
+
 Chạy playbooks/p1-bootstrap.md. Bắt đầu từ Bước 1: hỏi tôi theo batch trắc nghiệm
 để điền Docs/. GDD ở [đường dẫn]. Đừng hỏi lại thứ GDD đã trả lời.
 ```

@@ -37,24 +37,7 @@ Không trả lời được một hàng ⇒ instrument trước (`skills/debug-a
 - Mỗi operation nhận `operationId` hoặc `generation` tăng dần.
 - Completion / cancellation / `finally` chỉ được final-write khi id vẫn là active owner.
 
-Pseudo-pattern:
-
-```csharp
-var op = ++_motionGeneration;
-_isArrivalBlocked = true;
-try
-{
-    await PlayMotionAsync(ct);
-}
-finally
-{
-    if (_motionGeneration == op)
-    {
-        _isArrivalBlocked = false;
-        NormalizeOwnedState();
-    }
-}
-```
+Implementation baseline: `recipes/generation-owner.md`; adapt it to the actual ownership model.
 
 ### Handoff
 - Resolve destination/current owner **lại ngay trước handoff** nếu nó có thể đổi trong lúc bay.
@@ -92,6 +75,8 @@ ready. Contract readiness không được thay đổi gameplay ordering.
 - [ ] Có audit event cho blocked → ready → handoff và mismatch.
 
 ## 5. Output
+
+Generation/ownership baseline: `recipes/generation-owner.md` (adapt to the actual ownership model).
 
 1. Ownership map: `phase → owner → state được phép mutate`.
 2. Lifecycle table: `Acquire/Bind → Active → Transfer → Release`.

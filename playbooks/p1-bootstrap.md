@@ -11,6 +11,9 @@ Mục tiêu không phải "có gameplay". Mục tiêu là **mọi story sau khô
 
 ## Bước 1 — Đọc GDD, hỏi cho đủ (enrich-context)
 
+**Trước Bước 1:** chạy `handoff/PROJECT-READINESS-PROMPT.md`. Không bắt đầu Story 001 khi audit
+chưa kết luận `READY FOR STORY 001: YES`.
+
 Skill: `enrich-context`.
 
 Hỏi theo batch trắc nghiệm. Nhóm câu hỏi tối thiểu:
@@ -25,6 +28,7 @@ Hỏi theo batch trắc nghiệm. Nhóm câu hỏi tối thiểu:
 | Orientation & tỉ lệ | portrait/landscape; dải aspect ratio phải chịu |
 | Meta | có progression / shop / booster không (chỉ cần biết **có**, chưa cần chi tiết) |
 | Ràng buộc | deadline, team size, thứ bắt buộc dùng lại từ project cũ |
+| Frontier collaboration | A) AUTO — recommend: chỉ gọi cho architecture/high-risk/Story L; B) OFF — local only; C) REQUIRED — block nếu provider không hoạt động |
 
 **Không** hỏi những gì GDD đã trả lời. Trả lời rồi ⇒ ghi vào `Docs/project-context.md §7`
 ("câu hỏi đã trả lời — không hỏi lại").
@@ -35,6 +39,10 @@ Thứ tự điền, mỗi file confirm với dev trước khi sang file sau:
 
 1. `Docs/project-context.md` — stack, thiết bị chuẩn, ràng buộc, fact đã chốt (đánh dấu 🔒 cho
    contract toàn project).
+   Chốt Frontier inputs: mode (`AUTO` recommend / `OFF` / `REQUIRED`), provider
+   (`codex-with-chatgpt`), readability sentinel (`AGENTS.md`) và identity sentinel
+   (`Docs/project-context.md`). Connector selection là provider-managed, không ghi connector name vào project.
+   Internal name/project identity phải được thay khỏi placeholder trước frontier full preflight đầu tiên.
 2. `Docs/glossary.md` — tên các element và khái niệm chính. Làm **sớm**; đổi tên sau khi đã có 50
    file code là đắt.
 3. `Docs/data-model.md` — cái gì là source of truth, cái gì generated, level data trông thế nào.
@@ -92,6 +100,7 @@ Checklist:
 ## Bước 6 — Dựng `handoff/`
 
 - [ ] `handoff/ROADMAP.md` — danh sách story dự kiến, sizing S/M/L
+- [ ] Chạy `handoff/PROJECT-READINESS-PROMPT.md` và xử lý blocker trước Story 001
 - [ ] Story 001 viết xong theo `templates/story.md`
 - [ ] `handoff/START-PROMPT.md` / `handoff/RUN-STORY-PROMPT.md` đã trỏ đúng tên game
 

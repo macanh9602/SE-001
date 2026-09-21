@@ -122,7 +122,17 @@
   </section>
 
   <section>
-    <h2>8. Harvest — đề xuất đẩy về pack</h2>
+    <h2>8. Frontier preflight — khi có frontier call</h2>
+    <div class="hint">Không điền connector name thủ công. Ghi runtime evidence do provider/C2C trả về;
+      nếu story không gọi frontier, ghi N/A.</div>
+    <table>
+      <tr><th>Provider / Mode</th><th>Workspace + internal name</th><th>Readability/identity sentinels + health</th><th>Result / Reason</th></tr>
+      <tr><td></td><td></td><td></td><td>FRONTIER READY / LOCAL FALLBACK / BLOCKED / N/A</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>9. Harvest — đề xuất đẩy về pack</h2>
     <div class="hint">Theo <code>workflow/harvest.md</code>. Đây là chỗ pack lớn lên qua từng story.</div>
     <ul>
       <li><b>anti-patterns:</b> (triệu chứng → nguyên nhân → cách tránh)</li>

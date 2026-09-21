@@ -25,143 +25,6 @@ fix sai một lần.
 
 ---
 
-## 0. Trước khi hook
-
-Đọc đúng causal slice, không scan toàn project:
-
-`input/trigger → domain decision → reservation/ownership → mutation → presentation/handoff → cleanup`
-
-Tra `standards/anti-patterns.md §B` và skill `presentation-lifecycle/` nếu có pool/async/tween.
-
-Viết nội bộ 2–5 hypothesis; mỗi hypothesis phải có **một dấu hiệu phân biệt được trong audit**. Không
-cần hỏi dev duyệt hypothesis.
-
----
-
-## 1. Instrumentation ownership
-
-Agent tự làm đủ vòng sau:
-
-```
-Bug report
-  ↓
-inspect targeted code
-  ↓
-identify causal boundaries + hypotheses
-  ↓
-add targeted audit hooks
-  ↓
-compile/source-check
-  ↓
-"Audit ready — repro case lỗi một lần rồi nhắn 'đã repro'."
-```
-
-Không dừng ở việc đưa snippet để dev tự chèn. Không bắt dev copy/paste console log.
-
-Nếu project đã có reusable `AgentDebugAudit`, dùng nó. Nếu chưa có, tạo một helper generic nhỏ ở
-`Assets/_Core/Scripts/Diagnostics/AgentDebugAudit.cs`; helper sống lại qua bug sau, hook cụ thể thì có
-thể tháo sau khi fix.
-
----
-
-## 2. File contract
-
-Trong Unity Editor, audit nằm ở project root để coding agent đọc trực tiếp:
-
-```text
-AgentAudit/<channel>.md
-```
-
-Development Build có thể fallback sang `Application.persistentDataPath/AgentAudit/`.
-
-Mỗi investigation có **một channel** ngắn, ví dụ:
-
-```text
-queue-drain-priority
-strip-reload-visual
-tray-delivery-order
-```
-
-`Begin(...)` phải overwrite file cũ ở đầu repro boundary. Với level-based game, hook mặc định là
-**ngay khi LevelManager nhận request load**, trước cleanup level cũ, để cùng file capture được:
-
-`old cleanup → pool release → new spawn/bind → stale async completion → gameplay`.
-
-Không append nhiều lần chơi vào cùng file rồi bắt AI đoán phiên nào là phiên lỗi.
-
----
-
-## 3. Toggle / build guard / budget
-
-- Có toggle/flag rõ: `Enabled` hoặc per-channel enable.
-- Chỉ hoạt động trong `UNITY_EDITOR || DEVELOPMENT_BUILD`.
-- Default budget: khoảng **500 event/repro**; agent được đổi khi case cần.
-- Khi chạm budget phải append `AUDIT_TRUNCATED`, **không silently stop**.
-- Sau khi fix: disable channel hoặc remove temporary hook. Giữ core helper reusable.
-
-Instrumentation không được làm thay đổi gameplay timing đáng kể. Ưu tiên 5–15 hook chiến lược hơn
-100 `Write()` rải khắp class.
-
----
-
-## 4. Log **decision + reason**, không dump state vô nghĩa
-
-Log yếu:
-
-```text
-slot=2; pieceCount=3
-```
-
-Log tốt:
-
-```text
-QueueDrain.SourceSelected
-cake=Blue; sequence=17; slot=3; pieces=3
-candidates=[seq15/slot2/p4, seq17/slot3/p3, seq20/slot4/p3]
-decision=sequence17
-reason=min pieces; tie-break higher slot index
-```
-
-Mỗi event nên có khi relevant:
-
-- stable/domain id
-- Unity instance id nếu pool/reuse quan trọng
-- sequence/order id
-- generation / operation id / ownership id cho async
-- slot/index **chỉ như vị trí**, không thay stable id
-- state before → state after
-- decision + reason
-
-Planner/mutator flow phải log **planned identity và actual mutated identity**. Async/pool flow phải log
-**started generation/owner và current generation/owner** ở completion/finally.
-
----
-
-## 5. Chỉ log transition / boundary
-
-### Nên hook
-
-- command accepted/rejected + reason
-- candidate set → selected candidate
-- reserve/release
-- mutation request → mutation result
-- ownership handoff
-- pool acquire/release/rebind
-- async start/replaced/cancelled/completed
-- state transition `Ready ↔ Blocked`
-- load begin / cleanup / spawn ready
-
-### Cấm mặc định
-
-```csharp
-void Update() => Audit(...);
-```
-
-Không frame-by-frame position/progress dump. Nếu cần biết threshold crossing, log **một lần khi state
-đổi** (`HoldBegin`, `HoldEnd`), không log `progress=.01/.02/...`.
-
----
-
 ## 6. Sau khi dev nói `đã repro`
 
 Agent tự tìm channel đang active và đọc **toàn bộ file audit**. Không hỏi dev gửi lại log nếu file
@@ -210,6 +73,13 @@ Sau fix, giữ audit bật cho **một lần verify lại** nếu bug intermitte
 | planner chọn đúng nhưng consume sai | candidate → selected stableId → actual consumed stableId |
 | slot logic rảnh nhưng visual overlap | logical assignment + physical readiness + handoff |
 | lỗi biến mất khi thêm nhiều log | giảm hook, chỉ transition; nghi timing/race |
+
+
+
+## Detail routes
+
+- `refs/instrumentation-contract.md`
+- `recipes/targeted-audit-hook.md`
 
 ## Đầu ra vòng 1
 
