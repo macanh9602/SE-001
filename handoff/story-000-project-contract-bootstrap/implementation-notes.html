@@ -1,11 +1,28 @@
 <!doctype html><meta charset="utf-8"><title>Story 000 implementation notes</title>
 <h1>Story 000 — Implementation Notes</h1>
-<h2>Decision / Deviation / Trade-off / Risk</h2><ul><li>Chưa có.</li></ul>
+<h2>Decision / Deviation / Trade-off / Risk</h2>
+<ul>
+  <li>Canonical project identity: <code>SE-001</code>, namespace <code>SE001</code>, Unity <code>6000.0.70f1</code>, URP.</li>
+  <li>Low-end target: Redmi 9A. Creative mode được ghi nhận là future mode, chưa có semantics trong Story 000.</li>
+  <li>Scene-flow deviation theo user decision: <code>GameScene</code> là scene duy nhất cho bootstrap và gameplay; D-002 supersedes phần scene-flow của D-001.</li>
+  <li>Legacy <code>Assets/_Core/4_Scripts</code> giữ nguyên, không làm source of truth cho code mới.</li>
+</ul>
 <h2>Performance</h2>
-<pre>CPU:
-GPU / draw call:
-GC:
-Memory:
-Measurement:</pre>
-<h2>Verification</h2><table border="1" cellspacing="0" cellpadding="6"><tr><th>Check</th><th>Status</th><th>Evidence</th></tr></table>
-<h2>Semantic deviations</h2><p>NONE / ghi rõ nếu có.</p>
+<pre>CPU: Chưa đo trong Story 000.
+GPU / draw call: Chưa đo trong Story 000.
+GC: Chưa đo trong Story 000.
+Memory: Chưa đo trong Story 000.
+Measurement: Device gate thuộc Story 001/014.</pre>
+<h2>Verification</h2>
+<table border="1" cellspacing="0" cellpadding="6">
+  <tr><th>Check</th><th>Status</th><th>Evidence</th></tr>
+  <tr><td>Unity version / MCP session</td><td>PASS (pre-change evidence)</td><td>Unity MCP session <code>SE-001@49dd5fcfcb6952e3</code>, Unity <code>6000.0.70f1</code>.</td></tr>
+  <tr><td>Project contract docs</td><td>PASS</td><td>Canonical values present in project-context/runtime-architecture/data-model/decision-log.</td></tr>
+  <tr><td>Scene contract</td><td>DOING</td><td>GameScene-only change applied; Unity MCP became unavailable before post-change live verification.</td></tr>
+  <tr><td>Template lint</td><td>PASS</td><td><code>powershell -NoProfile -ExecutionPolicy Bypass -File tools/template-lint.ps1</code>: 11 skills checked, 0 errors, 0 warnings. This is skill-template lint, not project identity lint.</td></tr>
+  <tr><td>git diff --check</td><td>PASS</td><td>Ran after scene-flow update; no whitespace errors.</td></tr>
+  <tr><td>Unity compile / console</td><td>TODO</td><td>Requires active Unity MCP/editor connection after changes.</td></tr>
+  <tr><td>Gameplay/manual tests</td><td>SKIPPED</td><td>Per project instruction; manual test belongs to developer.</td></tr>
+</table>
+<h2>Semantic deviations</h2>
+<p>Scene ownership changed from the original Story 000 recommendation <code>MainScene → GameScene</code> to user-approved <code>GameScene</code>-only flow. Recorded as D-002 and reflected in canonical docs.</p>

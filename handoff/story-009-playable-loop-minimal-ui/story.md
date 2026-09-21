@@ -13,12 +13,12 @@
 
 ## 1. Kết quả mong đợi
 
-> Sau story này, trên device thật có thể MainScene → load level → vẽ/đổ → Win/Lose → Retry/Next và lặp lại không leak.
+> Sau story này, trên device thật có thể GameScene → load level → vẽ/đổ → Win/Lose → Retry/Next và lặp lại không leak.
 
 ## 2. Ranh giới
 
 **Làm:**
-- Bootstrap vào GameScene/level loader theo Story 000.
+- Bootstrap và level loader chạy trong GameScene theo Story 000.
 - Bind gameplay input chỉ sau level spawn.
 - Minimal HUD: level label, restart, clear-line nếu reference flow cần, result panels.
 - Win → Next, Lose → Retry.

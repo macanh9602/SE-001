@@ -10,7 +10,7 @@
 |---|---|---|
 | Project docs còn placeholder identity/contracts | `Docs/project-context.md`, `runtime-architecture.md`, `data-model.md`, `ROADMAP.md` | Worker phải đoán namespace, authority, data |
 | Nhiều script template cũ đang comment và còn namespace project cũ | `_Core/4_Scripts/*` | Dễ vô tình resurrect code không liên quan |
-| Build settings đang trỏ `MainScene`, `GameScene` tồn tại riêng | `EditorBuildSettings.asset`, `_Core/Scenes/GameScene.unity` | Cần ownership scene rõ trước core loop |
+| Build settings cần ownership scene rõ | `EditorBuildSettings.asset`, `_Core/Scenes/GameScene.unity` | Cần ownership scene rõ trước core loop |
 
 ## 1. Kết quả mong đợi
 
@@ -20,7 +20,7 @@
 
 **Làm:**
 - Điền project identity và các 🔒 contract từ USER-SETUP-GATE.
-- Chốt MainScene bootstrap → GameScene gameplay.
+- Chốt `GameScene` là scene duy nhất cho bootstrap và gameplay.
 - Chốt feature-scoped assemblies cho code mới; không resurrect CH013/template gameplay.
 - Map layer cụ thể vào `Docs/runtime-architecture.md` ở mức owner/module, chưa cần feature code.
 - Khởi tạo Level JSON schemaVersion owner và Resources/Levels folder contract.
@@ -58,7 +58,7 @@
 | Việc | Layer | Ghi chú |
 |---|---|---|
 | Project identity | Docs | canonical |
-| Scene flow | Bootstrap | MainScene → GameScene |
+| Scene flow | Bootstrap | GameScene duy nhất |
 | Module boundaries | Architecture | feature-scoped |
 | Level root schema owner | Data | schema only |
 
@@ -75,7 +75,7 @@
 - Domain/Simulation/Visual boundaries theo `standards/system-design.md`.
 - Simulation authority = custom 2D grid, không Rigidbody authority.
 - Existing commented CH013 code là template/legacy reference, không source-of-truth.
-- `GameScene` là gameplay scene; `MainScene` chỉ bootstrap/meta entry.
+- `GameScene` là scene duy nhất cho bootstrap/meta entry và gameplay.
 
 ## 6. Acceptance criteria
 

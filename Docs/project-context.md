@@ -1,131 +1,101 @@
-# Project Context — [TÊN GAME]
+# Project Context — SE-001 Salt/Pepper Sand Clone
 
 Version: 0.1
 Stage: Prototype / Discovery
 Primary platform: Mobile
 
-> Agent đọc file này **trước mọi task**. Mọi thứ riêng của game nằm ở đây, không nằm trong
-> `standards/` hay `AGENTS.md`.
->
-> Đây là file chống-hỏi-lại: câu nào agent phải hỏi tới lần thứ hai thì câu trả lời thuộc về file này.
-
----
-
 ## 1. Product context
 
 | | |
 |---|---|
-| Internal name / code | `[in0xx-tên]` |
-| Genre | |
-| Gameplay reference (game có thật) | |
-| Mục tiêu giai đoạn này | |
-| GDD đã lock chưa | chưa / một phần / rồi |
-| Production-ready chưa | |
-| Ai là người chốt gameplay | |
-| Ai dùng level editor | |
+| Internal name / code | `SE-001` |
+| Namespace root | `SE001` |
+| Class name prefix | Không dùng prefix |
+| Genre | Mobile puzzle / physics-drawing |
+| Gameplay reference | Salt & Pepper, Don't mix em up (`com.aa.dontmixemup`) |
+| Product direction | Clone core gameplay; khác biệt có chủ đích là powder sand feel |
+| Current phase | Bootstrap / technical discovery |
+| Gameplay decision owner | Product Owner / GD |
+| Level editor user | GD / Designer |
+| Creative mode | Future mode; chưa có semantics hoặc quality contract trong Story 000 |
 
 ## 2. Source of truth
 
 | Thứ | File |
 |---|---|
-| Gameplay / design | `reference/[...]` |
-| Gameplay / visual reference | `reference/[...].mp4` |
 | Project guardrail | `AGENTS.md` + file này |
-| Tầng hệ thống | `standards/system-design.md` (generic, **không sửa**) |
-| Kiến trúc game này | `Docs/runtime-architecture.md` |
+| System architecture | `standards/system-design.md` |
+| Game architecture | `Docs/runtime-architecture.md` |
 | Data contract | `Docs/data-model.md` |
-| Từ vựng | `Docs/glossary.md` |
-| Story scope | `handoff/story-xxx.md` |
-| Decision | `Docs/decision-log.md` + implementation notes |
+| Vocabulary | `Docs/glossary.md` |
+| Scope / acceptance | `handoff/story-XXX-*/story.md` |
+| Project decisions | `Docs/decision-log.md` |
 
-## 3. PROJECT FACTS TO CONFIRM
+## 3. Project facts
 
-> **Điền trước file code đầu tiên.** Agent được khảo sát repo để **đề xuất** giá trị, nhưng phải chờ
-> dev confirm những mục kéo theo project-wide contract (đánh dấu 🔒).
-
-| Fact | Giá trị | |
-|---|---|---|
-| Namespace root `[GameRoot]` | | 🔒 |
-| Class name prefix | | 🔒 |
-| Unity version | | |
-| Render pipeline | URP | |
-| Root scripts folder | `Assets/_Core/Scripts` | |
-| Assembly convention | feature-scoped Runtime / Editor / Tests | 🔒 |
-| **Module cũ nằm ở `Assembly-CSharp`?** → chọn hướng (a) thêm asmdef hay (b) interface + bridge | | 🔒 |
-| Level serialization | JSON (`JsonUtility`) tại `Assets/_Core/Resources/Levels/` | 🔒 |
-| Async library | UniTask | |
-| Tween library | DOTween (hoặc UniTask + lerp nếu assembly không reference được) | |
-| Pool | `VTLTools.ObjectPool` | |
-| Text | TextMeshPro qua prefab có script quản lý | |
-| Inspector | Odin | |
-| Test framework | Unity Test Framework | |
-| Máy target (low-end) | | |
-| Frame budget | 60fps mid / 30fps low | |
-| Physics authority mode (Presentation / Hybrid / Simulation-driven) | | 🔒 |
-| Physics dimension (None / 2D / 3D / Mixed) | | 🔒 |
-| Physics determinism requirement (Exact / Tolerance-based / Not required) | | 🔒 |
-| Unity MCP có bật không | | |
-| Code cũ được phép tham khảo | `Assets/Legacy/...` | |
-
-## Frontier collaboration
-
-| Fact | Value | Contract |
-|---|---|---|
-| Frontier collaboration mode | AUTO | AUTO / OFF / REQUIRED |
-| Frontier provider | codex-with-chatgpt | provider adapter trong `workflow/providers/` |
-| Readability sentinel | `AGENTS.md` | phải đọc thành công |
-| Identity sentinel | `Docs/project-context.md` | internal name/project identity phải match |
-
-Project chỉ lưu mode/provider/sentinels. Không lưu connector name; C2C tự map current workspace tới exact connector và verify identity theo `workflow/frontier-collaboration.md`.
+| Fact | Giá trị |
+|---|---|
+| Unity version | `6000.0.70f1` |
+| Render pipeline | URP |
+| Root scripts folder | `Assets/_Core/Scripts/SE001` cho code mới |
+| Existing legacy scripts | `Assets/_Core/4_Scripts`, reference-only trong Story 000 |
+| Assembly convention | Feature-scoped `Runtime` / `Editor` / `Tests` |
+| Existing module policy | Không migrate/resurrect legacy module trong Story 000 |
+| Level serialization | JSON (`JsonUtility`) tại `Assets/_Core/Resources/Levels/` |
+| Async | UniTask |
+| Tween | DOTween nếu assembly reference được; nếu không dùng UniTask + lerp |
+| Pool | `VTLTools.ObjectPool` |
+| Text | TextMeshPro qua prefab có script quản lý |
+| Inspector | Odin |
+| Test framework | Unity Test Framework |
+| Low-end target | Redmi 9A |
+| Frame budget | 60 fps mid / 30 fps low |
+| Physics authority | Simulation-driven |
+| Physics dimension | 2D board XY |
+| Determinism | Tolerance-based; accounting/count phải deterministic |
+| Unity MCP | Active session `SE-001@49dd5fcfcb6952e3` |
+| Build scene flow | `GameScene` là scene duy nhất cho bootstrap và gameplay |
 
 ## 4. Development philosophy
 
-- Build để khám phá design, không giả vờ GDD đã lock.
-- Manual authoring trước → đo/observe → evaluator → generator. Không đảo thứ tự.
-- Cắt technical risk thành slice nhỏ, runnable, verify độc lập.
-- Không over-engineer. Không abstraction "phòng xa".
-- Số liệu ra khỏi code: prefab field / Profile SO / level data.
+- Authoring data là source of truth; generated cache và runtime state không được save thay thế authoring data.
+- Simulation sở hữu pose/transition của sand; Domain nhận semantic signals, không query raw Physics.
+- Tunable values nằm ở prefab/component, Profile ScriptableObject hoặc level JSON.
+- Mobile performance guardrails theo `standards/performance-budget.md`.
+- Không SDK, ads, analytics, IAP hoặc final art polish trong roadmap hiện tại.
 
-## 5. Roadmap hiện tại
-
-Xem `handoff/ROADMAP.md`. Không nhảy story khi foundation trước chưa đạt acceptance.
-
-## 6. Decisions đã chốt
-
-> Tóm tắt **một dòng** mỗi decision, kèm số `D-xxx`. Chi tiết ở `decision-log.md`.
+## 5. Decisions đã chốt
 
 ### Gameplay
--
+
+- Dùng core loop của reference game; khác biệt sản phẩm có chủ đích là powder sand feel.
 
 ### Data & authoring
--
+
+- Level authoring dùng JSON `SE001LevelJson`; scene hierarchy, collider và generated grid không phải source of truth.
 
 ### Visual & feel
--
+
+- ParticleSystem/VFX chỉ presentation; không quyết định sand logic, collection hoặc win/lose.
+- Creative mode để future story định nghĩa, không ảnh hưởng Story 000 contract.
 
 ### Performance
--
 
-## 7. Câu hỏi đã trả lời — không hỏi lại
+- Redmi 9A là low-end measurement target; project default là 60 fps mid / 30 fps low.
+- Simulation-driven 2D và tolerance-based determinism là contract nền.
 
-> Mỗi lần agent phải hỏi một câu tới **lần thứ hai**, câu trả lời được ghi xuống đây.
+## 6. Frontier collaboration
 
-| Câu hỏi | Trả lời | Ngày |
-|---|---|---|
-| | | |
+| Fact | Value |
+|---|---|
+| Frontier collaboration mode | AUTO |
+| Frontier provider | codex-with-chatgpt |
+| Readability sentinel | `AGENTS.md` |
+| Identity sentinel | `Docs/project-context.md` |
 
-## 8. Module tái sử dụng đã kiểm kê
+Project chỉ lưu mode/provider/sentinels; không lưu connector name.
 
-| Module | Ở đâu | Dùng được cho | Rủi ro khi tái sử dụng |
-|---|---|---|---|
-| | | | |
+## 7. Legacy reference
 
-## 9. Legacy reference
-
-- Path:
-- Rules: đọc để tham khảo architecture/style · **không copy namespace** · không sửa trừ khi story yêu cầu.
-
-## 10. Particle System / VFX contract
-
-Rule runtime cho Particle System/VFX nằm tại `Docs/particle-system-rule.md`.
-Flow mặc định: `EffectsProfile` → `ObjectPool` → `Effect` → `MainParticleSystem` → recycle.
+- `Assets/_Core/4_Scripts` là pre-existing/template reference, không phải source of truth cho code mới.
+- Story 000 không sửa legacy code chỉ vì còn placeholder hoặc chưa đẹp.

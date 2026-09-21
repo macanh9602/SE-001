@@ -1,57 +1,40 @@
-# Glossary — [TÊN GAME]
+# Glossary — SE-001
 
-> **Một khái niệm một tên.** Dùng đúng tên này trong code, doc, tooltip, và khi nói chuyện với GD.
->
-> Đây không phải file trang trí. Hai lỗi đắt nhất về đặt tên đã xảy ra thật:
-> - **một tên hai nghĩa** — hai thứ khác hẳn cơ chế cùng tên `Careless`, GD đọc panel hiểu sai và
->   phải viết hẳn một tài liệu để phân biệt;
-> - **một khái niệm hai tên** — `Priority` vừa nghĩa "thằng thắng" vừa nghĩa "thứ tự chạy".
->
-> Đặt tên trùng một tên đã có nghĩa khác ⇒ **escalate**, không tự đặt.
-
----
-
-## 1. Từ vựng gameplay
+## 1. Gameplay
 
 | Term | Nghĩa chính xác | Tên trong code | Không phải là |
 |---|---|---|---|
-| | | | |
+| Logical grain | Đơn vị material được simulation/accounting theo dõi | `LogicalGrain` | Visual crumb/particle |
+| Sand | Material rơi và repose trên grid | `Sand` | ParticleSystem |
+| Source | Entity phát finite material stream | `Source` | VFX emitter vô hạn |
+| Cup | Entity nhận material và phát semantic collection result | `Cup` | Collider authority |
+| Player obstacle | Obstacle rasterize từ path người chơi vào mask | `PlayerObstacle` | Collider per cell |
+| Static obstacle | Obstacle authored trong level data | `StaticObstacle` | Generated mesh |
+| Settled | Trạng thái simulation không còn movement vượt threshold contract | `Settled` | Một frame không render |
 
-## 2. Từ vựng authoring / tool
+## 2. Authoring / architecture
 
 | Term | Nghĩa | Tên trong code |
 |---|---|---|
-| | | |
+| Source of truth | Data authored duy nhất được save | `AuthoringData` |
+| Generated data | Data có thể regenerate từ authoring | `GeneratedData` |
+| RuntimeState | State sinh theo level load, chết khi unload | `RuntimeState` |
+| Simulation-driven | Simulation custom là authority cho sand pose/transition | `SimulationDriven` |
+| Semantic signal | Kết quả domain/simulation truyền qua contract | `SemanticSignal` |
+| Feature-scoped assembly | Assembly tách theo feature và vai trò Runtime/Editor/Tests | `*.Runtime`, `*.Editor`, `*.Tests` |
 
-## 3. Từ vựng đo lường
+## 3. Metrics / modes
 
-> Mỗi metric ghi rõ **cái nó KHÔNG nói** — đây là chỗ hay bị đọc quá đà.
-
-| Term | Đo bằng gì | Nói lên gì | KHÔNG nói lên |
+| Term | Đo bằng gì | Nói lên gì | Không nói lên |
 |---|---|---|---|
-| | | | |
+| Low-end target | Redmi 9A device capture | Baseline performance thấp | Mọi Android device |
+| Mid target | Project default 60 fps | Mục tiêu trải nghiệm mid device | Đã đo nếu chưa capture |
+| Creative mode | Future quality/feel mode | Hướng sản phẩm cần chốt sau | Semantics hiện tại |
 
-## 4. Cặp từ dễ nhầm
+## 4. Cặp dễ nhầm
 
-> Liệt kê ở đây mọi cặp mà người mới sẽ nhầm.
-
-| Từ A | Từ B | Khác nhau ở |
+| A | B | Khác nhau |
 |---|---|---|
-| | | |
-
-## 5. Từ đã bị đổi tên
-
-| Tên cũ | Tên mới | Vì sao đổi | Decision |
-|---|---|---|---|
-| | | | |
-
----
-
-## Luật đặt tên
-
-1. Tên phải mô tả **cái nó là**, không phải cái nó *có vẻ* là. Đặt tên theo một tính chất mà model
-   không bảo đảm là lỗi (ví dụ gọi một thang là "yếu → mạnh" khi giữa các bậc không có quan hệ trội).
-2. Tên hiển thị **≠** khoá tra cứu. Nếu một chuỗi đang được dùng làm key (`Find("X")`), muốn đổi cách
-   hiển thị thì thêm hàm `DisplayName(...)` riêng, **không** đổi `Name`.
-3. Technical term giữ English kể cả khi nói tiếng Việt.
-4. Một từ chỉ được mang một nghĩa trong toàn project. Cần nghĩa thứ hai → đặt từ mới.
+| Logical grain | Visual crumb | Gameplay quantity vs presentation detail |
+| Static obstacle | Player obstacle | Authored level data vs runtime input |
+| RuntimeState | Source of truth | Transient runtime vs persisted authoring |

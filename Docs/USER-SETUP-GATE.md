@@ -18,7 +18,7 @@ Excluded toàn roadmap này: **SDK / ads / analytics / IAP** và **final art pol
 | Determinism | **Tolerance-based** | Không cần bit-exact replay; cần accounting/count deterministic |
 | Low-end target device | **BẮT BUỘC chọn model thật** | Story 001 + 014 cần số đo thật |
 | Frame target | 60 fps mid / 30 fps low | Đang là project default |
-| Scene ownership | `MainScene` = bootstrap, `GameScene` = gameplay | Tránh nhét bootstrap rule vào gameplay scene |
+| Scene ownership | `GameScene` = bootstrap + gameplay | Giữ một scene boundary; tách ownership bằng module/component |
 | Gameplay start | source bắt đầu sau `pourStartDelay`; player được vẽ từ frame đầu và khi đang pour | Clone flow, vẫn cho tune delay |
 
 Nếu không muốn đổi, chỉ cần xác nhận các recommend trên và cung cấp **tên máy low-end target**.
@@ -82,4 +82,3 @@ Production implementation phải xây từ các behavior sau, không được y�
 8. Player line rasterize trực tiếp vào grid obstacle mask. Không tạo collider per cell.
 9. Sand accounting phải bảo toàn count: `emitted = inField + collected + spilled/lost + pending`.
 10. ParticleSystem chỉ presentation. Không quyết định sand logic, collection, win/lose.
-

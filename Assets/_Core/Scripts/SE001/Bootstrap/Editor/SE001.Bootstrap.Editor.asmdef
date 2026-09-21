@@ -1,0 +1,14 @@
+{
+  "name": "SE001.Bootstrap.Editor",
+  "rootNamespace": "SE001.Bootstrap.Editor",
+  "references": ["SE001.Bootstrap.Runtime"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
