@@ -41,10 +41,16 @@ Chạy trước frontier call đầu tiên của story:
 5. Đọc `AGENTS.md` trên connector làm readability sentinel.
 6. Đọc `Docs/project-context.md` trên connector làm identity sentinel; internal name/project identity phải khớp expected local project.
 7. So khớp branch/HEAD khi available. Bất kỳ workspace hoặc identity mismatch nào = `FAIL` trước PLAN/REVIEW.
-8. Nếu fail, chạy provider-native doctor/repair một lần rồi retry đúng một lần.
+8. Phân loại failure trước khi repair:
+   - provider/bridge/tunnel/auth/workspace mapping/readability failure → provider failure;
+   - placeholder/rỗng hoặc project identity mismatch → project identity gate failure.
+9. Chỉ provider failure mới chạy provider-native doctor/repair một lần rồi retry đúng một lần.
 
 Không yêu cầu user nhập runtime state mà Codex/C2C tự lấy được.
-Internal name còn placeholder/rỗng thì identity sentinel chưa hợp lệ: `AUTO` fallback local, `REQUIRED` block cho tới khi bootstrap điền identity thật.
+Internal name còn placeholder/rỗng thì identity sentinel chưa hợp lệ: `Project identity = PENDING BOOTSTRAP`
+và `Frontier readiness = NOT READY`. Đây không phải connector/provider failure, nên không chạy doctor
+và không ghi `LOCAL FALLBACK`. Khi cần frontier, `AUTO` chỉ fallback nếu provider failure thực sự xảy ra;
+`REQUIRED` chỉ block do provider failure hoặc do identity gate khi story yêu cầu frontier.
 
 ## 5. Review preflight
 
@@ -59,8 +65,8 @@ Fail → áp dụng policy `AUTO` hoặc `REQUIRED`; không âm thầm review nh
 
 ## 6. Failure policy
 
-- `AUTO`: doctor/repair → retry 1 lần → vẫn fail thì tiếp tục local, ghi `LOCAL FALLBACK` + reason.
-- `REQUIRED`: doctor/repair → retry 1 lần → vẫn fail thì `BLOCKED`; chỉ hỏi user nếu cần auth/consent hoặc external state change.
+- `AUTO`: provider failure → doctor/repair → retry 1 lần → vẫn fail thì tiếp tục local, ghi `LOCAL FALLBACK` + reason.
+- `REQUIRED`: provider failure → doctor/repair → retry 1 lần → vẫn fail thì `BLOCKED`; chỉ hỏi user nếu cần auth/consent hoặc external state change.
 - `OFF`: không có failure policy vì không gọi frontier.
 
 ## 7. Provider adapter
@@ -76,25 +82,41 @@ Ghi ngắn trong `implementation-notes.html`:
 Frontier Preflight
 Provider: codex-with-chatgpt
 Mode: AUTO
-Workspace match: PASS
-Sentinel AGENTS.md: PASS
-Identity Docs/project-context.md: PASS
-Internal name match: PASS
+Project mode: EXISTING_PROJECT_ADOPTION
+C2C provider: PASS
+Connector transport: PASS
+Workspace mapping: PASS
+Workspace readability: PASS
+Project identity: PASS
 Branch: main
 HEAD match: PASS
-Provider health: PASS
-Result: FRONTIER READY
+Frontier readiness: READY
+Provider failure: NONE
 ```
 
-Fallback example:
+Provider failure fallback example:
 
 ```text
-Provider health: FAIL
+Connector transport: FAIL
 Repair: attempted
 Retry: FAIL
 Mode: AUTO
-Result: LOCAL FALLBACK
+Provider failure: LOCAL FALLBACK
 Reason: connector workspace unreadable
+```
+
+Identity pending example:
+
+```text
+Project mode: EXISTING_PROJECT_ADOPTION
+C2C provider: PASS
+Connector transport: PASS
+Workspace mapping: PASS
+Workspace readability: PASS
+Project identity: PENDING BOOTSTRAP
+Frontier readiness: NOT READY
+Provider failure: NONE
+Reason: Docs/project-context.md still contains placeholder identity
 ```
 
 Evidence phải là runtime result thực tế. Không ghi `PASS` nếu command/call chưa chạy.

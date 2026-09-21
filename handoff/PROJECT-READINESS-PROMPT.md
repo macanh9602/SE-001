@@ -1,12 +1,18 @@
 # PROJECT READINESS AUDIT
 
-> Chạy ngay sau khi copy Template vào một Unity project mới, trước Story 001.
+> Chạy sau khi Template được copy vào project, trước Story 001.
 > Chỉ audit và auto-fix mechanical/reversible setup; không implement gameplay.
 
 ```text
 PROJECT READINESS AUDIT
 
-Đây là Unity project mới vừa copy từ Template.
+Đầu tiên phải tự phân loại project:
+- `NEW_PROJECT`: repo/Assets còn là skeleton Template, chưa có identity hoặc gameplay project-specific.
+- `EXISTING_PROJECT_ADOPTION`: đã có product name, namespace/code, asset/scene/module hoặc history project-specific.
+
+Không được mặc định `NEW_PROJECT` chỉ vì prompt được chạy sau khi copy Template. Với
+`EXISTING_PROJECT_ADOPTION`, audit phải inspect và harvest baseline hiện có; không bắt chạy lại
+toàn bộ p1-bootstrap như một project trắng.
 
 MỤC TIÊU:
 - Kiểm tra project đã đủ workflow/tooling để bắt đầu Story 001 chưa.
@@ -34,6 +40,11 @@ A. TEMPLATE INTEGRITY
 - Báo file/folder Template thiếu hoặc sai.
 
 B. PROJECT IDENTITY
+- Ghi `Project mode: 
+
+
+
+ / EXISTING_PROJECT_ADOPTION` và evidence.
 - Docs/project-context.md đã thay placeholder chưa.
 - Internal name / namespace root / Unity version / render pipeline đã có chưa.
 - Identity sentinel có đủ để phân biệt project này với project Unity khác chưa.
@@ -67,9 +78,22 @@ Nếu AUTO hoặc REQUIRED:
 7. Verify project identity match.
 8. Verify branch/HEAD match nếu provider expose được.
 
-Nếu fail: chạy provider-native doctor/repair một lần, retry đúng một lần.
-- AUTO vẫn fail: ghi LOCAL FALLBACK và reason.
-- REQUIRED vẫn fail: ghi BLOCKED.
+Tách kết quả thành các dòng độc lập:
+- `C2C provider`: capability/provider health.
+- `Connector transport`: bridge/tunnel/auth.
+- `Workspace mapping`: provider map đúng workspace hiện tại.
+- `Workspace readability`: đọc được sentinel files.
+- `Project identity`: PASS hoặc `PENDING BOOTSTRAP` nếu placeholder.
+- `Frontier readiness`: READY / NOT READY.
+
+Placeholder/rỗng trong project identity là project bootstrap issue, không phải provider failure.
+Không chạy doctor/repair và không ghi `LOCAL FALLBACK` cho riêng lỗi này.
+
+Chỉ khi provider/transport/mapping/readability thực sự fail mới chạy provider-native doctor/repair
+một lần và retry đúng một lần.
+- AUTO: nếu provider failure vẫn còn, ghi `LOCAL FALLBACK` + reason.
+- REQUIRED: nếu provider failure vẫn còn, ghi `BLOCKED`.
+- Identity `PENDING BOOTSTRAP`: giữ Frontier `NOT READY`, không đổi thành `LOCAL FALLBACK`.
 
 Không yêu cầu dev nhập connector name.
 
@@ -92,7 +116,18 @@ implementation-notes template, verification + harvest + Story Closure workflow,
 debug-audit route, và migration history không cần thiết.
 
 H. BOOTSTRAP STATE
-Đánh giá p1-bootstrap: bước đã PASS, chưa làm, cần dev trả lời, và agent tự xử lý được.
+Với `NEW_PROJECT`, đánh giá toàn bộ p1-bootstrap: bước đã PASS, chưa làm, cần dev trả lời,
+và agent tự xử lý được.
+
+Với `EXISTING_PROJECT_ADOPTION`, thay bằng adoption baseline:
+- inferred identity/architecture/contracts;
+- existing compile issues và evidence;
+- contracts đã harvest được;
+- contracts cần dev confirm;
+- phần p1-bootstrap thực sự còn thiếu.
+
+Không báo `Bootstrap: 0/20` như blocker tổng quát nếu project đã có baseline; báo riêng
+`Bootstrap baseline` và `Adoption gaps`.
 
 AUTO-FIX được:
 - Placeholder path sai rõ ràng.
@@ -110,14 +145,21 @@ KHÔNG auto-fix:
 OUTPUT CUỐI:
 
 PROJECT READINESS
+Project mode: NEW_PROJECT / EXISTING_PROJECT_ADOPTION
 Template integrity: PASS / ...
 Project identity: PASS / ...
 Project contracts: PASS / ...
-C2C/frontier: PASS / LOCAL FALLBACK / BLOCKED / N/A
+C2C provider: PASS / ...
+Connector transport: PASS / ...
+Workspace mapping: PASS / ...
+Workspace readability: PASS / ...
+Project identity gate: PASS / PENDING BOOTSTRAP / ...
+Frontier readiness: READY / NOT READY / N/A
+Provider failure: NONE / LOCAL FALLBACK / BLOCKED / N/A
 Unity tooling: PASS / PARTIAL / ...
 Git: PASS / ...
 Workflow: PASS / ...
-Bootstrap: X/Y complete
+Bootstrap/adoption: X/Y complete hoặc baseline + N adoption gaps
 
 READY FOR STORY 001: YES / NO
 

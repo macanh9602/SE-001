@@ -1,8 +1,12 @@
 # P1 — Bootstrap project
 
-**Vào khi:** repo trống hoặc mới có GDD.
+**Vào khi:** repo trống, mới có GDD, hoặc project hiện hữu đang adopt Template và còn thiếu baseline.
 **Ra khi:** có `Docs/` điền đủ, folder structure dựng xong, một scene chạy được với Bootstrap →
 Profile → một element hiển thị từ data.
+
+Nếu project đã có product identity, namespace, asset/scene/module và code baseline, dùng mode
+`EXISTING_PROJECT_ADOPTION`: inspect → harvest → confirm contract → xử lý adoption gaps. Không reset
+hoặc lặp lại các bước đã được project chứng minh; chỉ chạy các phần p1 còn thiếu.
 
 Mục tiêu không phải "có gameplay". Mục tiêu là **mọi story sau không phải hỏi lại những câu đã hỏi
 ở đây**.
