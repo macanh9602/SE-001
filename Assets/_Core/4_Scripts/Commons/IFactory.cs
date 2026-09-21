@@ -1,7 +1,7 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
-namespace CH013.Commons
+namespace SE001.Commons
 {
     public interface IFactory<T>
     {

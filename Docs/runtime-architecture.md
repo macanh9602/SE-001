@@ -6,18 +6,18 @@
 
 | Layer | Owner / module contract |
 |---|---|
-| Bootstrap | `GameScene` là scene duy nhất; bootstrap và gameplay lifecycle cùng ownership |
+| Bootstrap | `GameScene` là scene duy nhất; `SE001.System.Management.LevelManager` boot foundation runtime |
 | Profile | Feature profiles trong module tương ứng; tunables không nằm trong Domain |
-| Level Data | `SE001LevelJson` từ `Assets/_Core/Resources/Levels/` |
+| Level Data | `SE001LevelJson` từ `Assets/_Core/Resources/Levels/`; Story 000A chỉ dùng smoke context |
 | Save / Progress | Chưa implement; sẽ là module progression riêng, không thuộc Story 000 |
 | Spawner | Source feature phát lệnh spawn/pour; không quyết định sand movement |
 | Factory | Feature-scoped factory tạo/bind prefab hoặc pooled view |
 | Domain | Cup, Source, level rules và accounting; không reference Visual |
 | Simulation | Sand grid Simulation-driven 2D; là authority cho sand pose/transition |
-| RuntimeState | Per-level state: stable IDs, masks, counts, occupancy và semantic signals |
+| RuntimeState | `SE001.System.Management.LevelRuntimeState`, per-level foundation; feature state thêm ở story sau |
 | Scheduler | Chỉ thêm khi behavior kéo dài nhiều nhịp; timing đọc từ Profile |
 | Visual | Sand renderer, cup/source views, HUD presentation; đọc state/signal |
-| Bridge | Adapter giữa Domain/Simulation và Visual/HUD |
+| Bridge | `LevelReadinessGate` và lifecycle contracts; adapter gameplay thêm ở story sau |
 | HUD | `IHudPresenter` + bridge; gameplay không phụ thuộc UI framework cụ thể |
 | Editor | Level authoring/validation/preview; document state tách view state |
 
@@ -62,7 +62,16 @@ Theo blueprint `standards/system-design.md §5`: cancel token cũ → cleanup le
 - Simulation → Domain: semantic state/signals (settled, collected, spilled, edge-leave).
 - Runtime pose authoritative: có, trong Simulation; renderer chỉ present state.
 
-## 7. Generated data
+## 7. Core runtime foundation
+
+- Canonical code root là `Assets/_Core/4_Scripts`; không có runtime framework tree song song.
+- `LevelManager` chỉ orchestration/lifecycle: begin, reload, unload và readiness.
+- `LevelContext` sở hữu level lifetime token, per-level `LevelRuntimeState`, root hierarchy và lifecycle participants.
+- `LevelRuntimeState` không static, không serialize và chưa chứa sand/cup/source/gameplay rule.
+- `LevelReadinessGate` đóng trước unload/cancel và mở sau khi context foundation sẵn sàng.
+- Foundation smoke context dùng ID development-only `foundation_smoke`; không phải production level JSON.
+
+## 8. Generated data
 
 ```text
 SE001LevelJson (authoring source)

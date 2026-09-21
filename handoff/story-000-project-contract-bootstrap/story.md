@@ -21,7 +21,7 @@
 **Làm:**
 - Điền project identity và các 🔒 contract từ USER-SETUP-GATE.
 - Chốt `GameScene` là scene duy nhất cho bootstrap và gameplay.
-- Chốt feature-scoped assemblies cho code mới; không resurrect CH013/template gameplay.
+- Chốt `Assets/_Core/4_Scripts` là canonical structure; audit/reuse theo từng file và không resurrect CH013 gameplay semantics.
 - Map layer cụ thể vào `Docs/runtime-architecture.md` ở mức owner/module, chưa cần feature code.
 - Khởi tạo Level JSON schemaVersion owner và Resources/Levels folder contract.
 - Update ROADMAP từ proposed thành canonical sau khi gate pass.
@@ -59,7 +59,7 @@
 |---|---|---|
 | Project identity | Docs | canonical |
 | Scene flow | Bootstrap | GameScene duy nhất |
-| Module boundaries | Architecture | feature-scoped |
+| Module boundaries | Architecture | canonical `4_Scripts`; asmdef chỉ thêm tại chỗ khi cần |
 | Level root schema owner | Data | schema only |
 
 ### 5.2 Số liệu tune được
@@ -74,7 +74,7 @@
 
 - Domain/Simulation/Visual boundaries theo `standards/system-design.md`.
 - Simulation authority = custom 2D grid, không Rigidbody authority.
-- Existing commented CH013 code là template/legacy reference, không source-of-truth.
+- `Assets/_Core/4_Scripts` là canonical structure; generic code là reusable, còn CH013 gameplay-specific code phải replace/adapt.
 - `GameScene` là scene duy nhất cho bootstrap/meta entry và gameplay.
 
 ## 6. Acceptance criteria
@@ -94,7 +94,7 @@ Không có blocker nếu `Docs/USER-SETUP-GATE.md` đã được chốt.
 
 | Rủi ro | Dấu hiệu | Ứng phó |
 |---|---|---|
-| Đụng code template cũ ngoài scope | diff lớn ở CH013/commented files | không sửa, chỉ tạo module mới |
+| Port CH013 semantics ngoài scope | diff lớn hoặc old gameplay type sống lại | audit từng file; chỉ port generic contract/flow cần thiết |
 | Dirty tree che diff | file pre-existing xuất hiện trong story diff | commit/stash trước story |
 
 ## 9. Khi implement

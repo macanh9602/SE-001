@@ -1,7 +1,7 @@
-namespace CH013.Commons
+namespace SE001.Commons
 {
     public interface IRuntimeCreatable
     {
-        void OnCreated();
+        void OnCreated(ICreateParameters parameters);
     }
 }

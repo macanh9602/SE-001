@@ -37,10 +37,10 @@ Primary platform: Mobile
 |---|---|
 | Unity version | `6000.0.70f1` |
 | Render pipeline | URP |
-| Root scripts folder | `Assets/_Core/Scripts/SE001` cho code mới |
-| Existing legacy scripts | `Assets/_Core/4_Scripts`, reference-only trong Story 000 |
-| Assembly convention | Feature-scoped `Runtime` / `Editor` / `Tests` |
-| Existing module policy | Không migrate/resurrect legacy module trong Story 000 |
+| Root scripts folder | `Assets/_Core/4_Scripts` |
+| Existing script policy | Audit theo từng file: generic thì reuse, game-specific CH013 thì replace/adapt |
+| Assembly convention | Canonical tree hiện compile trong project assembly; chỉ tách asmdef tại chỗ khi dependency thực tế yêu cầu |
+| Existing module policy | Giữ structure quen thuộc; không resurrect CH013 gameplay semantics mù quáng |
 | Level serialization | JSON (`JsonUtility`) tại `Assets/_Core/Resources/Levels/` |
 | Async | UniTask |
 | Tween | DOTween nếu assembly reference được; nếu không dùng UniTask + lerp |
@@ -95,7 +95,8 @@ Primary platform: Mobile
 
 Project chỉ lưu mode/provider/sentinels; không lưu connector name.
 
-## 7. Legacy reference
+## 7. Canonical script structure
 
-- `Assets/_Core/4_Scripts` là pre-existing/template reference, không phải source of truth cho code mới.
-- Story 000 không sửa legacy code chỉ vì còn placeholder hoặc chưa đẹp.
+- `Assets/_Core/4_Scripts` là canonical script structure của project.
+- Existing CH013 gameplay code được audit theo từng file: generic code thì reuse, game-specific code thì replace/adapt.
+- Không tạo một framework tree song song dưới `Assets/_Core/Scripts`; module mới nằm trong structure canonical theo đúng owner.
