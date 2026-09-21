@@ -1,0 +1,410 @@
+<title>Salt &amp; Pepper Sand Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --ground:#16181d; --panel:#1f2229; --line:#2c3039; --text:#ebe7df; --muted:#8e919a;
+  --brass:#e0a948; --brass-ink:#1b1406; --salt:#f4f1ea; --pepper:#3a3430; --ok:#6fcf97; --bad:#ef6b5b;
+  --sans:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+html,body{background:var(--ground);color:var(--text)}
+body{font-family:var(--sans);font-size:14px;line-height:1.5;padding-inline:16px;padding-block:20px 40px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px}
+h1{font-weight:800;font-size:clamp(22px,3.2vw,32px);letter-spacing:-.02em;margin:0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--brass)}
+.sub{color:var(--muted);margin:4px 0 0;max-width:62ch}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 340px;gap:16px;align-items:start}
+@media (max-width:980px){.stage{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.panel{grid-column:1/-1}}
+.board{display:flex;flex-direction:column;gap:8px;min-width:0}
+.bhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tag{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:5px 7px;border-radius:4px;background:var(--line);color:var(--muted)}
+.tag.b{background:var(--brass);color:var(--brass-ink)}
+.bname{font-weight:700;font-size:15px}
+canvas.bd{width:100%;max-width:100%;aspect-ratio:9/16;display:block;border-radius:14px;touch-action:none;cursor:crosshair;background:#86b9b0;box-shadow:0 0 0 1px var(--line)}
+.meters{display:grid;grid-template-columns:1fr 1fr;gap:6px;font:12px/1.35 var(--mono)}
+.m{background:var(--panel);border-radius:8px;padding:7px 9px;display:flex;flex-direction:column;gap:2px}
+.m b{font-weight:600}
+.pure{font-variant-numeric:tabular-nums}
+.pure.ok{color:var(--ok)} .pure.bad{color:var(--bad)}
+.stats{font:11.5px/1.5 var(--mono);color:var(--muted);font-variant-numeric:tabular-nums;min-height:3em}
+.panel{background:var(--panel);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+button{font:600 13px var(--sans);border:0;border-radius:8px;padding:8px 12px;cursor:pointer;background:var(--line);color:var(--text)}
+button:hover{filter:brightness(1.2)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+button.primary{background:var(--brass);color:var(--brass-ink)}
+button.chip[aria-pressed="true"]{background:var(--text);color:var(--ground)}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+legend{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--brass);margin-bottom:6px;padding:0}
+.ctl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.ctl label{font-size:13px}
+.ctl output{font:12px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ctl input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--brass)}
+.ctl small{grid-column:1/-1;color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:-2px}
+.tog{display:flex;align-items:center;gap:8px;font-size:13px}
+.tog input{accent-color:var(--brass);width:16px;height:16px}
+.hint{font-size:12px;color:var(--muted);border-left:2px solid var(--brass);padding-left:10px}
+section.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.note{background:var(--panel);border-radius:14px;padding:16px 18px}
+.note h2{font-size:15px;margin:0 0 8px;font-weight:700}
+.note p,.note li{color:#c9c6bf;font-size:13px}
+.note ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+code{font-family:var(--mono);font-size:12px;color:var(--brass)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Salt &amp; Pepper — <em>sand feel</em> lab</h1>
+      <p class="sub">Bên trái: cảm giác bản store (hạt tròn rigid physics). Bên phải: falling-sand grid đang tune. Vẽ line trên bất kỳ board nào — cả hai dùng chung line. Line ramp phải cố tình thoải (~36°) để thấy momentum/slide quan trọng thế nào.</p>
+    </div>
+    <div class="row">
+      <button class="primary" id="btnPour">Đổ lại</button>
+      <button id="btnDemo">Line mẫu</button>
+      <button id="btnClear">Xoá line</button>
+      <button id="btnPause" aria-pressed="false">Pause</button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="board">
+      <div class="bhead"><span class="bname">Bản store</span><span class="tag">A · rigid beads</span></div>
+      <canvas class="bd" id="cvA" aria-label="Board A: rigid bead physics"></canvas>
+      <div class="meters" id="mA"></div>
+      <div class="stats" id="sA"></div>
+    </div>
+    <div class="board">
+      <div class="bhead"><span class="bname">Sand grid</span><span class="tag b">B · tune</span></div>
+      <canvas class="bd" id="cvB" aria-label="Board B: falling sand cellular automaton"></canvas>
+      <div class="meters" id="mB"></div>
+      <div class="stats" id="sB"></div>
+    </div>
+
+    <div class="panel">
+      <fieldset>
+        <legend>Preset</legend>
+        <div class="row" id="presets"></div>
+        <p class="hint" id="presetNote"></p>
+      </fieldset>
+      <fieldset id="fsGrain"><legend>Hạt</legend></fieldset>
+      <fieldset id="fsMotion"><legend>Chuyển động</legend></fieldset>
+      <fieldset id="fsLook"><legend>Hiển thị</legend></fieldset>
+      <fieldset id="fsPour"><legend>Rót</legend></fieldset>
+    </div>
+  </div>
+
+  <section class="notes">
+    <div class="note">
+      <h2>Sand feel ở đây gồm 5 lớp</h2>
+      <ul>
+        <li><b>Mật độ</b>: nhiều hạt nhỏ (grid 2px ≈ 800+ hạt/cup) thay vì ~100 bi tròn. Đây là khác biệt lớn nhất so với bản store.</li>
+        <li><b>Quán tính rơi</b>: gia tốc + max fall → dòng rơi dài ra, không đều đều từng ô.</li>
+        <li><b>Momentum trên line</b>: hạt giữ vận tốc ngang khi trượt → chạy được trên ramp thoải và văng ra thành đường cong ở mép line. CA thuần sẽ kẹt trên dốc &lt;45°.</li>
+        <li><b>Đống cát</b>: repose quyết định góc đống; flow quyết định mặt đống phẳng hay nhọn.</li>
+        <li><b>Hạt có “chất”</b>: color jitter + highlight bề mặt + sparkle muối. Rẻ vì tính trong 1 pass tô texture.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h2>Map sang Unity (đề xuất, chưa chốt)</h2>
+      <div class="tbl"><table>
+        <tr><th>Visualizer</th><th>Unity</th></tr>
+        <tr><td>Grid <code>type/shade/vel/mom</code></td><td><code>NativeArray</code> + Burst <code>IJob</code>, 1 job/frame, row bottom-up</td></tr>
+        <tr><td>Tô ImageData</td><td><code>Texture2D</code> R8/RG16 (type+shade), <code>SetPixelData</code> + <code>Apply</code>; màu/shading trong shader</td></tr>
+        <tr><td>Line vẽ tay</td><td>Rasterize vào grid (wall) + LineRenderer/mesh để hiển thị</td></tr>
+        <tr><td>Board A</td><td>Physics2D CircleCollider2D — cách bản store đang làm (giả định)</td></tr>
+      </table></div>
+      <p>Draw call cát: 1 quad. Không có GC per-frame nếu giữ NativeArray persistent.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+(()=>{
+const BW=270, BH=480, WALL_T=5;
+const SHAKERS=[{x:117,t:2,label:'SALT'},{x:153,t:3,label:'PEPPER'}];
+const CUPS=[{x0:12,x1:78,y0:388,y1:468,t:2,name:'Cup muối'},{x0:192,x1:258,y0:388,y1:468,t:3,name:'Cup tiêu'}];
+const LEVEL=[
+  [12,388,12,468],[12,468,78,468],[78,468,78,388],
+  [192,388,192,468],[192,468,258,468],[258,468,258,388],
+  [117,300,135,282],[135,282,153,300]
+];
+const DEMO=[[126,68,34,172],[144,70,242,140]];
+let userSegs=DEMO.map(s=>s.slice());
+
+const P={cs:2,g:.35,vmax:5,repose:.85,slide:.9,splash:.35,flow:.04,jitter:.7,shade:.6,sparkle:true,soft:false,rate:10,width:5,sub:1};
+const PRESETS={
+  sandy:{name:'Sandy (khuyên)',note:'Hạt 2px, momentum cao, jitter + highlight. Gần look “Sandy Jam”: dòng mượt, đống mềm, hạt vẫn đọc được.',v:{cs:2,g:.35,vmax:5,repose:.85,slide:.9,splash:.35,flow:.04,jitter:.7,shade:.6,sparkle:true,soft:false,rate:10,width:5,sub:1}},
+  powder:{name:'Bột mịn',note:'Hạt 1.5px, soft render. Đẹp như chất lỏng nhưng mất cảm giác “hạt” — muối/tiêu khó phân biệt từng hạt.',v:{cs:1.5,g:.3,vmax:4,repose:1,slide:.95,splash:.5,flow:.14,jitter:.35,shade:.3,sparkle:false,soft:true,rate:16,width:6,sub:1}},
+  coarse:{name:'Hạt thô',note:'Hạt 3.5px, repose thấp → đống nhọn, dừng sớm trên line. Đọc rõ nhưng hơi “pixel game”.',v:{cs:3.5,g:.45,vmax:6,repose:.45,slide:.55,splash:.1,flow:0,jitter:1,shade:.8,sparkle:true,soft:false,rate:6,width:3,sub:1}},
+  pure:{name:'CA thuần',note:'Không momentum/splash — falling-sand kinh điển. Để thấy pepper kẹt trên ramp thoải (<45°).',v:{cs:2,g:.35,vmax:5,repose:1,slide:0,splash:0,flow:0,jitter:0,shade:0,sparkle:false,soft:false,rate:10,width:5,sub:1}}
+};
+const CTLS=[
+  ['fsGrain','cs','Kích thước hạt (px)',1.5,5,.5,'Đổi = reset grid. Nhỏ → mượt nhưng nhiều cell hơn.'],
+  ['fsGrain','jitter','Color jitter',0,1,.05,'Mỗi hạt lệch sáng/tối ngẫu nhiên — tạo texture cát.'],
+  ['fsMotion','g','Gia tốc rơi',.05,.8,.05,''],
+  ['fsMotion','vmax','Max fall (cell/frame)',1,8,1,''],
+  ['fsMotion','repose','Repose (xác suất lăn chéo)',.1,1,.05,'Thấp → đống nhọn, cát “dính”.'],
+  ['fsMotion','slide','Momentum trên line',0,.98,.02,'Giữ vận tốc ngang khi trượt. 0 = kẹt trên dốc thoải.'],
+  ['fsMotion','splash','Splash khi chạm',0,1,.05,'Tốc độ rơi đổi thành đẩy ngang lúc va.'],
+  ['fsMotion','flow','Flow ngang (san phẳng)',0,.3,.01,'Cao → giống bột/nước.'],
+  ['fsMotion','sub','Substep / frame',1,3,1,''],
+  ['fsLook','shade','Highlight bề mặt',0,1,.05,'Sáng mép trên, tối mép dưới của khối cát.'],
+  ['fsPour','rate','Tốc độ rót (hạt/frame)',2,30,1,''],
+  ['fsPour','width','Độ rộng dòng (cell)',1,10,1,'']
+];
+
+// ---------- controls ----------
+const inputs={};
+for(const [fs,k,lab,mn,mx,st,help] of CTLS){
+  const d=document.createElement('div');d.className='ctl';
+  d.innerHTML=`<label for="c_${k}">${lab}</label><output id="o_${k}"></output><input type="range" id="c_${k}" min="${mn}" max="${mx}" step="${st}">${help?`<small>${help}</small>`:''}`;
+  document.getElementById(fs).appendChild(d);
+  const inp=d.querySelector('input');inputs[k]=inp;
+  inp.addEventListener('input',()=>{P[k]=+inp.value;syncOut(k);if(k==='cs')resetAll();markCustom();});
+}
+for(const [k,lab] of [['sparkle','Sparkle muối'],['soft','Soft render (bilinear)']]){
+  const d=document.createElement('label');d.className='tog';
+  d.innerHTML=`<input type="checkbox" id="c_${k}"> ${lab}`;
+  document.getElementById('fsLook').appendChild(d);
+  const inp=d.querySelector('input');inputs[k]=inp;
+  inp.addEventListener('change',()=>{P[k]=inp.checked;markCustom();});
+}
+function syncOut(k){const o=document.getElementById('o_'+k);if(o)o.textContent=(+P[k]).toFixed(P[k]%1?2:0);}
+function syncAll(){for(const k in inputs){if(inputs[k].type==='checkbox')inputs[k].checked=P[k];else{inputs[k].value=P[k];syncOut(k);}}}
+const presetBox=document.getElementById('presets');
+for(const id in PRESETS){const b=document.createElement('button');b.className='chip';b.textContent=PRESETS[id].name;b.dataset.id=id;b.setAttribute('aria-pressed','false');
+  b.onclick=()=>applyPreset(id);presetBox.appendChild(b);}
+function applyPreset(id){const pr=PRESETS[id];const csChanged=pr.v.cs!==P.cs;Object.assign(P,pr.v);syncAll();
+  presetBox.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===id));
+  document.getElementById('presetNote').textContent=pr.note;resetAll();}
+function markCustom(){presetBox.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));document.getElementById('presetNote').textContent='Custom — đang tune tay.';}
+
+// ---------- canvas setup ----------
+function setupCanvas(cv){const ctx=cv.getContext('2d');
+  const fit=()=>{const r=cv.getBoundingClientRect();const dpr=Math.min(2,window.devicePixelRatio||1);cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.width*16/9*dpr);};
+  fit();new ResizeObserver(fit).observe(cv);return ctx;}
+const cvA=document.getElementById('cvA'),cvB=document.getElementById('cvB');
+const ctxA=setupCanvas(cvA),ctxB=setupCanvas(cvB);
+
+// ---------- SAND (board B) ----------
+const S={};
+function allSegs(){return LEVEL.concat(userSegs);}
+function initSand(){
+  const W=Math.round(BW/P.cs),H=Math.round(BH/P.cs),N=W*H;
+  Object.assign(S,{W,H,type:new Uint8Array(N),shade:new Uint8Array(N),vel:new Float32Array(N),mom:new Float32Array(N),stamp:new Uint8Array(N),
+    frame:0,remain:[0,0],spilled:0,img:null,off:document.createElement('canvas'),count:0,ms:0});
+  S.off.width=W;S.off.height=H;S.octx=S.off.getContext('2d');S.img=S.octx.createImageData(W,H);
+  for(const s of allSegs())stampSeg(s);
+  const cupCells=((CUPS[0].x1-CUPS[0].x0-WALL_T)/P.cs)*((CUPS[0].y1-CUPS[0].y0)/P.cs);
+  S.perShaker=Math.floor(cupCells*.72);S.remain=[S.perShaker,S.perShaker];
+}
+function stampSeg([ax,ay,bx,by]){
+  const {W,H,type}=S,cs=P.cs,rad=Math.max(.75,WALL_T/2/cs);
+  const len=Math.hypot(bx-ax,by-ay),n=Math.max(1,Math.ceil(len/(cs*.4)));
+  const r=Math.ceil(rad);
+  for(let k=0;k<=n;k++){const px=(ax+(bx-ax)*k/n)/cs,py=(ay+(by-ay)*k/n)/cs;
+    const cx=Math.floor(px),cy=Math.floor(py);
+    for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const x=cx+dx,y=cy+dy;if(x<0||y<0||x>=W||y>=H)continue;
+      if((x+.5-px)**2+(y+.5-py)**2<=rad*rad)type[y*W+x]=1;}}
+}
+function rebuildWalls(){for(let i=0;i<S.type.length;i++)if(S.type[i]===1)S.type[i]=0;for(const s of allSegs())stampSeg(s);}
+
+function emitSand(){
+  const {W,type,shade,vel,mom}=S,ey=Math.round(36/P.cs);
+  SHAKERS.forEach((sh,si)=>{let n=Math.min(P.rate,S.remain[si]);
+    for(let k=0;k<n;k++){const x=Math.round(sh.x/P.cs+(Math.random()-.5)*P.width),y=ey+((Math.random()*2)|0);
+      const i=y*W+x;if(x<0||x>=W||type[i])continue;
+      type[i]=sh.t;shade[i]=(Math.random()*256)|0;vel[i]=1+Math.random()*1.5;mom[i]=(Math.random()-.5)*.3;S.remain[si]--;}});
+}
+function stepSand(){
+  const {W,H,type,shade,vel,mom,stamp}=S;S.frame=S.frame===1?2:1;const f=S.frame;
+  const g=P.g,vmax=P.vmax,repose=P.repose,slide=P.slide,splash=P.splash,flow=P.flow;
+  let count=0;
+  for(let y=H-1;y>=0;y--){
+    const ltr=Math.random()<.5;
+    for(let k=0;k<W;k++){
+      const x=ltr?k:W-1-k,i=y*W+x,t=type[i];
+      if(t<2||stamp[i]===f)continue;
+      count++;
+      let v=vel[i]+g;if(v>vmax)v=vmax;
+      let m=mom[i],cx=x,cy=y,ci=i,fell=0,out=false;
+      const n=v<1?1:v|0;
+      for(let s=0;s<n;s++){if(cy+1>=H){out=true;break;}const ni=ci+W;if(type[ni]===0){cy++;ci=ni;fell++;}else break;}
+      if(out){type[i]=0;S.spilled++;continue;}
+      if(fell===0){
+        if(v>1.5&&splash>0){if(Math.abs(m)<.2)m=(Math.random()<.5?-.2:.2);m+=Math.sign(m)*(v-1)*splash*.5;}
+        let moved=false;
+        const am=Math.abs(m);
+        const d=am>.15?(m>0?1:-1):(Math.random()<.5?-1:1);
+        if(Math.random()<repose||am>.5){
+          for(let q=0;q<2&&!moved;q++){const dd=q?-d:d,nx=cx+dd;
+            if(nx<0||nx>=W||cy+1>=H)continue;
+            const ni=(cy+1)*W+nx;
+            if(type[ni]===0&&type[cy*W+nx]===0){cx=nx;cy++;ci=ni;m=m*.9+dd*.35;moved=true;}}
+        }
+        if(!moved&&Math.abs(m)>.3){const dd=m>0?1:-1,nx=cx+dd;
+          if(nx>=0&&nx<W&&type[cy*W+nx]===0){cx=nx;ci=cy*W+nx;moved=true;m*=slide;}else m*=-.2;}
+        if(!moved&&flow>0&&Math.random()<flow){const dd=Math.random()<.5?-1:1,nx=cx+dd;
+          if(nx>=0&&nx<W&&type[cy*W+nx]===0){cx=nx;ci=cy*W+nx;moved=true;}}
+        if(!moved)m*=slide*.5;
+        v=moved?Math.max(1,v*.7):1;
+      }else{
+        if(fell<n)v=1+(v-1)*.3;
+        if(Math.abs(m)>.4&&Math.random()<Math.abs(m)*.35){const dd=m>0?1:-1,nx=cx+dd;
+          if(nx>=0&&nx<W&&type[cy*W+nx]===0){cx=nx;ci=cy*W+nx;}}
+        m*=.985;
+      }
+      if(m>2)m=2;else if(m<-2)m=-2;
+      if(ci!==i){type[ci]=t;shade[ci]=shade[i];vel[ci]=v;mom[ci]=m;stamp[ci]=f;type[i]=0;}
+      else{vel[i]=v;mom[i]=m;stamp[i]=f;}
+    }
+  }
+  S.count=count;
+}
+const BG=[134,185,176],SALT=[245,242,234],PEP=[56,50,46];
+let tick=0;
+function renderSand(ctx,cv){
+  const {W,H,type,shade}=S,data=S.img.data;
+  const jit=P.jitter,hl=P.shade,spk=P.sparkle;
+  for(let y=0;y<H;y++){
+    const bgk=1-y/H*.12;
+    for(let x=0;x<W;x++){
+      const i=y*W+x,o=i*4,t=type[i];
+      if(t<2){data[o]=BG[0]*bgk;data[o+1]=BG[1]*bgk;data[o+2]=BG[2]*bgk;data[o+3]=255;continue;}
+      const base=t===2?SALT:PEP,sd=shade[i];
+      let l=(sd-128)/128*jit*(t===2?26:38);
+      if(hl>0){
+        const up=y===0?0:type[i-W],dn=y===H-1?1:type[i+W];
+        if(up<2)l+=hl*(t===2?14:34);
+        else if(dn===0)l-=hl*24;
+        else if(y>1&&type[i-2*W]>=2)l-=hl*(t===2?10:4);
+        if(up<2&&spk&&t===2&&(((sd*13+(tick>>2)*7)&255)<6))l+=60;
+      }
+      data[o]=base[0]+l;data[o+1]=base[1]+l;data[o+2]=base[2]+l*.95;data[o+3]=255;
+    }
+  }
+  S.octx.putImageData(S.img,0,0);
+  beginBoard(ctx,cv);
+  ctx.imageSmoothingEnabled=P.soft;
+  ctx.drawImage(S.off,0,0,BW,BH);
+  drawProps(ctx);
+}
+
+// ---------- BEADS (board A) ----------
+const B={list:[],remain:[0,0],spilled:0,ms:0};
+const BR=3.4;
+function initBeads(){const area=(CUPS[0].x1-CUPS[0].x0-WALL_T)*(CUPS[0].y1-CUPS[0].y0);
+  const per=Math.floor(area/(Math.PI*BR*BR)*.6);B.list=[];B.remain=[per,per];B.spilled=0;B.per=per;}
+function segData(){return allSegs().map(([ax,ay,bx,by])=>({ax,ay,bx,by,dx:bx-ax,dy:by-ay,l2:(bx-ax)**2+(by-ay)**2||1}));}
+let SEGS=[];
+const GW=Math.ceil(BW/8),GH=Math.ceil(BH/8),head=new Int32Array(GW*GH);let nxt=new Int32Array(0);
+function stepBeads(){
+  if(tick%2===0)SHAKERS.forEach((sh,si)=>{if(B.remain[si]<=0)return;
+    const x=sh.x+(Math.random()-.5)*6,y=38;
+    if(B.list.some(p=>Math.abs(p.x-x)<BR*2&&Math.abs(p.y-y)<BR*2))return;
+    B.list.push({x,y,px:x+(Math.random()-.5)*.4,py:y-1,t:sh.t});B.remain[si]--;});
+  const L=B.list,G=.16,minD=BR+WALL_T/2;
+  for(let sub=0;sub<2;sub++){
+    for(const p of L){const vx=(p.x-p.px)*.992,vy=(p.y-p.py)*.992;p.px=p.x;p.py=p.y;p.x+=vx;p.y+=vy+G;}
+    for(let it=0;it<2;it++){
+      for(const p of L)for(const s of SEGS){
+        let t=((p.x-s.ax)*s.dx+(p.y-s.ay)*s.dy)/s.l2;t=t<0?0:t>1?1:t;
+        const qx=s.ax+s.dx*t,qy=s.ay+s.dy*t,dx=p.x-qx,dy=p.y-qy,d2=dx*dx+dy*dy;
+        if(d2<minD*minD&&d2>1e-6){const d=Math.sqrt(d2),k=(minD-d)/d;p.x+=dx*k;p.y+=dy*k;}
+      }
+      head.fill(-1);if(nxt.length<L.length)nxt=new Int32Array(L.length*2);
+      for(let i=0;i<L.length;i++){const p=L[i],cx=Math.min(GW-1,Math.max(0,(p.x/8)|0)),cy=Math.min(GH-1,Math.max(0,(p.y/8)|0)),c=cy*GW+cx;nxt[i]=head[c];head[c]=i;}
+      for(let i=0;i<L.length;i++){const p=L[i],cx=(p.x/8)|0,cy=(p.y/8)|0;
+        for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const gx=cx+ox,gy=cy+oy;if(gx<0||gy<0||gx>=GW||gy>=GH)continue;
+          for(let j=head[gy*GW+gx];j!==-1;j=nxt[j]){if(j<=i)continue;const q=L[j],dx=q.x-p.x,dy=q.y-p.y,d2=dx*dx+dy*dy,md=BR*2;
+            if(d2<md*md&&d2>1e-6){const d=Math.sqrt(d2),k=(md-d)/d*.5;p.x-=dx*k;p.y-=dy*k;q.x+=dx*k;q.y+=dy*k;}}}}
+    }
+  }
+  const before=L.length;B.list=L.filter(p=>p.y<BH+8&&p.x>-8&&p.x<BW+8);B.spilled+=before-B.list.length;
+}
+function renderBeads(ctx,cv){
+  beginBoard(ctx,cv);
+  const g=ctx.createLinearGradient(0,0,0,BH);g.addColorStop(0,'rgb(134,185,176)');g.addColorStop(1,'rgb(118,163,155)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,BW,BH);
+  ctx.lineWidth=.8;
+  for(const p of B.list){ctx.beginPath();ctx.arc(p.x,p.y,BR,0,Math.PI*2);
+    ctx.fillStyle=p.t===2?'#f5f2ea':'#3a3430';ctx.strokeStyle=p.t===2?'#b9b4a8':'#1c1816';ctx.fill();ctx.stroke();}
+  drawProps(ctx);
+}
+
+// ---------- shared drawing ----------
+function beginBoard(ctx,cv){const s=cv.width/BW;ctx.setTransform(s,0,0,s,0,0);}
+function drawProps(ctx){
+  ctx.imageSmoothingEnabled=true;
+  ctx.lineCap='round';ctx.lineJoin='round';
+  for(const c of CUPS){ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(c.x0,c.y0,c.x1-c.x0,c.y1-c.y0);
+    ctx.fillStyle=c.t===2?'#f5f2ea':'#3a3430';ctx.font='700 9px "Be Vietnam Pro",sans-serif';ctx.textAlign='center';
+    ctx.fillText(c.t===2?'SALT':'PEPPER',(c.x0+c.x1)/2,c.y1+10);}
+  ctx.strokeStyle='#23293a';ctx.lineWidth=WALL_T;
+  ctx.beginPath();for(const [ax,ay,bx,by] of LEVEL){ctx.moveTo(ax,ay);ctx.lineTo(bx,by);}ctx.stroke();
+  ctx.strokeStyle='#2d2150';
+  ctx.beginPath();for(const [ax,ay,bx,by] of userSegs){ctx.moveTo(ax,ay);ctx.lineTo(bx,by);}ctx.stroke();
+  for(const sh of SHAKERS){const salt=sh.t===2;
+    ctx.fillStyle=salt?'#f6f3ec':'#2f2a27';ctx.strokeStyle='#23293a';ctx.lineWidth=1.5;
+    roundRect(ctx,sh.x-8,6,16,22,4);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#c9ccd3';roundRect(ctx,sh.x-6,26,12,6,2);ctx.fill();ctx.stroke();}
+}
+function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+
+// ---------- meters ----------
+function meterHTML(counts,per){return CUPS.map((c,ci)=>{const own=counts[ci][c.t===2?0:1],other=counts[ci][c.t===2?1:0],tot=own+other;
+  const pur=tot?own/tot*100:100,fill=Math.min(100,own/per*100);
+  return `<div class="m"><b>${c.name}</b><span>đúng ${own} · lẫn ${other}</span><span class="pure ${pur>=99?'ok':'bad'}">sạch ${pur.toFixed(1)}% · đầy ${fill.toFixed(0)}%</span></div>`;}).join('');}
+function countSand(){const {W,type}=S;return CUPS.map(c=>{let a=0,b=0;
+  for(let y=Math.floor(c.y0/P.cs);y<Math.floor(c.y1/P.cs);y++)for(let x=Math.ceil(c.x0/P.cs);x<Math.floor(c.x1/P.cs);x++){const t=type[y*W+x];if(t===2)a++;else if(t===3)b++;}
+  return [a,b];});}
+function countBeads(){return CUPS.map(c=>{let a=0,b=0;for(const p of B.list)if(p.x>c.x0&&p.x<c.x1&&p.y>c.y0&&p.y<c.y1){if(p.t===2)a++;else b++;}return [a,b];});}
+
+// ---------- input ----------
+let drawing=null;
+function toLogical(cv,e){const r=cv.getBoundingClientRect();return [(e.clientX-r.left)/r.width*BW,(e.clientY-r.top)/r.height*BH];}
+for(const cv of [cvA,cvB]){
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);drawing=toLogical(cv,e);});
+  cv.addEventListener('pointermove',e=>{if(!drawing)return;const p=toLogical(cv,e);
+    if(Math.hypot(p[0]-drawing[0],p[1]-drawing[1])<5)return;
+    const seg=[drawing[0],drawing[1],p[0],p[1]];userSegs.push(seg);stampSeg(seg);SEGS=segData();drawing=p;});
+  const end=()=>{drawing=null;};cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+}
+function resetAll(){initSand();initBeads();SEGS=segData();}
+document.getElementById('btnPour').onclick=resetAll;
+document.getElementById('btnClear').onclick=()=>{userSegs=[];rebuildWalls();SEGS=segData();};
+document.getElementById('btnDemo').onclick=()=>{userSegs=DEMO.map(s=>s.slice());rebuildWalls();SEGS=segData();};
+let paused=false;const bp=document.getElementById('btnPause');
+bp.onclick=()=>{paused=!paused;bp.textContent=paused?'Chạy tiếp':'Pause';bp.setAttribute('aria-pressed',paused);};
+
+// ---------- loop ----------
+const mA=document.getElementById('mA'),mB=document.getElementById('mB'),sA=document.getElementById('sA'),sB=document.getElementById('sB');
+let emaA=0,emaB=0;
+function frame(){
+  if(!paused){
+    tick++;
+    let t0=performance.now();
+    for(let s=0;s<P.sub;s++){emitSand();stepSand();}
+    emaB=emaB*.9+(performance.now()-t0)*.1;
+    t0=performance.now();stepBeads();emaA=emaA*.9+(performance.now()-t0)*.1;
+  }
+  renderSand(ctxB,cvB);renderBeads(ctxA,cvA);
+  if(tick%8===0){
+    mB.innerHTML=meterHTML(countSand(),S.perShaker);mA.innerHTML=meterHTML(countBeads(),B.per);
+    const kb=(S.W*S.H*2/1024).toFixed(0);
+    sB.textContent=`grid ${S.W}×${S.H} · ${S.count.toLocaleString()} hạt động · sim ${emaB.toFixed(2)} ms (JS) · upload R8G8 ≈ ${kb} KB/frame · rơi ra ngoài ${S.spilled}`;
+    sA.textContent=`${B.list.length} bi · ${SEGS.length} segment · sim ${emaA.toFixed(2)} ms (JS) · rơi ra ngoài ${B.spilled}`;
+  }
+  requestAnimationFrame(frame);
+}
+applyPreset('sandy');
+requestAnimationFrame(frame);
+})();
+</script>
