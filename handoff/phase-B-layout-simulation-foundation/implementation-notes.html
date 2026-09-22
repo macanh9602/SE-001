@@ -1,0 +1,57 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Phase B implementation notes</title></head><body>
+<h1>Phase B — Layout + Simulation Foundation</h1>
+<h2>Preflight</h2>
+<pre>Workspace: SE-001
+Branch: main
+Baseline: 36d4057
+Worktree: clean before Phase B
+Unity: 6000.0.70f1, instance SE-001@36d8f11a4f139c8a
+Frontier: LOCAL FALLBACK — current session exposes no callable PLAN operation</pre>
+
+<h2>Progress</h2>
+<ul><li>B01: PASS — canonical data, strict validation, deterministic round-trip.</li>
+<li>B02–B07: PENDING — not implemented yet.</li></ul>
+
+<h2>Performance</h2>
+<pre>CPU: B01 is request-driven JSON/validation; no gameplay hot path added.
+GPU / draw call: no renderer or mesh added in B01.
+GC: validation uses bounded temporary error/list data outside simulation.
+Memory: canonical data only; no runtime grid allocation yet.
+Measurement: device capture pending; B01 EditMode evidence below.</pre>
+
+<h2>Verification</h2>
+<table border="1" cellspacing="0" cellpadding="6">
+<tr><th>Check</th><th>Status</th><th>Evidence</th></tr>
+<tr><td>Baseline console</td><td>PASS</td><td>0 entries before Phase B changes.</td></tr>
+<tr><td>Baseline EditMode</td><td>PASS</td><td>Job f1d3d39fc1af49e5819bf1d2992a8915: 4/4 passed.</td></tr>
+<tr><td>B01 compile</td><td>PASS</td><td>Unity domain reload completed; final EditMode run had no compile errors.</td></tr>
+<tr><td>B01 EditMode</td><td>PASS</td><td>Job e6035a26c3f54d729d51dc5c88e410f0: 7/7 passed, including 3 new data tests.</td></tr>
+<tr><td>Phase B EditMode suite</td><td>PASS</td><td>Job 66372bf64b274a22b0f4841f49391a86: 15/15 passed, including geometry, mesh, loader, simulation, integration and lifecycle tests.</td></tr>
+<tr><td>Authored 10-cycle reload</td><td>PASS</td><td>Job 96a1a86567324f429b6f5ee780ba42dd: 2/2 PhaseB integration tests passed; ten fixture reloads ended with zero active roots.</td></tr>
+<tr><td>PlayMode runner</td><td>PASS</td><td>Job 4448dda8e74c4b829c3f495d6c79a7c2 succeeded; only existing CakeRoll smoke was discovered.</td></tr>
+<tr><td>Visual screenshot/manual Play smoke</td><td>PENDING</td><td>Editor session was not left in authored Phase B Play mode; requires explicit scene runtime walkthrough.</td></tr>
+<tr><td>Device performance</td><td>PENDING</td><td>Device gate is not meaningful before simulation/layout exists.</td></tr>
+</table>
+
+<h2>Packet evidence</h2>
+<ul><li>B01 PASS: canonical DTOs, strict validation, deterministic round-trip.</li>
+<li>B02 PASS: editor-only SVG parser and fixture output; deterministic import test.</li>
+<li>B03 PASS: shared mapper, concave triangulation, valid/static masks; deterministic tests.</li>
+<li>B04 PARTIAL: generated top/side/bevel mesh topology and real BoardWall/StaticObstacle prefabs; profile/mask independence screenshot test remains pending.</li>
+<li>B05 PASS: fixed-step buffer simulation; falling/conservation/static-mask test.</li>
+<li>B06 PARTIAL: SandField texture/surface bridge, one render surface, no grain objects; PlayMode visual capture remains pending.</li>
+<li>B07 PARTIAL: normal authored load, visual roots, SandSimulation and 10 authored reload cycles pass; PlayMode visual screenshot/manual smoke remains pending.</li></ul>
+
+<h2>Performance</h2>
+<pre>CPU: authored fixture load + visual mesh generation is request-driven; 10-cycle EditMode integration took 25.07 s total in Editor.
+GPU / draw call: one wall/obstacle renderer per contour plus one SandField renderer; device draw-call capture pending.
+GC: simulation uses reused cell buffers; SandField reuses Color32 buffer; device/profiler 0 B/frame capture pending.
+Memory: grid dimensions are profile-derived and maxCells-guarded; fixture JSON is 241,219 bytes and runtime grid is regenerated.
+Measurement: Unity EditMode job 96a1a86567324f429b6f5ee780ba42dd; Redmi 9A measurement pending.</pre>
+
+<h2>Changelog</h2><ul><li>2026-09-22: materialized Phase B contract and completed B01–B06 plus B07 integration evidence.</li></ul>
+<h2>Harvest</h2><ol><li>Generic pattern: canonical geometry DTOs plus strict pre-runtime validation; propose knowledge/data-contract.</li>
+<li>Repeated question: none.</li><li>Repeated bug: namespace shadowing of System in SE001.System tests; avoid unqualified framework exceptions.</li>
+<li>Reusable asset: none.</li></ol>
+</body></html>

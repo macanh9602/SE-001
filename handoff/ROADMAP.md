@@ -10,6 +10,18 @@
 - Story 000 là historical bootstrap evidence. Story 000A đã archive/supersede.
 - Story 001–014 của roadmap cũ đã bị D-005 retire; Git history giữ historical record.
 
+## Active phase
+
+| Phase | Name | Status | Scope |
+|---|---|---|---|
+| A | Foundation | DONE / PASS | Architecture alignment and lifecycle foundation |
+| B | Layout + Simulation Foundation | CURRENT / EXECUTABLE | Canonical JSON, SVG import, shared geometry/masks, 3D layout, SandSimulation, SandField, integration |
+| C | Complete Playable Core | PLANNED | Source, Cup, Draw, GameplayManager, accounting, win/lose, retry/next, minimal HUD |
+| D | GD Production Pipeline | PLANNED | Progression/save/sequence, production Level Editor, SVG workflow, validation, preview, unsaved Play Test |
+| E | Feel + Performance + Ship Quality | PLANNED | Sand feel, VFX/material/texture/shadow/quality tiers, device performance |
+
+Phase B worker packets are implementation packets, not architecture gates.
+
 ## Active story
 
 | Story | Tên | Size | Status | Dependency | Source |

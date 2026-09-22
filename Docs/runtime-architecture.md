@@ -108,6 +108,16 @@ mesh/line chỉ là presentation.
 
 ## 9. Mobile performance guardrails
 
+## 10. Phase B runtime boundary
+
+The normal runtime path is `LevelManager -> LevelSpawner -> LevelDataLoader -> shared geometry ->
+SandSimulation -> Visual`. `LevelManager` never parses SVG or generates meshes. SVG is editor/import input
+only; runtime loads canonical JSON from `Resources/Levels`. `LevelSpawner` validates data before readiness,
+creates per-level state and roots, seeds masks from canonical geometry, and owns partial-load cleanup.
+
+Gameplay geometry is board-space XY. Presentation may extrude it along Z and add a top-to-side bevel, but
+visual height/depth/bevel/material changes must not alter the gameplay polygon or generated masks.
+
 - Không GameObject-per-grain/cell; không procedural mesh rebuild mỗi frame.
 - Không allocation/LINQ/scene search trong hot path.
 - Runtime query O(1) hoặc O(out-degree); buffers được reuse và dispose theo level.

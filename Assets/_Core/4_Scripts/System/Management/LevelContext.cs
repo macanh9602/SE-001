@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using SE001.Simulation.Sand;
 
 namespace SE001.System.Management
 {
@@ -11,6 +12,7 @@ namespace SE001.System.Management
         private readonly List<ILevelLifecycleParticipant> participants = new List<ILevelLifecycleParticipant>();
         private readonly CancellationTokenSource lifetimeSource = new CancellationTokenSource();
         private bool disposed;
+        private SandSimulationProfile ownedSimulationProfile;
 
         internal LevelContext(
             string levelId,
@@ -44,6 +46,13 @@ namespace SE001.System.Management
             VfxRoot = vfxRoot != null ? vfxRoot : throw new ArgumentNullException(nameof(vfxRoot));
         }
 
+        internal void AttachSimulation(SandSimulation simulation, SandSimulationProfile ownedProfile = null)
+        {
+            EnsureNotDisposed();
+            SandSimulation = simulation;
+            ownedSimulationProfile = ownedProfile;
+        }
+
         public string LevelId { get; }
         public int Generation { get; }
         public CancellationToken LifetimeToken { get; }
@@ -56,6 +65,9 @@ namespace SE001.System.Management
         public Transform DynamicDrawRoot { get; }
         public Transform SandVisualRoot { get; }
         public Transform VfxRoot { get; }
+        public SandSimulation SandSimulation { get; private set; }
+        /// <summary>Board bounds in board-space units, origin at (0,0). Zero when the level has no authored data.</summary>
+        public Vector2 BoardSize { get; internal set; }
         public bool IsDisposed => disposed;
 
         public void RegisterParticipant(ILevelLifecycleParticipant participant)
@@ -91,6 +103,13 @@ namespace SE001.System.Management
             }
 
             participants.Clear();
+            SandSimulation?.Dispose();
+            if (ownedSimulationProfile != null)
+            {
+                if (UnityEngine.Application.isPlaying) UnityEngine.Object.Destroy(ownedSimulationProfile);
+                else UnityEngine.Object.DestroyImmediate(ownedSimulationProfile);
+                ownedSimulationProfile = null;
+            }
             RuntimeState.Dispose();
             lifetimeSource.Dispose();
         }

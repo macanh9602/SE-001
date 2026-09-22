@@ -94,6 +94,21 @@ Không giữ hai nguồn cho cùng một sự thật. Optional override phải p
 
 ## 7. Schema evolution
 
+## 8. Phase B canonical geometry clarification
+
+`SE001LevelJson` is the runtime authoring source of truth for Phase B. It contains `schemaVersion`,
+`levelId`, `board`, `staticObstacles`, and empty/default `sources` and `cups` arrays. `BoardData` owns
+`size` and wall polygon contours. `StaticObstacleData` owns a stable ID, one or more filled polygon
+contours, and an optional presentation `styleId`.
+
+Contours are closed simple polygons represented by finite board-space points. Duplicate terminal points,
+fewer than three unique vertices, degenerate contours, missing IDs, and duplicate IDs are validation errors.
+Concave contours and multiple independent contours are supported. Holes/compound boolean contours are not
+silently approximated in Phase B.
+
+Meshes, triangulation, raster masks, bevel geometry, colliders, and SVG commands are generated/runtime data
+and are never serialized as authoring truth.
+
 - Field mới có safe default có thể không bump schema khi backward compatibility được test.
 - Đổi nghĩa/xóa/đổi type field bắt buộc bump schema và có migration/validation rõ.
 - Story thay serialization contract phải được Product Owner approve trước implementation.

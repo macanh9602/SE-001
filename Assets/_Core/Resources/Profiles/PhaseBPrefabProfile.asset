@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2319e267e1d6fb740b7861a8f4708a9b, type: 3}
+  m_Name: PhaseBPrefabProfile
+  m_EditorClassIdentifier: 
+  boardWallPrefab: {fileID: 6908245436140867521, guid: 0e7105f86186acc478cbbb6f73421690, type: 3}
+  staticObstaclePrefab: {fileID: 2981442954111418910, guid: f25e5367953167842b2404d157da33c4, type: 3}
+  sandFieldPrefab: {fileID: 7295030869049607874, guid: 078f1511439788542b2aaec8901d05b2, type: 3}

@@ -27,6 +27,15 @@
 
 ## 3. Metrics / modes
 
+## Phase B terms
+
+| Term | Meaning | Code |
+|---|---|---|
+| Board-space | Canonical gameplay XY coordinates after authoring conversion | `BoardSpace` |
+| Canonical contour | Finite, filled, closed simple polygon in board-space | `PolygonContourData` |
+| Valid mask | Generated cells where sand may exist inside the board | `validMask` |
+| Static mask | Generated cells blocked by authored wall/obstacles | `staticObstacleMask` |
+
 | Term | Đo bằng gì | Nói lên gì | Không nói lên |
 |---|---|---|---|
 | Low-end target | Redmi 9A device capture | Baseline performance thấp | Mọi Android device |
