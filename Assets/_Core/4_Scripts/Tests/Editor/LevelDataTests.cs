@@ -116,7 +116,7 @@ namespace SE001.Data.Tests
         [Test]
         public void GeneratedFixture_LoadsThroughCanonicalResourceProvider()
         {
-            SE001LevelJson level = LevelDataLoader.Load("phase_b_svg_test");
+            SE001LevelJson level = LevelDataLoader.Load("phase_c_level_02");
             Assert.That(level.board.wallContours.Count, Is.GreaterThan(0));
             Assert.That(level.staticObstacles.Count, Is.GreaterThan(0));
         }

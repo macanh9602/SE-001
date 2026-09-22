@@ -770,7 +770,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levelSpawner: {fileID: 1743770822}
   autoLoadFirstLevel: 1
-  firstLevelId: phase_c_level_01
+  firstLevelId: phase_c_level_02
 --- !u!114 &1743770822
 MonoBehaviour:
   m_ObjectHideFlags: 0

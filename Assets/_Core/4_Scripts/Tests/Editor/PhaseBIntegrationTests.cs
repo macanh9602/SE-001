@@ -20,7 +20,7 @@ namespace SE001.Tests
             Assert.That(Resources.Load<SE001.Data.PrefabProfile>("Profiles/PhaseBPrefabProfile"), Is.Not.Null);
             Assert.That(Resources.Load<SE001.Data.LayoutVisualProfile>("Profiles/PhaseBLayoutVisualProfile"), Is.Not.Null);
             LevelManager manager = owner.GetComponent<LevelManager>();
-            manager.BeginLevel("phase_b_svg_test");
+                manager.BeginLevel("phase_c_level_02");
             Assert.That(manager.IsReady, Is.True);
             Assert.That(manager.CurrentContext.SandSimulation, Is.Not.Null);
             Assert.That(manager.CurrentContext.BoardRoot.childCount, Is.GreaterThan(0));
@@ -33,7 +33,7 @@ namespace SE001.Tests
         public void Fixture_ReloadsTenTimesWithoutAccumulatingRuntimeRoots()
         {
             LevelManager manager = owner.GetComponent<LevelManager>();
-            manager.BeginLevel("phase_b_svg_test");
+                manager.BeginLevel("phase_c_level_02");
             for (int i = 0; i < 10; i++)
             {
                 LevelContext previous = manager.CurrentContext;

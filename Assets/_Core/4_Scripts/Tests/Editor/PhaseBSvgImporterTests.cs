@@ -13,7 +13,7 @@ namespace SE001.Editor.Level.Tests
         {
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
             string source = Path.Combine(projectRoot, "TrashStuff", "test_tool.svg");
-            string output = Path.Combine(Application.dataPath, "_Core", "Resources", "Levels", "phase_b_svg_test.temp.json");
+            string output = Path.Combine(Application.temporaryCachePath, "SE001", "phase_c_level_02.temp.json");
             PhaseBSvgImportSettings settings = new PhaseBSvgImportSettings { legacyTestFixture = true };
             string error;
             try

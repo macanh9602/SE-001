@@ -30,7 +30,7 @@ namespace SE001.Editor.Level
         private static void ImportTestFixture()
         {
             string source = Path.Combine(Application.dataPath, "../TrashStuff/test_tool.svg");
-            string output = Path.Combine(Application.dataPath, "_Core/Resources/Levels/phase_b_svg_test.json");
+            string output = Path.Combine(Application.temporaryCachePath, "SE001/phase_c_level_02.json");
             PhaseBSvgImportSettings settings = new PhaseBSvgImportSettings { legacyTestFixture = true };
             string error;
             if (!TryImport(source, output, settings, out error)) throw new InvalidOperationException(error);
@@ -76,7 +76,7 @@ namespace SE001.Editor.Level
             if (contours.Count == 0) throw new FormatException("SVG contains no supported closed geometry.");
             SE001LevelJson level = new SE001LevelJson
             {
-                levelId = "phase_b_svg_test",
+                levelId = "phase_c_level_02",
                 board = new BoardData { size = new Vector2(viewBox.width * settings.boardUnitsPerSvgUnit, viewBox.height * settings.boardUnitsPerSvgUnit) }
             };
 

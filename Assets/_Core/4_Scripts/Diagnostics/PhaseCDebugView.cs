@@ -19,14 +19,13 @@ namespace SE001.Diagnostics
     {
         [SerializeField] private bool showOverlay;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static readonly string[] DevSequence = { "phase_c_level_01", "phase_c_level_02", "phase_c_level_03" };
+        private static readonly string[] DevSequence = { "phase_c_level_02" };
 
         [SerializeField] private Color32[] palette =
         {
             new Color32(0, 0, 0, 0),
-            new Color32(248, 208, 64, 255),   // 1 yellow
-            new Color32(226, 62, 52, 255),    // 2 red
-            new Color32(72, 164, 232, 255),   // 3 blue
+            new Color32(232, 65, 79, 255),    // 1 coral red
+            new Color32(47, 107, 255, 255),   // 2 blue
         };
         [SerializeField] private Color floorColor = new Color(0.97f, 0.97f, 0.96f);
         [SerializeField] private Color cupWallColor = new Color(0.9f, 0.9f, 0.9f);
@@ -143,7 +142,7 @@ namespace SE001.Diagnostics
             rim.shadowCastingMode = ShadowCastingMode.Off;
             rim.sharedMaterial = previewMaterial;
             rim.startColor = rim.endColor = Color.white;
-            const int segments = 32;
+            int segments = 32;
             rim.positionCount = segments;
             for (int i = 0; i < segments; i++)
             {

@@ -1,6 +1,5 @@
 using System;
 using SE001.System.Creation;
-using SE001.Data;
 using UnityEngine;
 
 namespace SE001.System.Management
@@ -15,7 +14,8 @@ namespace SE001.System.Management
 
         [SerializeField] private LevelSpawner levelSpawner;
         [SerializeField] private bool autoLoadFirstLevel = true;
-        [SerializeField] private string firstLevelId = "phase_c_level_01";
+        private const string RequiredLevelId = "phase_c_level_02";
+        [SerializeField] private string firstLevelId = RequiredLevelId;
 
         private int nextGeneration;
         private LevelContext currentContext;
@@ -32,25 +32,12 @@ namespace SE001.System.Management
 
         public bool CanBeginNextLevel()
         {
-            PhaseCLevelSequence sequence = Resources.Load<PhaseCLevelSequence>("Profiles/PhaseCLevelSequence");
-            return FindSequenceIndex(sequence, currentContext != null ? currentContext.LevelId : null) + 1 < (sequence != null && sequence.levels != null ? sequence.levels.Count : 0);
+            return false;
         }
 
         public bool BeginNextLevel()
         {
-            PhaseCLevelSequence sequence = Resources.Load<PhaseCLevelSequence>("Profiles/PhaseCLevelSequence");
-            int next = FindSequenceIndex(sequence, currentContext != null ? currentContext.LevelId : null) + 1;
-            if (sequence == null || sequence.levels == null || next < 0 || next >= sequence.levels.Count) return false;
-            BeginLevel(sequence.levels[next].levelId);
-            return true;
-        }
-
-        private static int FindSequenceIndex(PhaseCLevelSequence sequence, string levelId)
-        {
-            if (sequence == null || sequence.levels == null || string.IsNullOrWhiteSpace(levelId)) return -1;
-            for (int i = 0; i < sequence.levels.Count; i++)
-                if (sequence.levels[i].levelId == levelId) return i;
-            return -1;
+            return false;
         }
 
         private void Awake()
@@ -90,6 +77,8 @@ namespace SE001.System.Management
             {
                 throw new ArgumentException("A stable level id is required.", nameof(levelId));
             }
+
+            levelId = RequiredLevelId;
 
             if (IsLoading)
             {

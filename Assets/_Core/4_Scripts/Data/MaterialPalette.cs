@@ -8,7 +8,7 @@ namespace SE001.Data
     public sealed class MaterialPalette : ScriptableObject
     {
         public List<MaterialPaletteEntry> entries = new List<MaterialPaletteEntry>();
-        public Color32 GetSandColor(byte id) { for (int i = 0; i < entries.Count; i++) if (entries[i].materialId == id) return entries[i].sandColor; return new Color32(220, 180, 100, 255); }
+        public Color32 GetSandColor(byte id) { for (int i = 0; i < entries.Count; i++) if (entries[i].materialId == id) return entries[i].sandColor; return Color.clear; }
         public bool Contains(int id) { for (int i = 0; i < entries.Count; i++) if (entries[i].materialId == id) return true; return false; }
     }
 

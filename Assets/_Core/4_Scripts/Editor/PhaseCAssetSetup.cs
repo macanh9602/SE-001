@@ -18,9 +18,8 @@ namespace SE001.Editor
             MaterialPalette palette = GetOrCreate<MaterialPalette>(folder + "/PhaseCMaterialPalette.asset");
             palette.entries = new List<MaterialPaletteEntry>
             {
-                new MaterialPaletteEntry { materialId = 1, sandColor = new Color32(248, 208, 64, 255), uiColor = new Color32(248, 208, 64, 255) },
-                new MaterialPaletteEntry { materialId = 2, sandColor = new Color32(226, 62, 52, 255), uiColor = new Color32(226, 62, 52, 255) },
-                new MaterialPaletteEntry { materialId = 3, sandColor = new Color32(72, 164, 232, 255), uiColor = new Color32(72, 164, 232, 255) }
+                new MaterialPaletteEntry { materialId = 1, sandColor = new Color32(232, 65, 79, 255), uiColor = new Color32(232, 65, 79, 255) },
+                new MaterialPaletteEntry { materialId = 2, sandColor = new Color32(47, 107, 255, 255), uiColor = new Color32(47, 107, 255, 255) }
             };
             SourceProfile source = GetOrCreate<SourceProfile>(folder + "/PhaseCSourceProfile.asset");
             source.bodySize = new Vector2(0.8f, 1.2f);
@@ -50,9 +49,7 @@ namespace SE001.Editor
             runtime.levelSequence = sequence;
             sequence.levels = new List<LevelSequenceEntry>
             {
-                new LevelSequenceEntry { levelId = "phase_c_level_01" },
-                new LevelSequenceEntry { levelId = "phase_c_level_02" },
-                new LevelSequenceEntry { levelId = "phase_c_level_03" }
+                new LevelSequenceEntry { levelId = "phase_c_level_02" }
             };
             EditorUtility.SetDirty(palette);
             EditorUtility.SetDirty(source);
@@ -100,7 +97,7 @@ namespace SE001.Editor
             Texture2D sourceTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
             Shader spriteShader = Shader.Find("SE001/SpriteSurface");
             Shader layoutShader = Shader.Find("SE001/LayoutSurface");
-            Material source = GetOrCreateMaterial("Assets/_Core/1_Materials/MAT_Source.mat", spriteShader, sourceTexture, new Color(1f, 0.82f, 0.18f, 1f));
+            Material source = GetOrCreateMaterial("Assets/_Core/1_Materials/MAT_Source.mat", spriteShader, sourceTexture, new Color32(232, 65, 79, 255));
             Material cup = GetOrCreateMaterial("Assets/_Core/1_Materials/MAT_Cup.mat", spriteShader, sourceTexture, Color.white);
             Material cupBack = GetOrCreateMaterial(
                 "Assets/_Core/1_Materials/MAT_CupBack.mat", spriteShader, sourceTexture, new Color(0.82f, 0.86f, 0.92f, 0.9f));

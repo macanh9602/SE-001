@@ -30,7 +30,7 @@ namespace SE001.Editor
 
             try
             {
-                string[] levels = { "phase_c_level_01", "phase_c_level_02", "phase_c_level_03" };
+                string[] levels = { "phase_c_level_02" };
                 for (int i = 0; i < levels.Length; i++) report.AppendLine(CaptureLevel(manager, levels[i]));
                 string path = Path.Combine(Directory.GetCurrentDirectory(), "handoff/phase-C-complete-playable-core/perf-C-R1.md");
                 File.WriteAllText(path, report.ToString(), Encoding.UTF8);

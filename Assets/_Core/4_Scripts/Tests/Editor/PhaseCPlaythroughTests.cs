@@ -33,8 +33,8 @@ namespace SE001.Tests
         [Test]
         public void Playthrough_Level01_TapOnly_Wins()
         {
-            GameplayManager game = Load("phase_c_level_01");
-            game.ToggleSource("source_yellow");
+            GameplayManager game = Load("phase_c_level_02");
+            game.ToggleSource("source_coral");
             RunToEnd(game);
             Assert.That(game.State, Is.EqualTo(GameState.Won), Describe(game));
         }
@@ -43,7 +43,7 @@ namespace SE001.Tests
         public void Playthrough_Level02_NoDraw_Loses()
         {
             GameplayManager game = Load("phase_c_level_02");
-            game.ToggleSource("source_yellow");
+            game.ToggleSource("source_coral");
             RunToEnd(game);
             Assert.That(game.State, Is.EqualTo(GameState.Lost), Describe(game));
             Assert.That(game.LastLoseReason, Is.EqualTo(LoseReason.NotFilled));
@@ -55,7 +55,7 @@ namespace SE001.Tests
             GameplayManager game = Load("phase_c_level_02");
             // Ramp under the plank's right edge (x≈7.9) guiding sand down-right into the cup at x=9.6.
             Assert.That(game.CommitStroke(Line(new Vector2(7.5f, 6.2f), new Vector2(9.3f, 3.1f), 12), 0.3f), Is.True);
-            game.ToggleSource("source_yellow");
+            game.ToggleSource("source_coral");
             RunToEnd(game);
             Assert.That(game.State, Is.EqualTo(GameState.Won), Describe(game));
         }
@@ -63,10 +63,10 @@ namespace SE001.Tests
         [Test]
         public void Playthrough_Level03_WrongRoute_LosesWrongCup()
         {
-            GameplayManager game = Load("phase_c_level_03");
-            // Ramp carrying yellow sand (x=3.0) over the obstacle into the red cup (x=7.8).
+            GameplayManager game = Load("phase_c_level_02");
+            // Ramp carrying coral sand (x=3.0) over the obstacle into the blue cup (x=9.45).
             Assert.That(game.CommitStroke(Line(new Vector2(2.3f, 12.2f), new Vector2(7.7f, 8.8f), 16), 0.3f), Is.True);
-            game.ToggleSource("source_yellow");
+            game.ToggleSource("source_coral");
             RunToEnd(game);
             Assert.That(game.State, Is.EqualTo(GameState.Lost), Describe(game));
             Assert.That(game.LastLoseReason, Is.EqualTo(LoseReason.WrongCup));
@@ -75,9 +75,9 @@ namespace SE001.Tests
         [Test]
         public void Playthrough_Level03_Correct_Wins()
         {
-            GameplayManager game = Load("phase_c_level_03");
-            game.ToggleSource("source_yellow");
-            game.ToggleSource("source_red");
+            GameplayManager game = Load("phase_c_level_02");
+            game.ToggleSource("source_coral");
+            game.ToggleSource("source_blue");
             RunToEnd(game);
             Assert.That(game.State, Is.EqualTo(GameState.Won), Describe(game));
         }
@@ -85,14 +85,14 @@ namespace SE001.Tests
         [Test]
         public void Playthrough_IsDeterministic_SameScriptSameResult()
         {
-            GameplayManager first = Load("phase_c_level_01");
-            first.ToggleSource("source_yellow");
+            GameplayManager first = Load("phase_c_level_02");
+            first.ToggleSource("source_coral");
             int firstSteps = RunToEnd(first);
             byte[] firstGrid = (byte[])first.Context.SandSimulation.State.Cells.Clone();
 
             levelManager.ReloadCurrentLevel();
             GameplayManager second = Game();
-            second.ToggleSource("source_yellow");
+            second.ToggleSource("source_coral");
             int secondSteps = RunToEnd(second);
 
             Assert.That(secondSteps, Is.EqualTo(firstSteps));
@@ -102,7 +102,7 @@ namespace SE001.Tests
         [Test]
         public void Playthrough_ClosedValve_NeverLoses()
         {
-            GameplayManager game = Load("phase_c_level_01");
+            GameplayManager game = Load("phase_c_level_02");
             game.AdvanceSteps(2000);
             Assert.That(game.State, Is.EqualTo(GameState.Playing), "Closed sources with sand left must never trigger NotFilled.");
         }
@@ -110,7 +110,7 @@ namespace SE001.Tests
         [Test]
         public void Source_TapHitTest_CoversVisibleJarNotOnlyEmitPoint()
         {
-            GameplayManager game = Load("phase_c_level_01");
+            GameplayManager game = Load("phase_c_level_02");
             var source = game.Sources[0];
             Vector2 bodyCenter = source.Position + source.BodyOffset;
             Assert.That(source.HitTest(bodyCenter, 0.2f), Is.True, "Tapping the jar body must hit.");

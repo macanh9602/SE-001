@@ -28,7 +28,7 @@ namespace SE001.Tests
         [Test]
         public void PhaseC_ReloadTenTimes_NoAccumulation()
         {
-            string[] levels = { "phase_c_level_01", "phase_c_level_02", "phase_c_level_03" };
+            string[] levels = { "phase_c_level_02" };
             int baselineMeshes = CountTransientMeshes();
             for (int levelIndex = 0; levelIndex < levels.Length; levelIndex++)
             {
@@ -52,12 +52,7 @@ namespace SE001.Tests
         [Test]
         public void PhaseC_NextFollowsSequence_DisabledOnLast()
         {
-            manager.BeginLevel("phase_c_level_01");
-            Assert.That(manager.CanBeginNextLevel(), Is.True);
-            Assert.That(manager.BeginNextLevel(), Is.True);
-            Assert.That(manager.CurrentContext.LevelId, Is.EqualTo("phase_c_level_02"));
-            Assert.That(manager.BeginNextLevel(), Is.True);
-            Assert.That(manager.CurrentContext.LevelId, Is.EqualTo("phase_c_level_03"));
+            manager.BeginLevel("phase_c_level_02");
             Assert.That(manager.CanBeginNextLevel(), Is.False);
             Assert.That(manager.BeginNextLevel(), Is.False);
         }

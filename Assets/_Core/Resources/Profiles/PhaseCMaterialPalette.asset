@@ -16,21 +16,14 @@ MonoBehaviour:
   - materialId: 1
     sandColor:
       serializedVersion: 2
-      rgba: 4282437880
+      rgba: 4283384296
     uiColor:
       serializedVersion: 2
-      rgba: 4282437880
+      rgba: 4283384296
   - materialId: 2
     sandColor:
       serializedVersion: 2
-      rgba: 4281614050
+      rgba: 4294929199
     uiColor:
       serializedVersion: 2
-      rgba: 4281614050
-  - materialId: 3
-    sandColor:
-      serializedVersion: 2
-      rgba: 4293436488
-    uiColor:
-      serializedVersion: 2
-      rgba: 4293436488
+      rgba: 4294929199
