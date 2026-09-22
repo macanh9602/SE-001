@@ -5,6 +5,7 @@ using SE001.Data;
 using SE001.Gameplay;
 using SE001.Presentation;
 using SE001.System.Management;
+using UnityEditor;
 using UnityEngine;
 
 namespace SE001.Tests
@@ -48,6 +49,15 @@ namespace SE001.Tests
             Assert.That(visual.NozzleRenderer.sharedMaterial, Is.SameAs(visual.BodyRenderer.sharedMaterial));
 
             Object.DestroyImmediate(parent);
+        }
+
+        [Test]
+        public void PrefabAssets_ExposeExactProductionHierarchy()
+        {
+            GameplayRuntimeProfile runtime = LoadRuntime();
+            AssertSourcePrefabContract(runtime.prefabProfile.sourcePrefab);
+            AssertCupPrefabContract(runtime.prefabProfile.cupPrefab);
+            AssertDrawStrokePrefabContract(runtime.prefabProfile.drawStrokePrefab);
         }
 
         [Test]
@@ -188,6 +198,107 @@ namespace SE001.Tests
         private static int CountChildren(Transform parent)
         {
             return parent == null ? 0 : parent.childCount;
+        }
+
+        private static void AssertSourcePrefabContract(GameObject prefab)
+        {
+            GameObject root = LoadPrefabContents(prefab);
+            try
+            {
+                AssertRequiredComponent<Renderer>(root, "Pivot/View/Body");
+                AssertRequiredComponent<Renderer>(root, "Pivot/View/Nozzle");
+                AssertRequiredTransform(root, "Anchors/EmitPoint");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static void AssertCupPrefabContract(GameObject prefab)
+        {
+            GameObject root = LoadPrefabContents(prefab);
+            try
+            {
+                AssertRequiredComponent<MeshFilter>(root, "View/WallL");
+                AssertRequiredComponent<MeshFilter>(root, "View/WallR");
+                AssertRequiredComponent<MeshFilter>(root, "View/WallB");
+                AssertRequiredComponent<MeshFilter>(root, "View/Back");
+                AssertRequiredComponent<LineRenderer>(root, "View/Rim");
+                AssertRequiredComponent<MeshFilter>(root, "View/FillLine");
+                AssertRequiredComponent<MeshFilter>(root, "FillView");
+                AssertRequiredComponent<MeshRenderer>(root, "FillView");
+                AssertRequiredTransform(root, "Anchors/Entry");
+                AssertRequiredTransform(root, "Anchors/Feedback");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static void AssertDrawStrokePrefabContract(GameObject prefab)
+        {
+            GameObject root = LoadPrefabContents(prefab);
+            try
+            {
+                AssertRequiredComponent<MeshFilter>(root, "View");
+                AssertRequiredComponent<MeshRenderer>(root, "View");
+                AssertRequiredComponent<LineRenderer>(root, "Preview");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static GameObject LoadPrefabContents(GameObject prefab)
+        {
+            Assert.That(prefab, Is.Not.Null);
+            string path = AssetDatabase.GetAssetPath(prefab);
+            Assert.That(path, Is.Not.Empty);
+            return PrefabUtility.LoadPrefabContents(path);
+        }
+
+        private static void AssertRequiredTransform(GameObject root, string path)
+        {
+            Transform target = root.transform.Find(path);
+            Assert.That(target, Is.Not.Null, path);
+            Assert.That(CountMatchingPaths(root.transform, path), Is.EqualTo(1), path);
+        }
+
+        private static void AssertRequiredComponent<T>(GameObject root, string path)
+            where T : Component
+        {
+            Transform target = root.transform.Find(path);
+            Assert.That(target, Is.Not.Null, path);
+            Assert.That(target.GetComponent<T>(), Is.Not.Null, path);
+            Assert.That(CountMatchingPaths(root.transform, path), Is.EqualTo(1), path);
+        }
+
+        private static int CountMatchingPaths(Transform root, string expectedPath)
+        {
+            int count = 0;
+            Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < transforms.Length; i++)
+            {
+                if (GetRelativePath(root, transforms[i]) == expectedPath)
+                    count++;
+            }
+            return count;
+        }
+
+        private static string GetRelativePath(Transform root, Transform target)
+        {
+            List<string> names = new List<string>();
+            Transform current = target;
+            while (current != null && current != root)
+            {
+                names.Add(current.name);
+                current = current.parent;
+            }
+            names.Reverse();
+            return string.Join("/", names);
         }
     }
 }

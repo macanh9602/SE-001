@@ -10,7 +10,7 @@
 
 ## Required tests
 
-The following six tests passed in Unity EditMode job `c3780c729d0e4d43ad918a1a637494de` / `7ecfb55dc3394d32910c56bf486180e4`:
+The prefab contract test plus the six existing C1 tests passed in Unity EditMode job `cd6b84a494a2493ba3252f6d6a12b61e` (7/7):
 
 - `SourceFactory_CreatesPrefabAndBindsDomain`
 - `CupFactory_VisualMatchesDomainGeometry`
@@ -19,11 +19,13 @@ The following six tests passed in Unity EditMode job `c3780c729d0e4d43ad918a1a63
 - `PhaseC_Level02_ProductionVisualHierarchyExists`
 - `PhaseC_ReloadTenTimes_NoVisualAccumulation`
 
-`Playthrough_Level02_ScriptedDraw_Wins` was run in job `7ecfb55dc3394d32910c56bf486180e4` and failed:
+- `PrefabAssets_ExposeExactProductionHierarchy`
+
+`Playthrough_Level02_ScriptedDraw_Wins` was run once in job `0117491460bc4cf3a8470be5b0157b85` and failed:
 
 `state=Playing reason=None steps=10000 ink=4.42/8.00 | source_coral Empty 0/1800 | source_blue Closed 1470/1470 | cup_coral 487/534 cap 644 | cup_blue 0/469 cap 564`
 
-The same result was reproduced through Unity code with `PhaseCDrawVisualController.enabled = false`, so this blocker is in the existing gameplay/simulation path, not the C1 visual ownership changes.
+The same result was reproduced through Unity code with and without `PhaseCDrawVisualController` enabled: `with=Playing|487/534; without=Playing|487/534`. This is recorded as an external/pre-existing gameplay blocker, not a C1 visual failure.
 
 ## Existing Phase C regressions
 
