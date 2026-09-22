@@ -3,6 +3,7 @@ using SE001.Elements.Sand;
 using SE001.Gameplay;
 using SE001.Geometry;
 using SE001.System.Management;
+using SE001.Data;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -16,6 +17,7 @@ namespace SE001.Diagnostics
     [DisallowMultipleComponent]
     public sealed class PhaseCDebugView : MonoBehaviour, ILevelLifecycleParticipant
     {
+        [SerializeField] private bool showOverlay;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly string[] DevSequence = { "phase_c_level_01", "phase_c_level_02", "phase_c_level_03" };
 
@@ -28,7 +30,6 @@ namespace SE001.Diagnostics
         };
         [SerializeField] private Color floorColor = new Color(0.97f, 0.97f, 0.96f);
         [SerializeField] private Color cupWallColor = new Color(0.9f, 0.9f, 0.9f);
-        [SerializeField] private float valveRotateSpeed = 900f; // deg/s
 
         private readonly List<Object> owned = new List<Object>();
         private readonly List<Transform> sourcePivots = new List<Transform>();
@@ -41,6 +42,9 @@ namespace SE001.Diagnostics
         private LevelContext context;
         private Material litMaterial;
         private Material previewMaterial;
+        private JuiceProfile juiceProfile;
+        private MaterialPalette materialPalette;
+        private PrefabProfile prefabProfile;
         private Mesh quad;
         private MaterialPropertyBlock block;
         private LineRenderer preview;
@@ -66,14 +70,17 @@ namespace SE001.Diagnostics
             if (manager == null) return;
             block = new MaterialPropertyBlock();
 
-            Shader shader = Shader.Find("SE001/LayoutSurface");
-            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Lit");
-            litMaterial = Own(new Material(shader) { name = "PhaseCDebugLit" });
+            LayoutVisualProfile layoutProfile = Resources.Load<LayoutVisualProfile>("Profiles/PhaseBLayoutVisualProfile");
+            GameplayRuntimeProfile runtimeProfile = Resources.Load<GameplayRuntimeProfile>("Profiles/PhaseCGameplayRuntimeProfile");
+            juiceProfile = runtimeProfile != null ? runtimeProfile.juiceProfile : null;
+            materialPalette = runtimeProfile != null ? runtimeProfile.materialPalette : null;
+            prefabProfile = runtimeProfile != null ? runtimeProfile.prefabProfile : null;
+            litMaterial = layoutProfile != null ? layoutProfile.wallMaterial : null;
             quad = Own(BuildQuad());
-            previewMaterial = Own(new Material(Shader.Find("Sprites/Default")) { name = "PhaseCDebugUnlit" });
+            previewMaterial = layoutProfile != null ? layoutProfile.obstacleMaterial : litMaterial;
 
             SandFieldVisual sand = context.SandVisualRoot.GetComponentInChildren<SandFieldVisual>();
-            if (sand != null) sand.SetPalette(palette);
+            if (sand != null) sand.SetPalette(BuildPalette());
 
             Vector2 board = context.BoardSize;
             CreateBox("DebugFloor", context.BoardRoot, new Vector3(board.x * 0.5f, board.y * 0.5f, 0.02f), board, floorColor, false);
@@ -87,9 +94,13 @@ namespace SE001.Diagnostics
         private void BuildSource(SourceDomain source)
         {
             Color color = PaletteColor(source.MaterialId);
-            var pivot = new GameObject("DebugSource_" + source.StableId).transform;
-            pivot.SetParent(context.SourceRoot, false);
-            pivot.localPosition = new Vector3(source.Position.x, source.Position.y + 0.6f, -0.3f);
+            GameObject sourceObject = prefabProfile != null && prefabProfile.sourcePrefab != null
+                ? Instantiate(prefabProfile.sourcePrefab, context.SourceRoot, false)
+                : new GameObject();
+            sourceObject.name = "SandSource_" + source.StableId;
+            var pivot = sourceObject.transform;
+            if (sourceObject.transform.parent == null) pivot.SetParent(context.SourceRoot, false);
+            pivot.localPosition = new Vector3(source.Position.x + SourceDomain.BodyOffset.x, source.Position.y + SourceDomain.BodyOffset.y, -0.3f);
             Renderer body = CreateBox("Body", pivot, Vector3.zero, new Vector2(0.8f, 0.9f), color, true);
             CreateBox("Nozzle", pivot, new Vector3(0f, 0.55f, 0f), new Vector2(0.32f, 0.22f), Color.white, true);
             pivot.localRotation = Quaternion.Euler(0f, 0f, source.IsPouring ? 180f : 0f);
@@ -99,8 +110,12 @@ namespace SE001.Diagnostics
 
         private void BuildCup(CupDomain cup)
         {
-            Transform root = new GameObject("DebugCup_" + cup.StableId).transform;
-            root.SetParent(context.CupRoot, false);
+            GameObject cupObject = prefabProfile != null && prefabProfile.cupPrefab != null
+                ? Instantiate(prefabProfile.cupPrefab, context.CupRoot, false)
+                : new GameObject();
+            cupObject.name = "Cup_" + cup.StableId;
+            Transform root = cupObject.transform;
+            if (cupObject.transform.parent == null) root.SetParent(context.CupRoot, false);
             float px = cup.Position.x, y0 = cup.Position.y, y1 = cup.Position.y + cup.Size.y;
             float th = cup.Size.x * 0.5f, bh = cup.Size.x * (1f - cup.Taper) * 0.5f, w = cup.EffectiveWall;
             Color wallColor = cupWallColor;
@@ -211,10 +226,14 @@ namespace SE001.Diagnostics
             mesh.CombineMeshes(combine.ToArray(), true, true);
             for (int i = 0; i < combine.Count; i++) Destroy(combine[i].mesh);
 
-            var go = new GameObject("DebugStroke");
-            go.transform.SetParent(context.DynamicDrawRoot, false);
-            go.AddComponent<MeshFilter>().sharedMesh = mesh;
-            var r = go.AddComponent<MeshRenderer>();
+            GameObject go = prefabProfile != null && prefabProfile.drawStrokePrefab != null
+                ? Instantiate(prefabProfile.drawStrokePrefab, context.DynamicDrawRoot, false)
+                : new GameObject("DrawStroke");
+            go.name = "DrawStroke";
+            if (go.transform.parent == null) go.transform.SetParent(context.DynamicDrawRoot, false);
+            MeshFilter meshFilter = go.GetComponent<MeshFilter>() ?? go.AddComponent<MeshFilter>();
+            meshFilter.sharedMesh = mesh;
+            MeshRenderer r = go.GetComponent<MeshRenderer>() ?? go.AddComponent<MeshRenderer>();
             r.sharedMaterial = litMaterial;
             block.SetColor(BaseColorId, new Color(0.35f, 0.3f, 0.55f));
             r.SetPropertyBlock(block);
@@ -224,6 +243,8 @@ namespace SE001.Diagnostics
         {
             if (manager == null || context == null) return;
             float dt = Time.deltaTime;
+            float rotateDuration = Mathf.Max(0.01f, juiceProfile != null ? juiceProfile.valveOpenDuration : 0.2f);
+            float valveRotateSpeed = 180f / rotateDuration;
 
             for (int i = 0; i < sourcePivots.Count && i < manager.Sources.Count; i++)
             {
@@ -235,7 +256,8 @@ namespace SE001.Diagnostics
                 if (s.State == SourceValveState.Empty) c = Color.Lerp(c, Color.gray, 0.7f);
                 block.SetColor(BaseColorId, c);
                 sourceBodies[i].SetPropertyBlock(block);
-                float pulse = s.State == SourceValveState.Open ? 1f + Mathf.Sin(Time.time * 18f) * 0.03f : 1f;
+                float pulseFrequency = 1f / Mathf.Max(0.01f, juiceProfile != null ? juiceProfile.cupPunchDuration : 0.12f);
+                float pulse = s.State == SourceValveState.Open ? 1f + Mathf.Sin(Time.time * pulseFrequency * Mathf.PI * 2f) * 0.03f : 1f;
                 sourcePivots[i].localScale = new Vector3(pulse, 2f - pulse, 1f);
             }
 
@@ -245,8 +267,9 @@ namespace SE001.Diagnostics
                                 cupFillShown[i] = Mathf.Lerp(cupFillShown[i], cup.FillRatio, 1f - Mathf.Exp(-10f * dt));
                 // Sand fills the cup physically now; this is only a progress bar below the cup.
                 cupFills[i].localScale = new Vector3(Mathf.Max(0.0001f, cupFillShown[i]), 0.12f, 1f);
-                Color c = cup.ForeignDetected ? Color.Lerp(PaletteColor(cup.AcceptedMaterialId), Color.red, Mathf.PingPong(Time.time * 6f, 1f)) : PaletteColor(cup.AcceptedMaterialId);
-                if (cup.Full) c = Color.Lerp(c, Color.white, Mathf.PingPong(Time.time * 2f, 0.25f));
+                float punchFrequency = 1f / Mathf.Max(0.01f, juiceProfile != null ? juiceProfile.cupPunchDuration : 0.12f);
+                Color c = cup.ForeignDetected ? Color.Lerp(PaletteColor(cup.AcceptedMaterialId), Color.red, Mathf.PingPong(Time.time * punchFrequency, 1f)) : PaletteColor(cup.AcceptedMaterialId);
+                if (cup.Full) c = Color.Lerp(c, Color.white, Mathf.PingPong(Time.time * punchFrequency * 0.33f, 0.25f));
                 block.SetColor(BaseColorId, c);
                 cupFillRenderers[i].SetPropertyBlock(block);
             }
@@ -263,6 +286,7 @@ namespace SE001.Diagnostics
 
         private void OnGUI()
         {
+            if (!showOverlay) return;
             if (manager == null || context == null) return;
             float scale = Mathf.Max(1f, Screen.height / 1100f);
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
@@ -313,7 +337,21 @@ namespace SE001.Diagnostics
             return r;
         }
 
-        private Color PaletteColor(byte id) => id < palette.Length ? (Color)palette[id] : Color.magenta;
+        private Color PaletteColor(byte id)
+        {
+            if (materialPalette != null && materialPalette.Contains(id)) return materialPalette.GetSandColor(id);
+            return id < palette.Length ? (Color)palette[id] : Color.magenta;
+        }
+
+        private Color32[] BuildPalette()
+        {
+            if (materialPalette == null || materialPalette.entries == null || materialPalette.entries.Count == 0) return palette;
+            byte maxId = 0;
+            for (int i = 0; i < materialPalette.entries.Count; i++) maxId = (byte)Mathf.Max(maxId, materialPalette.entries[i].materialId);
+            Color32[] result = new Color32[maxId + 1];
+            for (int i = 0; i < materialPalette.entries.Count; i++) result[materialPalette.entries[i].materialId] = materialPalette.entries[i].sandColor;
+            return result;
+        }
 
         private static Mesh BuildQuad()
         {

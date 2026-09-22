@@ -37,6 +37,18 @@ namespace SE001.Gameplay
         public SourceValveState State { get; private set; }
         public bool IsPouring => State == SourceValveState.Open || State == SourceValveState.Opening;
 
+        /// <summary>Jar body center relative to Position (the nozzle / emit point). Shared by visuals and tap hit-test.</summary>
+        public static readonly Vector2 BodyOffset = new Vector2(0f, 0.6f);
+        /// <summary>Jar body size in board units (visual + tap area before padding).</summary>
+        public static readonly Vector2 BodySize = new Vector2(0.8f, 1.2f);
+
+        /// <summary>Tap area: the visible jar body (not the emit point), grown by padding.</summary>
+        public bool HitTest(Vector2 boardPoint, float padding)
+        {
+            Vector2 d = boardPoint - (Position + BodyOffset);
+            return Mathf.Abs(d.x) <= BodySize.x * 0.5f + padding && Mathf.Abs(d.y) <= BodySize.y * 0.5f + padding;
+        }
+
         public void Toggle()
         {
             switch (State)

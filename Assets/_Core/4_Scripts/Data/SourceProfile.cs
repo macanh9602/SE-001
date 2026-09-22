@@ -1,0 +1,14 @@
+using UnityEngine;
+
+namespace SE001.Data
+{
+    [CreateAssetMenu(fileName = "SourceProfile", menuName = "SE001/Profiles/Source")]
+    public sealed class SourceProfile : ScriptableObject
+    {
+        public float emissionRate = 16f;
+        public int streamWidth = 6;
+        public float valveOpenDelay = 0.2f;
+        public float valveCloseRotateTime = 0.15f;
+        public float hitPadding = 0.2f;
+    }
+}

@@ -15,3 +15,6 @@ MonoBehaviour:
   boardWallPrefab: {fileID: 6908245436140867521, guid: 0e7105f86186acc478cbbb6f73421690, type: 3}
   staticObstaclePrefab: {fileID: 2981442954111418910, guid: f25e5367953167842b2404d157da33c4, type: 3}
   sandFieldPrefab: {fileID: 7295030869049607874, guid: 078f1511439788542b2aaec8901d05b2, type: 3}
+  sourcePrefab: {fileID: 5842621730535372116, guid: 6f851eeb7a1c61f4e8568eb6532f0e73, type: 3}
+  cupPrefab: {fileID: 6952505044521443933, guid: 2f94866efa34fb94f970278787a7f917, type: 3}
+  drawStrokePrefab: {fileID: 6273403083288076978, guid: 9fe2b193339a3e94db07350c9530facd, type: 3}

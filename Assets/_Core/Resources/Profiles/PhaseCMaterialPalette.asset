@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1557c1fcb9453f4ba5b4e7b41226479, type: 3}
+  m_Name: PhaseCMaterialPalette
+  m_EditorClassIdentifier: 
+  entries:
+  - materialId: 1
+    sandColor:
+      serializedVersion: 2
+      rgba: 4282437880
+    uiColor:
+      serializedVersion: 2
+      rgba: 4282437880
+  - materialId: 2
+    sandColor:
+      serializedVersion: 2
+      rgba: 4281614050
+    uiColor:
+      serializedVersion: 2
+      rgba: 4281614050
+  - materialId: 3
+    sandColor:
+      serializedVersion: 2
+      rgba: 4293436488
+    uiColor:
+      serializedVersion: 2
+      rgba: 4293436488

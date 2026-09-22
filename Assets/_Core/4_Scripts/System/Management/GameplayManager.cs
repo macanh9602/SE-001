@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using SE001.Gameplay;
+using SE001.Data;
 
 namespace SE001.System.Management
 {
@@ -48,12 +49,7 @@ namespace SE001.System.Management
             State = GameState.Playing;
             fixedStepHz = Mathf.Max(1f, fixedStepHz);
             bound = true;
-            AgentDebugAudit.Begin(DrawAudit, "Phase C draw bug — level " + value.LevelId + " gen " + value.Generation, DrawAuditEnabled, 400);
         }
-
-        // ---- TEMP debug-audit hook (draw bug). Remove after root cause fixed. ----
-        public const string DrawAudit = "phase-c-draw";
-        public static bool DrawAuditEnabled = true;
 
         public void Configure(IEnumerable<SourceDomain> sourceValues, IEnumerable<CupDomain> cupValues, float cellSize, float wallThickness)
         {
@@ -66,14 +62,20 @@ namespace SE001.System.Management
             for (int i = 0; i < cups.Count; i++) cups[i].RegisterWalls(context.SandSimulation, cellSize, wallThickness);
         }
 
+        public void ConfigureRuntime(GameplayRuntimeProfile profile)
+        {
+            if (profile == null) return;
+            fixedStepHz = Mathf.Max(1f, profile.fixedStepHz);
+            stableStepsForLose = Mathf.Max(1, profile.stableStepsForLose);
+            if (profile.drawPathProfile != null) maxStrokes = Mathf.Max(1, profile.drawPathProfile.maxStrokes);
+        }
+
         /// <summary>Stamps the stroke into the dynamic mask. Stroke is truncated when ink runs out.</summary>
         public bool CommitStroke(IList<Vector2> points, float thickness)
         {
-            AgentDebugAudit.Event(DrawAudit, "Commit.Request", $"bound={bound} state={State} points={(points == null ? -1 : points.Count)} first={(points != null && points.Count > 0 ? points[0].ToString("F2") : "-")} last={(points != null && points.Count > 0 ? points[points.Count - 1].ToString("F2") : "-")} thickness={thickness:F3} ink={InkRemaining:F2} strokes={strokeCount}/{maxStrokes}");
-            if (!bound || State != GameState.Playing || points == null || points.Count < 2) { AgentDebugAudit.Event(DrawAudit, "Commit.Rejected", "guard: bound/state/points"); return false; }
+            if (!bound || State != GameState.Playing || points == null || points.Count < 2) return false;
             if (strokeCount >= maxStrokes || InkRemaining <= 0f)
             {
-                AgentDebugAudit.Event(DrawAudit, "Commit.Rejected", "ink/strokes limit");
                 Debug.LogWarning($"[GameplayManager] Stroke rejected: strokes {strokeCount}/{maxStrokes}, ink {InkRemaining:0.00}.", this);
                 return false;
             }
@@ -110,18 +112,7 @@ namespace SE001.System.Management
             }
 
             strokeCount++;
-            int dyn = 0, minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
-            bool[] dm = sim.State.DynamicMask;
-            for (int i = 0; i < dm.Length; i++)
-            {
-                if (!dm[i]) continue;
-                dyn++;
-                int x = i % sim.State.Width, y = i / sim.State.Width;
-                if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y;
-            }
-            AgentDebugAudit.Event(DrawAudit, "Commit.Stamped", $"accepted={accepted.Count} radius={radius:F3} cellsR={r} inkLeft={InkRemaining:F2} dynamicCellsTotal={dyn} dynBounds=({minX},{minY})-({maxX},{maxY}) grid={sim.State.Width}x{sim.State.Height} cell={cell:F3}");
-            try { StrokeCommitted?.Invoke(accepted, radius * 2f); AgentDebugAudit.Event(DrawAudit, "Commit.VisualOk", ""); }
-            catch (Exception e) { AgentDebugAudit.Event(DrawAudit, "Commit.VisualException", e.GetType().Name + ": " + e.Message); throw; }
+            StrokeCommitted?.Invoke(accepted, radius * 2f);
             return true;
         }
 
@@ -158,6 +149,26 @@ namespace SE001.System.Management
             }
 
             if (steps == maxStepsPerFrame) stepAccumulator = 0f; // drop backlog after a hitch
+        }
+
+        /// <summary>
+        /// Deterministic headless advance: runs gameplay steps (or post-game settle steps) without frame time.
+        /// Used by playthrough tests and replays; identical to what Update does per step.
+        /// Returns the number of gameplay steps executed while Playing.
+        /// </summary>
+        public int AdvanceSteps(int count)
+        {
+            if (!bound || context == null || count <= 0) return 0;
+            float dt = 1f / fixedStepHz;
+            int played = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (State == GameState.Playing) { Tick(dt); played++; continue; }
+                if (settled) break;
+                settled = context.SandSimulation.Step() == 0;
+            }
+
+            return played;
         }
 
         private void Tick(float dt)

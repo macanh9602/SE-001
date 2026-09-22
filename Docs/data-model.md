@@ -52,6 +52,10 @@ Visual anchor có thể hỗ trợ alignment nhưng không quyết định logic
 
 - Stable ID, accepted material ID.
 - Authored sink shape/position/size.
+
+### Phase C position and material contract
+
+`SourceData.position` is the authored nozzle position. `CupData.position` is the centre of the cup's outside bottom; `CupData.size` is the outside mouth/height rectangle. `materialId` must resolve in `MaterialPalette` before a level can spawn. Runtime sand, masks and collected counts are generated state and are not serialized back into level JSON.
 - Required count.
 - Foreign-material tolerance chỉ khi gameplay contract yêu cầu.
 

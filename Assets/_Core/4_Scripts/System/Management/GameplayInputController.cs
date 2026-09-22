@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using SE001.Gameplay;
+using SE001.Data;
 
 namespace SE001.System.Management
 {
@@ -13,7 +14,7 @@ namespace SE001.System.Management
         [SerializeField] private float minPointDistance = 0.08f;
         [SerializeField] private float drawThickness = 0.3f;
         [SerializeField] private int maxPointsPerStroke = 128;
-        [SerializeField] private float sourceHitRadius = 0.7f;
+        [SerializeField] private float sourceHitPadding = 0.2f;
 
         private readonly List<Vector2> stroke = new List<Vector2>(128);
         private GameplayManager manager;
@@ -30,6 +31,16 @@ namespace SE001.System.Management
         /// <summary>Screen rect (GUI coords, y down) that should not start input, e.g. a dev overlay.</summary>
         public Rect BlockedGuiRect { get; set; }
 
+        public void Configure(DrawPathProfile profile, float hitPadding)
+        {
+            if (profile == null) return;
+            drawStartDeadZonePixels = Mathf.Max(0f, profile.drawStartDeadZone);
+            minPointDistance = Mathf.Max(0.001f, profile.minPointDistance);
+            drawThickness = Mathf.Max(0.001f, profile.drawThickness);
+            maxPointsPerStroke = Mathf.Max(2, profile.maxPointsPerStroke);
+            sourceHitPadding = Mathf.Max(0f, hitPadding);
+        }
+
         public void Bind(LevelContext value)
         {
             CleanupForLevelUnload();
@@ -42,7 +53,6 @@ namespace SE001.System.Management
         {
             if (manager == null || context == null || inputCamera == null)
             {
-                if (Input.GetMouseButtonDown(0)) AgentDebugAudit.Event(GameplayManager.DrawAudit, "Input.Down.Ignored", $"manager={(manager != null)} context={(context != null)} camera={(inputCamera != null)}");
                 return;
             }
             if (manager.State != GameState.Playing) { held = false; drawing = false; stroke.Clear(); return; }
@@ -50,9 +60,7 @@ namespace SE001.System.Management
             Vector2 screen = Input.mousePosition;
             if (Input.GetMouseButtonDown(0))
             {
-                bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
                 bool blocked = IsBlocked(screen);
-                AgentDebugAudit.Event(GameplayManager.DrawAudit, "Input.Down", $"screen={screen.ToString("F0")} screenSize={Screen.width}x{Screen.height} board={ToBoard(screen).ToString("F2")} overUi={overUi} uiObj={(overUi ? CurrentUiName() : "-")} guiRect={BlockedGuiRect} blocked={blocked} state={manager.State}");
                 if (blocked) return;
                 downScreen = screen;
                 held = true;
@@ -68,7 +76,6 @@ namespace SE001.System.Management
                 {
                     drawing = true;
                     stroke.Add(ToBoard(downScreen));
-                    AgentDebugAudit.Event(GameplayManager.DrawAudit, "Input.DrawStart", $"screen={screen.ToString("F0")} startBoard={stroke[0].ToString("F2")}");
                 }
 
                 if (drawing && stroke.Count < maxPointsPerStroke)
@@ -81,7 +88,6 @@ namespace SE001.System.Management
             if (Input.GetMouseButtonUp(0))
             {
                 held = false;
-                AgentDebugAudit.Event(GameplayManager.DrawAudit, "Input.Up", $"drawing={drawing} points={stroke.Count} lastBoard={(stroke.Count > 0 ? stroke[stroke.Count - 1].ToString("F2") : "-")} dragPx={(screen - downScreen).magnitude:F0}");
                 if (drawing)
                 {
                     drawing = false;
@@ -96,16 +102,17 @@ namespace SE001.System.Management
 
         private void TryTapSource(Vector2 boardPoint)
         {
+            // Hit-test the visible jar body (emit point + BodyOffset), not the emit point itself.
             SourceDomain best = null;
-            float bestDistance = sourceHitRadius;
+            float bestDistance = float.MaxValue;
             for (int i = 0; i < manager.Sources.Count; i++)
             {
                 SourceDomain source = manager.Sources[i];
-                float d = Vector2.Distance(boardPoint, source.Position);
-                if (d <= bestDistance) { best = source; bestDistance = d; }
+                if (!source.HitTest(boardPoint, sourceHitPadding)) continue;
+                float d = Vector2.Distance(boardPoint, source.Position + SourceDomain.BodyOffset);
+                if (d < bestDistance) { best = source; bestDistance = d; }
             }
 
-            AgentDebugAudit.Event(GameplayManager.DrawAudit, "Input.Tap", $"board={boardPoint.ToString("F2")} hit={(best != null ? best.StableId : "none")}");
             if (best != null) manager.ToggleSource(best.StableId);
         }
 
@@ -137,14 +144,6 @@ namespace SE001.System.Management
 
             Vector2 gui = new Vector2(screen.x, Screen.height - screen.y);
             return BlockedGuiRect.width > 0f && BlockedGuiRect.Contains(gui);
-        }
-
-        private static string CurrentUiName()
-        {
-            var data = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
-            var hits = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(data, hits);
-            return hits.Count > 0 ? hits[0].gameObject.name : "?(non-raycast)";
         }
 
         /// <summary>Screen → BoardRoot local XY on the z = 0 board plane.</summary>

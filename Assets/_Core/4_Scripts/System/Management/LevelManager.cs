@@ -1,5 +1,6 @@
 using System;
 using SE001.System.Creation;
+using SE001.Data;
 using UnityEngine;
 
 namespace SE001.System.Management
@@ -28,6 +29,29 @@ namespace SE001.System.Management
         public LevelReadinessGate Readiness { get; } = new LevelReadinessGate();
         public bool IsLoading { get; private set; }
         public bool IsReady => currentContext != null && !currentContext.IsDisposed && Readiness.IsOpen;
+
+        public bool CanBeginNextLevel()
+        {
+            PhaseCLevelSequence sequence = Resources.Load<PhaseCLevelSequence>("Profiles/PhaseCLevelSequence");
+            return FindSequenceIndex(sequence, currentContext != null ? currentContext.LevelId : null) + 1 < (sequence != null && sequence.levels != null ? sequence.levels.Count : 0);
+        }
+
+        public bool BeginNextLevel()
+        {
+            PhaseCLevelSequence sequence = Resources.Load<PhaseCLevelSequence>("Profiles/PhaseCLevelSequence");
+            int next = FindSequenceIndex(sequence, currentContext != null ? currentContext.LevelId : null) + 1;
+            if (sequence == null || sequence.levels == null || next < 0 || next >= sequence.levels.Count) return false;
+            BeginLevel(sequence.levels[next].levelId);
+            return true;
+        }
+
+        private static int FindSequenceIndex(PhaseCLevelSequence sequence, string levelId)
+        {
+            if (sequence == null || sequence.levels == null || string.IsNullOrWhiteSpace(levelId)) return -1;
+            for (int i = 0; i < sequence.levels.Count; i++)
+                if (sequence.levels[i].levelId == levelId) return i;
+            return -1;
+        }
 
         private void Awake()
         {

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using SE001.Data;
 using SE001.Geometry;
-using SE001.System.Management;
 using SE001.Simulation.Sand;
 using SE001.Creation;
 using SE001.Elements.Sand;
@@ -19,6 +18,7 @@ namespace SE001.System.Creation
         [SerializeField] private SandSimulationProfile sandSimulationProfile;
         [SerializeField] private PrefabProfile prefabProfile;
         [SerializeField] private LayoutVisualProfile layoutVisualProfile;
+        [SerializeField] private GameplayRuntimeProfile gameplayProfile;
         [SerializeField, Min(0.001f)] private float simulationCellSize = 0.1f;
         [SerializeField, Min(1)] private int simulationMaxCells = 262144;
         private LevelContext activeContext;
@@ -30,6 +30,7 @@ namespace SE001.System.Creation
             if (sandSimulationProfile == null) sandSimulationProfile = Resources.Load<SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile");
             if (prefabProfile == null) prefabProfile = Resources.Load<PrefabProfile>("Profiles/PhaseBPrefabProfile");
             if (layoutVisualProfile == null) layoutVisualProfile = Resources.Load<LayoutVisualProfile>("Profiles/PhaseBLayoutVisualProfile");
+            if (gameplayProfile == null) gameplayProfile = Resources.Load<GameplayRuntimeProfile>("Profiles/PhaseCGameplayRuntimeProfile");
         }
 
         public LevelContext SpawnLevel(string levelId, int generation)
@@ -43,6 +44,11 @@ namespace SE001.System.Creation
             {
                 throw new InvalidOperationException("Unload the active level before spawning another level.");
             }
+
+            if (sandSimulationProfile == null) sandSimulationProfile = Resources.Load<SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile");
+            if (prefabProfile == null) prefabProfile = Resources.Load<PrefabProfile>("Profiles/PhaseBPrefabProfile");
+            if (layoutVisualProfile == null) layoutVisualProfile = Resources.Load<LayoutVisualProfile>("Profiles/PhaseBLayoutVisualProfile");
+            if (gameplayProfile == null) gameplayProfile = Resources.Load<GameplayRuntimeProfile>("Profiles/PhaseCGameplayRuntimeProfile");
 
             LevelRuntimeState runtimeState = null;
             Transform levelRoot = null;
@@ -80,17 +86,10 @@ namespace SE001.System.Creation
                 {
                     activeContext.BoardSize = levelData.board.size;
                     activeContext.DrawInkBudget = levelData.drawInkBudget;
-                    SandSimulationProfile profile = sandSimulationProfile;
-                    SandSimulationProfile ownedProfile = null;
-                    if (profile == null)
-                    {
-                        profile = ScriptableObject.CreateInstance<SandSimulationProfile>();
-                        ownedProfile = profile;
-                        profile.cellSize = simulationCellSize;
-                        profile.maxCells = simulationMaxCells;
-                    }
+                    SandSimulationProfile profile = gameplayProfile != null && gameplayProfile.sandProfile != null ? gameplayProfile.sandProfile : sandSimulationProfile;
+                    if (profile == null) throw new InvalidOperationException("Phase C requires a SandSimulationProfile asset.");
                     LayoutMaskSet masks = LayoutRasterizer.Rasterize(levelData, profile.cellSize, profile.maxCells);
-                    activeContext.AttachSimulation(new SandSimulation(profile, masks), ownedProfile);
+                    activeContext.AttachSimulation(new SandSimulation(profile, masks));
                     SpawnLayoutVisuals(levelData);
                     SpawnSandField();
                     BindPhaseCGameplay(levelData, profile);
@@ -112,10 +111,12 @@ namespace SE001.System.Creation
             GameplayInputController input = activeContext.LevelRoot.gameObject.AddComponent<GameplayInputController>();
             activeContext.RegisterParticipant(gameplay);
             activeContext.RegisterParticipant(input);
-            SourceProfile sourceProfile = Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
-            CupProfile cupProfile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
-            if (sourceProfile == null) sourceProfile = ScriptableObject.CreateInstance<SourceProfile>();
-            if (cupProfile == null) cupProfile = ScriptableObject.CreateInstance<CupProfile>();
+            if (gameplayProfile == null || gameplayProfile.sourceProfile == null || gameplayProfile.cupProfile == null)
+                throw new InvalidOperationException("Phase C requires PhaseCGameplayRuntimeProfile with SourceProfile and CupProfile references.");
+            SourceProfile sourceProfile = gameplayProfile.sourceProfile;
+            CupProfile cupProfile = gameplayProfile.cupProfile;
+            gameplay.ConfigureRuntime(gameplayProfile);
+            input.Configure(gameplayProfile.drawPathProfile, sourceProfile.hitPadding);
             var sources = new List<SourceDomain>();
             var cups = new List<CupDomain>();
             int grainsPerUnit = profile != null ? profile.grainsPerUnit : 12;
@@ -130,7 +131,8 @@ namespace SE001.System.Creation
                 for (int k = 0; k < sources.Count; k++) if (sources[k].MaterialId == cups[c].AcceptedMaterialId) have += sources[k].Initial;
                 if (have < need) Debug.LogWarning($"[LevelSpawner] {levelData.levelId}: material {cups[c].AcceptedMaterialId} has {have} grains in sources but cups need {need} to reach the fill line — level is unwinnable.", this);
             }
-            // DEV placeholder visuals + overlay until Source/Cup/DrawStroke prefabs exist (Phase C remaining work).
+            activeContext.RegisterParticipant(activeContext.LevelRoot.gameObject.AddComponent<SE001.HUD.PhaseCHudView>());
+            // DEV placeholder visuals remain until Source/Cup/DrawStroke prefabs exist.
             activeContext.RegisterParticipant(activeContext.LevelRoot.gameObject.AddComponent<SE001.Diagnostics.PhaseCDebugView>());
         }
 

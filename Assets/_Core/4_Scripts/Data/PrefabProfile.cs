@@ -8,5 +8,8 @@ namespace SE001.Data
         public GameObject boardWallPrefab;
         public GameObject staticObstaclePrefab;
         public GameObject sandFieldPrefab;
+        public GameObject sourcePrefab;
+        public GameObject cupPrefab;
+        public GameObject drawStrokePrefab;
     }
 }

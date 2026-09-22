@@ -100,6 +100,22 @@ Các story sau tham chiếu `GameScene` cho bootstrap/load level; không tạo h
 
 Có yêu cầu meta flow hoặc scene loading độc lập làm thay đổi project-level scene ownership.
 
+## D-004 — Phase C finish contract: authored profiles and cup geometry
+
+Status: Accepted — 2026-09-22
+Story: `handoff/PHASE-C-FINISH-PLAN.md`
+
+### Chốt
+
+- Cup giữ sand thật trong sink; `Collected` là số hạt đúng màu đang nằm trong sink và `Required` tính theo hình học dưới `fillLine`.
+- Cup taper và effective wall thickness được dùng chung cho mask/domain; position là giữa đáy ngoài, size là kích thước ngoài.
+- Runtime bắt buộc dùng authored profiles trong `Resources/Profiles`; thiếu profile là lỗi rõ ràng, không `CreateInstance` fallback.
+- Palette là source cho material ID validation; visual palette rendering vẫn là phần closure sau.
+
+### Hệ quả
+
+LevelSpawner, GameplayManager và GameplayInputController nhận tune values từ profile; JSON level chỉ giữ level-authored data. Profile assets được tạo bằng menu `SE001/Phase C/Create default profiles`.
+
 ## D-001 — SE-001 dùng Simulation-driven 2D và feature-scoped contract
 
 Status: Accepted — 2026-09-22

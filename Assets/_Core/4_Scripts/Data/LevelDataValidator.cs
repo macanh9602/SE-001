@@ -12,7 +12,18 @@ namespace SE001.Data
             if (!TryValidate(level, errors)) throw new FormatException(string.Join(" | ", errors));
         }
 
+        public static void Validate(SE001LevelJson level, MaterialPalette palette)
+        {
+            List<string> errors = new List<string>();
+            if (!TryValidate(level, palette, errors)) throw new FormatException(string.Join(" | ", errors));
+        }
+
         public static bool TryValidate(SE001LevelJson level, List<string> errors)
+        {
+            return TryValidate(level, null, errors);
+        }
+
+        public static bool TryValidate(SE001LevelJson level, MaterialPalette palette, List<string> errors)
         {
             if (errors == null) throw new ArgumentNullException(nameof(errors));
             errors.Clear();
@@ -21,6 +32,7 @@ namespace SE001.Data
             if (level.schemaVersion <= 0) errors.Add("schemaVersion must be positive.");
             if (string.IsNullOrWhiteSpace(level.levelId)) errors.Add("levelId is required.");
             if (!Finite(level.board.size) || level.board.size.x <= 0f || level.board.size.y <= 0f) errors.Add("board.size must be finite and positive.");
+            if (level.drawInkBudget < 0f || float.IsNaN(level.drawInkBudget) || float.IsInfinity(level.drawInkBudget)) errors.Add("drawInkBudget must be finite and non-negative.");
             ValidateContours(level.board.wallContours, "board.wallContours", errors);
             HashSet<string> ids = new HashSet<string>(StringComparer.Ordinal);
             for (int i = 0; i < level.staticObstacles.Count; i++)
@@ -35,12 +47,16 @@ namespace SE001.Data
                 SourceData item = level.sources[i];
                 string id = item == null ? null : item.stableId;
                 if (string.IsNullOrWhiteSpace(id) || !ids.Add(id)) errors.Add($"sources[{i}] has a missing or duplicate stableId.");
+                if (item != null && (item.materialId <= 0 || item.logicalAmount <= 0 || !Finite(item.position) || !InsideBoard(item.position, level.board.size))) errors.Add($"sources[{i}] has invalid material, amount, position, or is outside board.");
+                if (item != null && palette != null && !palette.Contains(item.materialId)) errors.Add($"sources[{i}] references unknown material {item.materialId}.");
             }
             for (int i = 0; i < level.cups.Count; i++)
             {
                 CupData item = level.cups[i];
                 string id = item == null ? null : item.stableId;
                 if (string.IsNullOrWhiteSpace(id) || !ids.Add(id)) errors.Add($"cups[{i}] has a missing or duplicate stableId.");
+                if (item != null && (item.acceptedMaterialId <= 0 || item.requiredAmount <= 0 || !Finite(item.position) || !Finite(item.size) || item.size.x <= 0f || item.size.y <= 0f || !InsideBoard(item.position, level.board.size))) errors.Add($"cups[{i}] has invalid material, amount, size, or position.");
+                if (item != null && palette != null && !palette.Contains(item.acceptedMaterialId)) errors.Add($"cups[{i}] references unknown material {item.acceptedMaterialId}.");
             }
             return errors.Count == 0;
         }
@@ -73,5 +89,6 @@ namespace SE001.Data
         }
 
         private static bool Finite(Vector2 value) => !float.IsNaN(value.x) && !float.IsInfinity(value.x) && !float.IsNaN(value.y) && !float.IsInfinity(value.y);
+        private static bool InsideBoard(Vector2 position, Vector2 size) => position.x >= 0f && position.y >= 0f && position.x <= size.x && position.y <= size.y;
     }
 }
