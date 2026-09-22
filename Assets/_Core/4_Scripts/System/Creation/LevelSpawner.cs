@@ -5,6 +5,8 @@ using SE001.System.Management;
 using SE001.Simulation.Sand;
 using SE001.Creation;
 using SE001.Elements.Sand;
+using SE001.Gameplay;
+using SE001.System.Management;
 using UnityEngine;
 
 namespace SE001.System.Creation
@@ -89,6 +91,7 @@ namespace SE001.System.Creation
                     activeContext.AttachSimulation(new SandSimulation(profile, masks), ownedProfile);
                     SpawnLayoutVisuals(levelData);
                     SpawnSandField();
+                    BindPhaseCGameplay(levelData, profile);
                 }
 
                 return activeContext;
@@ -99,6 +102,24 @@ namespace SE001.System.Creation
                 DestroyOwnedRoot(levelRoot);
                 throw;
             }
+        }
+
+        private void BindPhaseCGameplay(SE001LevelJson levelData, SandSimulationProfile profile)
+        {
+            GameplayManager gameplay = activeContext.LevelRoot.gameObject.AddComponent<GameplayManager>();
+            GameplayInputController input = activeContext.LevelRoot.gameObject.AddComponent<GameplayInputController>();
+            activeContext.RegisterParticipant(gameplay);
+            activeContext.RegisterParticipant(input);
+            SourceProfile sourceProfile = Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
+            CupProfile cupProfile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
+            if (sourceProfile == null) sourceProfile = ScriptableObject.CreateInstance<SourceProfile>();
+            if (cupProfile == null) cupProfile = ScriptableObject.CreateInstance<CupProfile>();
+            var sources = new System.Collections.Generic.List<SourceDomain>();
+            var cups = new System.Collections.Generic.List<CupDomain>();
+            int grainsPerUnit = profile != null ? profile.grainsPerUnit : 12;
+            for (int i = 0; i < levelData.sources.Count; i++) sources.Add(new SourceDomain(levelData.sources[i], sourceProfile, grainsPerUnit));
+            for (int i = 0; i < levelData.cups.Count; i++) cups.Add(new CupDomain(levelData.cups[i], cupProfile, grainsPerUnit, profile.cellSize));
+            gameplay.Configure(sources, cups, profile.cellSize, cupProfile.wallThickness);
         }
 
         private void SpawnLayoutVisuals(SE001LevelJson levelData)

@@ -10,5 +10,7 @@ namespace SE001.Simulation.Sand
         [Min(1)] public int maxStepsPerFrame = 4;
         [Min(1)] public int maxCells = 262144;
         public bool enableLateralSlide = true;
+        [Min(1)] public int grainsPerUnit = 12;
+        [Min(1)] public int stableStepsForLose = 30;
     }
 }
