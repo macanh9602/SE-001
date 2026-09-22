@@ -15,6 +15,8 @@ namespace SE001.HUD
             CleanupForLevelUnload();
             gameplay = context.LevelRoot.GetComponent<GameplayManager>();
             hud = ResolveHudSystem();
+            if (hud == null)
+                Debug.LogError("[PhaseCResultHudController] No usable HUDSystem (needs an active scene instance with WinPanel + LosePanel sources). " + DescribeResolve(), this);
             HideResults();
             gameplay.GameStateChanged += OnGameStateChanged;
         }
@@ -35,6 +37,29 @@ namespace SE001.HUD
 
             return null;
         }
+
+
+
+        private static string DescribeResolve()
+        {
+            HUDSystem[] systems = Resources.FindObjectsOfTypeAll<HUDSystem>();
+            var sb = new global::System.Text.StringBuilder();
+            sb.Append("found=").Append(systems.Length);
+            for (int i = 0; i < systems.Length; i++)
+            {
+                HUDSystem c = systems[i];
+                sb.Append(" | [").Append(i).Append("] ").Append(c.name)
+                  .Append(" sceneValid=").Append(c.gameObject.scene.IsValid())
+                  .Append(" sceneLoaded=").Append(c.gameObject.scene.isLoaded)
+                  .Append(" activeInHierarchy=").Append(c.gameObject.activeInHierarchy)
+                  .Append(" hasWin=").Append(c.HasPanelSource<WinPanel>())
+                  .Append(" hasLose=").Append(c.HasPanelSource<LosePanel>())
+                  .Append(" rootUI=").Append(c.rootUI == null ? "NULL" : c.rootUI.name);
+            }
+
+            return sb.ToString();
+        }
+
 
         public void CleanupForLevelUnload()
         {

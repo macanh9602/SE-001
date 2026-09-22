@@ -50,9 +50,7 @@ namespace SE001.Tests
                     Assert.That(
                         manager.CurrentContext.DynamicDrawRoot.Find("DrawPreview"),
                         Is.Not.Null);
-                    Assert.That(
-                        manager.CurrentContext.LevelRoot.GetComponent<SE001.Diagnostics.PhaseCDebugView>(),
-                        Is.Null);
+                    Assert.That(HasDebugView(manager.CurrentContext.LevelRoot), Is.False);
                 }
                 manager.UnloadCurrentLevel();
                 Assert.That(owner.transform.childCount, Is.EqualTo(0));
@@ -112,5 +110,13 @@ namespace SE001.Tests
                 if (filters[i].sharedMesh != null && filters[i].sharedMesh.name == "SandFieldSurface") count++;
             return count;
         }
-    }
+    
+        private static bool HasDebugView(Transform root)
+        {
+            Component[] components = root.GetComponents<Component>();
+            for (int i = 0; i < components.Length; i++)
+                if (components[i] != null && components[i].GetType().Name == "PhaseCDebugView") return true;
+            return false;
+        }
+}
 }

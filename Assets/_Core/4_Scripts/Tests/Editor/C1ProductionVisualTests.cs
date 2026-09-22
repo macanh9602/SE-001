@@ -148,7 +148,7 @@ namespace SE001.Tests
 
             Assert.That(context.SourceRoot.GetComponentsInChildren<PhaseCSourceVisual>(), Is.Not.Empty);
             Assert.That(context.CupRoot.GetComponentsInChildren<PhaseCCupVisual>(), Is.Not.Empty);
-            Assert.That(context.LevelRoot.GetComponent<SE001.Diagnostics.PhaseCDebugView>(), Is.Null);
+            Assert.That(HasDebugView(context.LevelRoot), Is.False, "PhaseCDebugView must not be part of production presentation.");
             PhaseCSourceVisual source =
                 context.SourceRoot.GetComponentInChildren<PhaseCSourceVisual>();
             PhaseCCupVisual cup =
@@ -300,5 +300,13 @@ namespace SE001.Tests
             names.Reverse();
             return string.Join("/", names);
         }
-    }
+    
+        private static bool HasDebugView(Transform root)
+        {
+            Component[] components = root.GetComponents<Component>();
+            for (int i = 0; i < components.Length; i++)
+                if (components[i] != null && components[i].GetType().Name == "PhaseCDebugView") return true;
+            return false;
+        }
+}
 }

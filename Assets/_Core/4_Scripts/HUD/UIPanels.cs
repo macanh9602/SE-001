@@ -328,6 +328,31 @@ public abstract class UIPanels<T> : MonoBehaviour where T : Component
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
+    /// <summary>
+    /// Panel prefabs authored as root Canvases serialize a driven RectTransform (scale 0, size 0, anchors 0).
+    /// Once instantiated under rootUI the Canvas no longer drives it, so the panel exists but is invisible.
+    /// Stretch it to the parent and restore a sane transform.
+    /// </summary>
+    private static void NormalizePanelRect(Panel panel)
+    {
+        if (panel == null) return;
+        RectTransform rect = panel.transform as RectTransform;
+        if (rect == null || rect.parent == null) return;
+
+        rect.localScale = Vector3.one;
+        rect.localRotation = Quaternion.identity;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.localPosition = new Vector3(rect.localPosition.x, rect.localPosition.y, 0f);
+
+        // A nested CanvasScaler does nothing here and would fight the parent canvas scaling.
+        CanvasScaler scaler = panel.GetComponent<CanvasScaler>();
+        if (scaler != null) scaler.enabled = false;
+    }
+
     private T GetCachedOrCreatePanel<T>(ShowType showType = ShowType.KeepCurrent) where T : Panel
     {
         if (showType != ShowType.CreateNewFirstIndex)
@@ -352,6 +377,7 @@ public abstract class UIPanels<T> : MonoBehaviour where T : Component
         }
 
         var popup = Instantiate(findUIInSource, rootUI) as T;
+        NormalizePanelRect(popup);
 
         return popup;
 

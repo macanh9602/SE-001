@@ -22,6 +22,9 @@ namespace SE001.HUD
         private Canvas canvas;
         private TextMeshProUGUI title;
         private TextMeshProUGUI state;
+        private RectTransform inkFill;
+        private TextMeshProUGUI inkLabel;
+        private float inkTrackWidth;
 
         public void Bind(LevelContext value)
         {
@@ -71,12 +74,13 @@ namespace SE001.HUD
                 TextAlignmentOptions.Left,
                 new Vector2(18f, -92f),
                 new Vector2(390f, 48f));
+            BuildInkBar(panel.transform);
             CreateLists(panel.transform);
         }
 
         private void CreateLists(Transform parent)
         {
-            float y = -145f;
+            float y = -160f;
             for (int i = 0; i < gameplay.Sources.Count; i++)
             {
                 sourceLabels.Add(CreateLabel(
@@ -103,11 +107,36 @@ namespace SE001.HUD
             }
         }
 
+        /// <summary>Ink/energy bar: track + fill + remaining/budget label.</summary>
+        private void BuildInkBar(Transform parent)
+        {
+            inkLabel = CreateLabel("InkLabel", parent, "Ink", bodyFontSize, TextAlignmentOptions.Left,
+                new Vector2(18f, -100f), new Vector2(390f, 32f));
+            inkTrackWidth = 390f;
+            GameObject track = CreateRect("InkTrack", parent, new Vector2(18f, -132f),
+                new Vector2(inkTrackWidth, 16f), new Color(1f, 1f, 1f, 0.16f));
+            GameObject fill = CreateRect("InkFill", track.transform, Vector2.zero,
+                new Vector2(inkTrackWidth, 16f), new Color(0.35f, 0.78f, 1f, 0.95f));
+            inkFill = fill.GetComponent<RectTransform>();
+        }
+
+        private void RefreshInk()
+        {
+            if (inkFill == null || gameplay == null) return;
+            float budget = gameplay.InkBudget;
+            float ratio = budget > 0f ? Mathf.Clamp01(gameplay.InkRemaining / budget) : 0f;
+            inkFill.sizeDelta = new Vector2(inkTrackWidth * ratio, inkFill.sizeDelta.y);
+            if (inkLabel != null)
+                inkLabel.text = "Ink: " + gameplay.InkRemaining.ToString("0.0") + " / " + budget.ToString("0.0");
+        }
+
         private void Refresh()
         {
             if (gameplay == null) return;
             title.text = context.LevelId;
-            state.text = "State: " + gameplay.State;
+            state.text = "State: " + gameplay.State +
+                (gameplay.State == GameState.Lost ? " (" + gameplay.LastLoseReason + ")" : string.Empty);
+            RefreshInk();
             for (int i = 0; i < gameplay.Sources.Count && i < sourceLabels.Count; i++)
             {
                 SourceDomain source = gameplay.Sources[i];
