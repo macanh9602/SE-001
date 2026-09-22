@@ -54,11 +54,98 @@ namespace SE001.Tests
         [Test]
         public void Sim_NoLateralJitterOnFlatSurface()
         {
+            // A landing grain may splash sideways (powder model), but once settled it must stay put forever.
             SandSimulation sim = new SandSimulation(Profile(), OpenBoard(20, 20));
             Assert.That(sim.TryEmit(10, 10, 1), Is.True);
-            for (int i = 0; i < 30; i++) sim.Step();
-            Assert.That(sim.IsOccupied(10, 0), Is.True);
+            for (int i = 0; i < 200; i++) sim.Step();
+            byte[] settled = (byte[])sim.State.Cells.Clone();
+            int moved = 0;
+            for (int i = 0; i < 50; i++) moved += sim.Step();
+            Assert.That(moved, Is.EqualTo(0));
+            Assert.That(sim.State.Cells, Is.EqualTo(settled));
+            Assert.That(sim.State.RowCount[0], Is.EqualTo(1), "Grain must rest on the floor row.");
             sim.Dispose();
+        }
+
+        [Test]
+        public void Sim_PileReachesStableState()
+        {
+            SandSimulation sim = new SandSimulation(Profile(), OpenBoard(60, 60));
+            for (int i = 0; i < 40; i++) sim.EmitRegion(28, 55, 32, 55, 1);
+            int lastMoved = -1;
+            for (int i = 0; i < 1500; i++) { lastMoved = sim.Step(); if (i % 10 == 0) sim.EmitRegion(28, 55, 32, 55, 1); if (i > 600) break; }
+            for (int i = 0; i < 2000 && (lastMoved = sim.Step()) > 0; i++) { }
+            Assert.That(lastMoved, Is.EqualTo(0), "Pile never settled (endless jitter).");
+            sim.Dispose();
+        }
+
+        [Test]
+        public void Sim_ConservesGrains_WithMomentum()
+        {
+            SandSimulation sim = new SandSimulation(Profile(), OpenBoard(60, 80));
+            int emitted = 0;
+            for (int i = 0; i < 300; i++)
+            {
+                emitted += sim.EmitRegion(25, 75, 35, 76, 1);
+                sim.Step();
+            }
+
+            int count = 0;
+            foreach (byte c in sim.State.Cells) if (c != 0) count++;
+            int rows = 0;
+            foreach (int r in sim.State.RowCount) rows += r;
+            Assert.That(count, Is.EqualTo(emitted));
+            Assert.That(rows, Is.EqualTo(emitted), "RowCount bookkeeping drifted.");
+            sim.Dispose();
+        }
+
+        [Test]
+        public void Sim_MomentumSlidesFurtherOnShallowRamp_ThanPureCA()
+        {
+            float powder = MeanRestX(Profile());
+            SandSimulationProfile pure = Profile();
+            pure.splash = 0f;
+            pure.slide = 0f;
+            float pureCa = MeanRestX(pure);
+            Assert.That(powder, Is.GreaterThan(pureCa + 3f), $"powder {powder:0.0} vs pure {pureCa:0.0}");
+        }
+
+        [Test]
+        public void Sim_DifferentSeeds_DifferentGrid_SameSeed_SameGrid()
+        {
+            LayoutMaskSet masks = OpenBoard(40, 40);
+            SandSimulation a = new SandSimulation(Profile(), masks, 1u);
+            SandSimulation b = new SandSimulation(Profile(), OpenBoard(40, 40), 1u);
+            SandSimulation c = new SandSimulation(Profile(), OpenBoard(40, 40), 2u);
+            for (int i = 0; i < 60; i++)
+            {
+                a.EmitRegion(18, 38, 22, 38, 1); b.EmitRegion(18, 38, 22, 38, 1); c.EmitRegion(18, 38, 22, 38, 1);
+                a.Step(); b.Step(); c.Step();
+            }
+
+            Assert.That(b.State.Cells, Is.EqualTo(a.State.Cells));
+            Assert.That(c.State.Cells, Is.Not.EqualTo(a.State.Cells));
+            a.Dispose(); b.Dispose(); c.Dispose();
+        }
+
+        /// <summary>Drops grains onto a shallow (~1:4) ramp and returns the mean distance (cells) from the drop column where they rest.</summary>
+        private static float MeanRestX(SandSimulationProfile profile)
+        {
+            LayoutMaskSet masks = OpenBoard(120, 60);
+            SandSimulation sim = new SandSimulation(profile, masks, 7u);
+            for (int x = 0; x < 120; x++)
+            {
+                int ramp = 40 - x / 4;
+                for (int y = 0; y <= Mathf.Max(0, ramp); y++) sim.SetCupWall(x, y, true);
+            }
+
+            for (int i = 0; i < 20; i++) sim.TryEmit(10 + (i % 3), 58, 1);
+            for (int i = 0; i < 1500; i++) sim.Step();
+            float sum = 0f; int n = 0;
+            for (int i = 0; i < sim.State.Cells.Length; i++)
+                if (sim.State.Cells[i] != 0) { sum += Mathf.Abs(i % sim.State.Width - 11f); n++; }
+            sim.Dispose();
+            return n > 0 ? sum / n : 0f;
         }
 
         [Test]

@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 165238746d812b444a494971575d8c99, type: 3}
   m_Name: PhaseBSandSimulationProfile
   m_EditorClassIdentifier: 
-  cellSize: 0.1
-  fixedStepSeconds: 0.02
+  cellSize: 0.06
+  fixedStepSeconds: 0.016666668
   maxStepsPerFrame: 4
   maxCells: 262144
   enableLateralSlide: 1
