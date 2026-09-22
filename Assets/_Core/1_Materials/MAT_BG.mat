@@ -32,6 +32,6 @@ Material:
     - _AmbientBoost: 1
     - _ShadowStrength: 0.6
     m_Colors:
-    - _BaseColor: {r: 0.58, g: 0.59, b: 0.6, a: 1}
+    - _BaseColor: {r: 0.85564256, g: 0.86055535, b: 0.8679245, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
