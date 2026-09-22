@@ -55,17 +55,53 @@ namespace SE001.Simulation.Sand
                 int source = State.Index(x, y); byte material = State.Cells[source];
                 if (material == 0) continue;
                 int targetX = x; int targetY = y;
-                if (CanOccupy(x, y - 1) && nextCells[State.Index(x, y - 1)] == 0) targetY = y - 1;
-                else if (CanOccupy(x - 1, y - 1) && nextCells[State.Index(x - 1, y - 1)] == 0) { targetX = x - 1; targetY = y - 1; }
-                else if (CanOccupy(x + 1, y - 1) && nextCells[State.Index(x + 1, y - 1)] == 0) { targetX = x + 1; targetY = y - 1; }
-                // Lateral slide only toward a drop (cell below the target is free). Sliding on a flat surface made
-                // grains oscillate left/right forever (alternating scan) → visible jitter + never "stable" for lose.
-                else if (profile.enableLateralSlide && CanOccupy(x - increment, y) && nextCells[State.Index(x - increment, y)] == 0 && CanOccupy(x - increment, y - 1) && State.Cells[State.Index(x - increment, y - 1)] == 0) targetX = x - increment;
+                int first = increment; // alternate diagonal preference with scan direction → no left bias
+                if (IsFreeNext(x, y - 1)) targetY = y - 1;
+                else if (IsFreeNext(x + first, y - 1)) { targetX = x + first; targetY = y - 1; }
+                else if (IsFreeNext(x - first, y - 1)) { targetX = x - first; targetY = y - 1; }
+                else if (profile.dispersion > 1 && TryDisperse(x, y, first, out int dx)) targetX = x + (dx > 0 ? 1 : -1); // walk 1 cell/step toward the drop (smooth, no teleport)
                 int target = State.Index(targetX, targetY); if (nextCells[target] == 0) { nextCells[target] = material; if (target != source) moved++; } else nextCells[source] = material;
                 occupied++;
             }
             Array.Clear(State.Cells, 0, State.Cells.Length); Buffer.BlockCopy(nextCells, 0, State.Cells, 0, State.Cells.Length); reverseScan = !reverseScan; State.OccupiedCount = occupied; return moved;
         }
+
+        /// <summary>
+        /// Avalanche / levelling: a resting grain whose diagonals are blocked slides to the nearest drop up to
+        /// profile.dispersion cells away along its row (path must be free). Slope settles at ~1/dispersion instead
+        /// of 45°, piles spread flat like powder, and it only ever moves toward a lower cell → no endless jitter.
+        /// </summary>
+        private bool TryDisperse(int x, int y, int first, out int dx)
+        {
+            int reach = profile.dispersion;
+            for (int d = 2; d <= reach; d++)
+            {
+                for (int k = 0; k < 2; k++)
+                {
+                    int dir = k == 0 ? first : -first;
+                    if (!PathFree(x, y, dir, d)) continue;
+                    if (IsFreeNext(x + dir * d, y - 1)) { dx = dir * d; return true; }
+                }
+            }
+
+            dx = 0;
+            return false;
+        }
+
+        private bool PathFree(int x, int y, int dir, int distance)
+        {
+            for (int i = 1; i <= distance; i++)
+            {
+                int px = x + dir * i;
+                if (!CanOccupy(px, y)) return false;
+                int idx = State.Index(px, y);
+                if (State.Cells[idx] != 0 || nextCells[idx] != 0) return false;
+            }
+
+            return true;
+        }
+
+        private bool IsFreeNext(int x, int y) => CanOccupy(x, y) && nextCells[State.Index(x, y)] == 0;
 
         public void Dispose() { disposed = true; nextCells = null; }
         public void SetCupWall(int x, int y, bool value) { if (x >= 0 && y >= 0 && x < State.Width && y < State.Height) State.CupWallMask[State.Index(x, y)] = value; }

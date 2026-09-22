@@ -10,6 +10,8 @@ namespace SE001.Simulation.Sand
         [Min(1)] public int maxStepsPerFrame = 4;
         [Min(1)] public int maxCells = 262144;
         public bool enableLateralSlide = true;
+        [Tooltip("Avalanche reach in cells. 1 = 45° piles (pure CA). 4-6 = flat, powder-like spreading.")]
+        [Range(1, 8)] public int dispersion = 5;
         [Min(1)] public int grainsPerUnit = 12;
         [Min(1)] public int stableStepsForLose = 30;
     }
