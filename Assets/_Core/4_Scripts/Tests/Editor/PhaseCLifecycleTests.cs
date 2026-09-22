@@ -26,7 +26,7 @@ namespace SE001.Tests
         }
 
         [Test]
-        public void PhaseC_ReloadTenTimes_NoAccumulation()
+        public void PhaseC_ReloadTenTimes_NoVisualAccumulation()
         {
             string[] levels = { "phase_c_level_02" };
             int baselineMeshes = CountTransientMeshes();
@@ -41,6 +41,18 @@ namespace SE001.Tests
                     Assert.That(previous.IsDisposed, Is.True);
                     Assert.That(owner.transform.childCount, Is.EqualTo(1));
                     Assert.That(manager.CurrentContext.LevelRoot.childCount, Is.EqualTo(childCount));
+                    Assert.That(
+                        manager.CurrentContext.SourceRoot.GetComponentsInChildren<PhaseCSourceVisual>(),
+                        Has.Length.EqualTo(2));
+                    Assert.That(
+                        manager.CurrentContext.CupRoot.GetComponentsInChildren<PhaseCCupVisual>(),
+                        Has.Length.EqualTo(2));
+                    Assert.That(
+                        manager.CurrentContext.DynamicDrawRoot.Find("DrawPreview"),
+                        Is.Not.Null);
+                    Assert.That(
+                        manager.CurrentContext.LevelRoot.GetComponent<SE001.Diagnostics.PhaseCDebugView>(),
+                        Is.Null);
                 }
                 manager.UnloadCurrentLevel();
                 Assert.That(owner.transform.childCount, Is.EqualTo(0));

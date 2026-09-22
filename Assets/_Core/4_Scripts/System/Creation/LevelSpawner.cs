@@ -6,6 +6,7 @@ using SE001.Simulation.Sand;
 using SE001.Creation;
 using SE001.Elements.Sand;
 using SE001.Gameplay;
+using SE001.Presentation;
 using SE001.System.Management;
 using UnityEngine;
 
@@ -126,6 +127,14 @@ namespace SE001.System.Creation
             for (int i = 0; i < levelData.sources.Count; i++) sources.Add(new SourceDomain(levelData.sources[i], sourceProfile, grainsPerUnit));
             for (int i = 0; i < levelData.cups.Count; i++) cups.Add(new CupDomain(levelData.cups[i], cupProfile, grainsPerUnit, profile.cellSize));
             gameplay.Configure(sources, cups, profile.cellSize, cupProfile.wallThickness);
+            SourceFactory sourceFactory = new SourceFactory();
+            CupFactory cupFactory = new CupFactory();
+            if (gameplayProfile.prefabProfile == null) throw new InvalidOperationException("Phase C requires PrefabProfile for production visuals.");
+            for (int i = 0; i < sources.Count; i++)
+                sourceFactory.Create(new SourceCreateParameters(sources[i], activeContext.SourceRoot, gameplayProfile.prefabProfile, gameplayProfile));
+            for (int i = 0; i < cups.Count; i++)
+                cupFactory.Create(new CupCreateParameters(cups[i], activeContext.CupRoot, gameplayProfile.prefabProfile, gameplayProfile));
+            activeContext.RegisterParticipant(activeContext.LevelRoot.gameObject.AddComponent<PhaseCDrawVisualController>());
             // Level sanity (dev): per material, source grains must cover the cups' fill-line volume.
             for (int c = 0; c < cups.Count; c++)
             {
@@ -141,9 +150,7 @@ namespace SE001.System.Creation
             }
             activeContext.RegisterParticipant(
                 activeContext.LevelRoot.gameObject.AddComponent<SE001.HUD.PhaseCHudView>());
-            // Debug presentation is Play Mode only; EditMode lifecycle tests must not allocate debug meshes.
-            if (Application.isPlaying)
-                activeContext.RegisterParticipant(activeContext.LevelRoot.gameObject.AddComponent<SE001.Diagnostics.PhaseCDebugView>());
+            // DebugView is intentionally not part of production presentation ownership.
         }
 
         private void SpawnLayoutVisuals(SE001LevelJson levelData)
@@ -185,6 +192,10 @@ namespace SE001.System.Creation
 
             Transform levelRoot = context.LevelRoot;
             context.Dispose();
+            PhaseCCupVisual[] cupVisuals =
+                context.CupRoot.GetComponentsInChildren<PhaseCCupVisual>();
+            for (int i = 0; i < cupVisuals.Length; i++)
+                cupVisuals[i].ReleaseForUnload();
             DestroyOwnedRoot(levelRoot);
 
             if (ReferenceEquals(activeContext, context))

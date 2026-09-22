@@ -60,6 +60,24 @@ namespace SE001.Editor
             AssetDatabase.Refresh();
         }
 
+        [MenuItem("SE001/Phase C/Rebuild Gameplay Visual Prefabs")]
+        public static void RebuildGameplayVisualPrefabs()
+        {
+            GetOrCreateVisualPrefab("Assets/_Core/3_Prefabs/Gameplay/Source/SandSource.prefab", "SandSource", typeof(PhaseCSourceVisual), false);
+            GetOrCreateVisualPrefab("Assets/_Core/3_Prefabs/Gameplay/Cup/Cup.prefab", "Cup", typeof(PhaseCCupVisual), false);
+            GetOrCreateVisualPrefab("Assets/_Core/3_Prefabs/Gameplay/Draw/DrawStroke.prefab", "DrawStroke", typeof(PhaseCDrawStrokeVisual), true);
+            PrefabProfile profile = AssetDatabase.LoadAssetAtPath<PrefabProfile>("Assets/_Core/Resources/Profiles/PhaseBPrefabProfile.asset");
+            if (profile != null)
+            {
+                profile.sourcePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Core/3_Prefabs/Gameplay/Source/SandSource.prefab");
+                profile.cupPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Core/3_Prefabs/Gameplay/Cup/Cup.prefab");
+                profile.drawStrokePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Core/3_Prefabs/Gameplay/Draw/DrawStroke.prefab");
+                EditorUtility.SetDirty(profile);
+            }
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
         [MenuItem("SE001/Phase C/Create visual materials")]
         private static void CreateVisualMaterials()
         {
@@ -155,11 +173,7 @@ namespace SE001.Editor
             {
                 GameObject contents = PrefabUtility.LoadPrefabContents(path);
                 if (contents.GetComponent(markerType) == null) contents.AddComponent(markerType);
-                if (withMesh)
-                {
-                    if (contents.GetComponent<MeshFilter>() == null) contents.AddComponent<MeshFilter>();
-                    if (contents.GetComponent<MeshRenderer>() == null) contents.AddComponent<MeshRenderer>();
-                }
+                BuildVisualHierarchy(contents, markerType, withMesh);
                 PrefabUtility.SaveAsPrefabAsset(contents, path);
                 PrefabUtility.UnloadPrefabContents(contents);
                 return AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -167,14 +181,91 @@ namespace SE001.Editor
             EnsureFolder(global::System.IO.Path.GetDirectoryName(path).Replace('\\', '/'));
             GameObject root = new GameObject(name);
             root.AddComponent(markerType);
-            if (withMesh)
-            {
-                root.AddComponent<MeshFilter>();
-                root.AddComponent<MeshRenderer>();
-            }
+            BuildVisualHierarchy(root, markerType, withMesh);
             prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
             Object.DestroyImmediate(root);
             return prefab;
+        }
+
+        private static void BuildVisualHierarchy(GameObject root, global::System.Type markerType, bool withMesh)
+        {
+            Mesh quad = GetOrCreateVisualQuad();
+            if (markerType == typeof(PhaseCSourceVisual))
+            {
+                Transform pivot = EnsureChild(root.transform, "Pivot");
+                Transform view = EnsureChild(pivot, "View");
+                EnsureMeshRenderer(EnsureChild(view, "Body"), quad);
+                EnsureMeshRenderer(EnsureChild(view, "Nozzle"), quad);
+                Transform anchors = EnsureChild(root.transform, "Anchors");
+                EnsureChild(anchors, "EmitPoint");
+                return;
+            }
+            if (markerType == typeof(PhaseCCupVisual))
+            {
+                Transform view = EnsureChild(root.transform, "View");
+                EnsureMeshRenderer(EnsureChild(view, "WallL"), quad);
+                EnsureMeshRenderer(EnsureChild(view, "WallR"), quad);
+                EnsureMeshRenderer(EnsureChild(view, "WallB"), quad);
+                EnsureMeshRenderer(EnsureChild(view, "Back"), quad);
+                EnsureLineRenderer(EnsureChild(view, "Rim"));
+                EnsureMeshRenderer(EnsureChild(view, "FillLine"), quad);
+                EnsureMeshRenderer(EnsureChild(root.transform, "FillView"), quad);
+                Transform anchors = EnsureChild(root.transform, "Anchors");
+                EnsureChild(anchors, "Entry");
+                EnsureChild(anchors, "Feedback");
+                return;
+            }
+            if (markerType == typeof(PhaseCDrawStrokeVisual))
+            {
+                MeshFilter rootFilter = root.GetComponent<MeshFilter>();
+                MeshRenderer rootRenderer = root.GetComponent<MeshRenderer>();
+                if (rootFilter != null) Object.DestroyImmediate(rootFilter);
+                if (rootRenderer != null) Object.DestroyImmediate(rootRenderer);
+                Transform view = EnsureChild(root.transform, "View");
+                EnsureMeshRenderer(view, quad);
+                EnsureLineRenderer(EnsureChild(root.transform, "Preview"));
+                return;
+            }
+            if (withMesh) EnsureMeshRenderer(root.transform, quad);
+        }
+
+        private static Transform EnsureChild(Transform parent, string name)
+        {
+            Transform child = parent.Find(name);
+            if (child != null) return child;
+            GameObject go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            return go.transform;
+        }
+
+        private static Mesh GetOrCreateVisualQuad()
+        {
+            const string path = "Assets/_Core/3_Prefabs/Gameplay/VisualQuad.asset";
+            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (mesh != null) return mesh;
+            mesh = new Mesh { name = "VisualQuad" };
+            mesh.vertices = new[] { new Vector3(-0.5f, -0.5f), new Vector3(0.5f, -0.5f), new Vector3(0.5f, 0.5f), new Vector3(-0.5f, 0.5f) };
+            mesh.uv = new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up };
+            mesh.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+            mesh.RecalculateNormals();
+            AssetDatabase.CreateAsset(mesh, path);
+            return mesh;
+        }
+
+        private static void EnsureMeshRenderer(Transform target, Mesh quad)
+        {
+            MeshFilter filter = target.GetComponent<MeshFilter>();
+            if (filter == null) filter = target.gameObject.AddComponent<MeshFilter>();
+            filter.sharedMesh = quad;
+            if (target.GetComponent<MeshRenderer>() == null) target.gameObject.AddComponent<MeshRenderer>();
+        }
+
+        private static void EnsureLineRenderer(Transform target)
+        {
+            LineRenderer line = target.GetComponent<LineRenderer>();
+            if (line == null) line = target.gameObject.AddComponent<LineRenderer>();
+            line.useWorldSpace = false;
+            line.positionCount = 0;
         }
 
         private static void EnsureFolder(string path)
