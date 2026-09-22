@@ -145,7 +145,8 @@ namespace SE001.Gameplay
             wall = Mathf.Max(wallThickness, cell * 2.5f); // >= 2 cells everywhere: no diagonal leaks through slanted walls
             outerMinY = Mathf.FloorToInt(Position.y / cell);
             outerMaxY = Mathf.CeilToInt((Position.y + Size.y) / cell) - 1;
-            MinY = Mathf.CeilToInt((Position.y + wall) / cell);
+            // First row whose cell center is above the bottom wall (must match RegisterWalls' 'bottom' test exactly).
+            MinY = Mathf.CeilToInt((Position.y + wall) / cell - 0.5f);
             MaxY = outerMaxY;
             int rows = Mathf.Max(0, MaxY - MinY + 1);
             rowMinX = new int[rows];
