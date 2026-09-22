@@ -11,6 +11,31 @@ namespace SE001.Tests
     public sealed class PhaseCFinishTests
     {
         [Test]
+        public void SourceSize_UsesAuthoredOverrideOrProfileDefault()
+        {
+            SourceProfile profile = ScriptableObject.CreateInstance<SourceProfile>();
+            profile.bodySize = new Vector2(0.8f, 1.2f);
+            SourceData authoredData = new SourceData
+            {
+                stableId = "source",
+                materialId = 1,
+                position = Vector2.one,
+                size = new Vector2(1.08f, 1.37f),
+                logicalAmount = 1
+            };
+            SourceDomain authored = new SourceDomain(authoredData, profile, 1);
+            SourceDomain fallback = new SourceDomain(
+                new SourceData { stableId = "fallback", materialId = 1, logicalAmount = 1 },
+                profile,
+                1);
+
+            Assert.That(authored.Size, Is.EqualTo(authoredData.size));
+            Assert.That(authored.BodyOffset, Is.EqualTo(new Vector2(0f, authoredData.size.y * 0.5f)));
+            Assert.That(fallback.Size, Is.EqualTo(profile.bodySize));
+            Object.DestroyImmediate(profile);
+        }
+
+        [Test]
         public void CupGeometry_MatchesContractExample()
         {
             CupProfile profile = ScriptableObject.CreateInstance<CupProfile>();

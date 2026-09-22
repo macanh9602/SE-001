@@ -109,7 +109,7 @@ namespace SE001.System.Management
             {
                 SourceDomain source = manager.Sources[i];
                 if (!source.HitTest(boardPoint, sourceHitPadding)) continue;
-                float d = Vector2.Distance(boardPoint, source.Position + SourceDomain.BodyOffset);
+                float d = Vector2.Distance(boardPoint, source.Position + source.BodyOffset);
                 if (d < bestDistance) { best = source; bestDistance = d; }
             }
 

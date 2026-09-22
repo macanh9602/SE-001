@@ -378,11 +378,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3367552559367696682, guid: 656a9fa5b59662a468aa972820554ebe, type: 3}
       propertyPath: 'listPanelSource.Array.data[0]'
-      value:
+      value: 
       objectReference: {fileID: 7502060621486761191, guid: 85cbb42b5b8dd904e9646276e4557c0d, type: 3}
     - target: {fileID: 3367552559367696682, guid: 656a9fa5b59662a468aa972820554ebe, type: 3}
       propertyPath: 'listPanelSource.Array.data[1]'
-      value:
+      value: 
       objectReference: {fileID: 3477413640553076426, guid: ba040ab3a0d969b499f157ef64cafaa1, type: 3}
     - target: {fileID: 5549000622281886820, guid: 656a9fa5b59662a468aa972820554ebe, type: 3}
       propertyPath: m_Name
@@ -592,6 +592,10 @@ PrefabInstance:
     - target: {fileID: 988455669105054465, guid: 2c24959966894e84ea00f12e54f60990, type: 3}
       propertyPath: m_Name
       value: ToolCanva
+      objectReference: {fileID: 0}
+    - target: {fileID: 988455669105054465, guid: 2c24959966894e84ea00f12e54f60990, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5443385414137517138, guid: 2c24959966894e84ea00f12e54f60990, type: 3}
       propertyPath: m_Pivot.x

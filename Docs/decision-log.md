@@ -2,6 +2,21 @@
 
 > Append-only. Decision mới đặt ở trên cùng. Project-level decision ghi ở đây; micro-decision ghi trong story implementation notes.
 
+## D-006 — Source body size có thể author theo từng level
+
+Status: Accepted — 2026-09-22
+Story: Phase C level 02 layout/video pass
+
+### Chốt
+
+- `SourceData.size` là optional width/height theo board-space cho từng source.
+- `(0,0)` resolve về `SourceProfile.bodySize`, giữ backward compatibility cho JSON cũ mà không bump `schemaVersion`.
+- Resolved size dùng chung cho presentation và tap hit-area; `SourceData.position` vẫn là nozzle/emission position.
+
+### Hệ quả
+
+Level có thể match scale từ layout reference mà không đổi source ở level khác. Resolve chỉ xảy ra khi load level; không thêm allocation hoặc work trong gameplay loop.
+
 ## D-005 — Architecture Blueprint supersedes the former execution roadmap
 
 Status: Accepted — 2026-09-22

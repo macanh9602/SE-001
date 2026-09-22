@@ -43,6 +43,7 @@ truth thay thế.
 ### Source
 
 - Stable ID, material ID, authored position.
+- Optional authored body `size` in board units; `(0,0)` resolves to `SourceProfile.bodySize` for backward compatibility.
 - Logical material/grain amount.
 - Stream width/shape override chỉ khi product contract yêu cầu.
 
@@ -55,7 +56,7 @@ Visual anchor có thể hỗ trợ alignment nhưng không quyết định logic
 
 ### Phase C position and material contract
 
-`SourceData.position` is the authored nozzle position. `CupData.position` is the centre of the cup's outside bottom; `CupData.size` is the outside mouth/height rectangle. `materialId` must resolve in `MaterialPalette` before a level can spawn. Runtime sand, masks and collected counts are generated state and are not serialized back into level JSON.
+`SourceData.position` is the authored nozzle position. `SourceData.size` is the source body width/height; it drives both presentation bounds and tap hit-area, while `(0,0)` uses `SourceProfile.bodySize`. `CupData.position` is the centre of the cup's outside bottom; `CupData.size` is the outside mouth/height rectangle. `materialId` must resolve in `MaterialPalette` before a level can spawn. Runtime sand, masks and collected counts are generated state and are not serialized back into level JSON.
 - Required count.
 - Foreign-material tolerance chỉ khi gameplay contract yêu cầu.
 

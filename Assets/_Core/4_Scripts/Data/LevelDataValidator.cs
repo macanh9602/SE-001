@@ -48,6 +48,7 @@ namespace SE001.Data
                 string id = item == null ? null : item.stableId;
                 if (string.IsNullOrWhiteSpace(id) || !ids.Add(id)) errors.Add($"sources[{i}] has a missing or duplicate stableId.");
                 if (item != null && (item.materialId <= 0 || item.logicalAmount <= 0 || !Finite(item.position) || !InsideBoard(item.position, level.board.size))) errors.Add($"sources[{i}] has invalid material, amount, position, or is outside board.");
+                if (item != null && !ValidOptionalSize(item.size)) errors.Add($"sources[{i}].size must be zero (profile default) or finite and positive.");
                 if (item != null && palette != null && !palette.Contains(item.materialId)) errors.Add($"sources[{i}] references unknown material {item.materialId}.");
             }
             for (int i = 0; i < level.cups.Count; i++)
@@ -89,6 +90,7 @@ namespace SE001.Data
         }
 
         private static bool Finite(Vector2 value) => !float.IsNaN(value.x) && !float.IsInfinity(value.x) && !float.IsNaN(value.y) && !float.IsInfinity(value.y);
+        private static bool ValidOptionalSize(Vector2 value) => value == Vector2.zero || Finite(value) && value.x > 0f && value.y > 0f;
         private static bool InsideBoard(Vector2 position, Vector2 size) => position.x >= 0f && position.y >= 0f && position.x <= size.x && position.y <= size.y;
     }
 }

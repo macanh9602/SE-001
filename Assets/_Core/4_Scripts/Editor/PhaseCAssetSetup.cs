@@ -23,6 +23,7 @@ namespace SE001.Editor
                 new MaterialPaletteEntry { materialId = 3, sandColor = new Color32(72, 164, 232, 255), uiColor = new Color32(72, 164, 232, 255) }
             };
             SourceProfile source = GetOrCreate<SourceProfile>(folder + "/PhaseCSourceProfile.asset");
+            source.bodySize = new Vector2(0.8f, 1.2f);
             CupProfile cup = GetOrCreate<CupProfile>(folder + "/PhaseCCupProfile.asset");
             DrawPathProfile draw = GetOrCreate<DrawPathProfile>(folder + "/PhaseCDrawPathProfile.asset");
             JuiceProfile juice = GetOrCreate<JuiceProfile>(folder + "/PhaseCJuiceProfile.asset");
@@ -54,6 +55,7 @@ namespace SE001.Editor
                 new LevelSequenceEntry { levelId = "phase_c_level_03" }
             };
             EditorUtility.SetDirty(palette);
+            EditorUtility.SetDirty(source);
             EditorUtility.SetDirty(runtime);
             EditorUtility.SetDirty(sequence);
             EditorUtility.SetDirty(juice);

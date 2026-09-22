@@ -100,9 +100,10 @@ namespace SE001.Diagnostics
             sourceObject.name = "SandSource_" + source.StableId;
             var pivot = sourceObject.transform;
             if (sourceObject.transform.parent == null) pivot.SetParent(context.SourceRoot, false);
-            pivot.localPosition = new Vector3(source.Position.x + SourceDomain.BodyOffset.x, source.Position.y + SourceDomain.BodyOffset.y, -0.3f);
-            Renderer body = CreateBox("Body", pivot, Vector3.zero, new Vector2(0.8f, 0.9f), color, true);
-            CreateBox("Nozzle", pivot, new Vector3(0f, 0.55f, 0f), new Vector2(0.32f, 0.22f), Color.white, true);
+            pivot.localPosition = new Vector3(source.Position.x + source.BodyOffset.x, source.Position.y + source.BodyOffset.y, -0.3f);
+            Renderer body = CreateBox("Body", pivot, Vector3.zero, source.Size, color, true);
+            Vector2 nozzleSize = new Vector2(source.Size.x * 0.4f, source.Size.y * 0.18f);
+            CreateBox("Nozzle", pivot, new Vector3(0f, source.Size.y * 0.5f, 0f), nozzleSize, Color.white, true);
             pivot.localRotation = Quaternion.Euler(0f, 0f, source.IsPouring ? 180f : 0f);
             sourcePivots.Add(pivot);
             sourceBodies.Add(body);

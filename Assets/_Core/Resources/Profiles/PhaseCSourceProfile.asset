@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3ec518e21b1e2049858a78773aa4c04, type: 3}
   m_Name: PhaseCSourceProfile
   m_EditorClassIdentifier: 
+  bodySize: {x: 0.8, y: 1.2}
   emissionRate: 16
   streamWidth: 6
   valveOpenDelay: 0.2

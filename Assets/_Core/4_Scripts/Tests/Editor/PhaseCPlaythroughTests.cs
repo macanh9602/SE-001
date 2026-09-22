@@ -112,7 +112,7 @@ namespace SE001.Tests
         {
             GameplayManager game = Load("phase_c_level_01");
             var source = game.Sources[0];
-            Vector2 bodyCenter = source.Position + SE001.Gameplay.SourceDomain.BodyOffset;
+            Vector2 bodyCenter = source.Position + source.BodyOffset;
             Assert.That(source.HitTest(bodyCenter, 0.2f), Is.True, "Tapping the jar body must hit.");
             Assert.That(source.HitTest(bodyCenter + new Vector2(0.35f, 0.5f), 0.2f), Is.True, "Near the jar top corner must hit.");
             Assert.That(source.HitTest(bodyCenter + new Vector2(1.5f, 0f), 0.2f), Is.False, "Far away must not hit.");
