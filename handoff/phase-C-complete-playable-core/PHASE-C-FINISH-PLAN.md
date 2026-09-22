@@ -3,6 +3,10 @@
 Base: HEAD `c5727d1`. Viết ngày 2026-09-23. Owner thực thi: Codex. Người duyệt: Ducan.
 Plan này thay cho mọi to-do Phase C rải rác; F0–F6 cũ không dùng nữa.
 
+> **Trạng thái 2026-09-23:** C1-FINAL, C2A, C2B, C3 đã xong. Juice cup (`cupPunchDuration`) và stroke-grow
+> (`strokeExtrudeDuration`) **bị bỏ khỏi scope** theo quyết định của Ducan; chỉ còn juice valve. C4 còn các mục
+> PENDING MANUAL phải chạy trong Unity — xem `PHASE.md`. Plan này giữ lại làm hồ sơ, không còn là to-do.
+
 ## 0. Trạng thái đã xác minh trên repo
 
 | Claim | Kết quả kiểm tra |

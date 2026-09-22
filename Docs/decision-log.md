@@ -168,3 +168,28 @@ Story 001 trở đi phải tuân thủ `SE001` namespace, feature assembly, JSON
 ### Xem lại khi
 
 Physics authority hoặc serialization contract thay đổi ở story cấp project; khi đó phải tạo decision mới và supersede entry này.
+
+## 2026-09-23 — Đóng Phase C: freeze sand, descope juice cup/stroke
+
+### Bối cảnh
+
+Sand feel đã được tune rồi revert hai lần trong ngày. Panel Win không hiện do prefab root-Canvas bị instantiate làm con (chi tiết: `handoff/phase-C-complete-playable-core/evidence/win-panel-invisible-rootcause.md`).
+
+### Quyết định
+
+1. Sand simulation trả về hành vi `6dee3cb` và **freeze** trong Phase C. Mọi thay đổi feel chuyển sang phase sau, kèm rebalance level.
+2. Stream density lấy từ `PhaseCSourceProfile`; level JSON không override `emissionRate`/`streamWidth`.
+3. Juice cup (`cupPunchDuration`) và stroke-grow (`strokeExtrudeDuration`) **descope** khỏi Phase C; giữ field trong `JuiceProfile` nhưng không dùng.
+4. Panel prefab kiểu canvas được chuẩn hoá RectTransform ở `UIPanels.NormalizePanelRect` thay vì sửa từng prefab.
+
+### Đánh đổi đã chấp nhận
+
+Phase C đóng với ít juice hơn dự kiến; đổi lại lấy được thời gian cho Phase D và tránh rebalance lại 3 level.
+
+### Hệ quả
+
+Phase D bắt đầu từ D0 và D0.5 (pipeline SVG → prefab mesh + mask). Các mục PENDING MANUAL của C4 phải chạy trước khi coi là CLOSURE PASS đầy đủ.
+
+### Xem lại khi
+
+GD yêu cầu feel khác cho sand, hoặc khi thêm juice trở lại sau Phase D.
