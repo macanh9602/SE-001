@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SE001.Data;
 using SE001.Geometry;
 using SE001.System.Management;
@@ -78,6 +79,7 @@ namespace SE001.System.Creation
                 if (levelData != null)
                 {
                     activeContext.BoardSize = levelData.board.size;
+                    activeContext.DrawInkBudget = levelData.drawInkBudget;
                     SandSimulationProfile profile = sandSimulationProfile;
                     SandSimulationProfile ownedProfile = null;
                     if (profile == null)
@@ -114,12 +116,22 @@ namespace SE001.System.Creation
             CupProfile cupProfile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
             if (sourceProfile == null) sourceProfile = ScriptableObject.CreateInstance<SourceProfile>();
             if (cupProfile == null) cupProfile = ScriptableObject.CreateInstance<CupProfile>();
-            var sources = new System.Collections.Generic.List<SourceDomain>();
-            var cups = new System.Collections.Generic.List<CupDomain>();
+            var sources = new List<SourceDomain>();
+            var cups = new List<CupDomain>();
             int grainsPerUnit = profile != null ? profile.grainsPerUnit : 12;
             for (int i = 0; i < levelData.sources.Count; i++) sources.Add(new SourceDomain(levelData.sources[i], sourceProfile, grainsPerUnit));
             for (int i = 0; i < levelData.cups.Count; i++) cups.Add(new CupDomain(levelData.cups[i], cupProfile, grainsPerUnit, profile.cellSize));
             gameplay.Configure(sources, cups, profile.cellSize, cupProfile.wallThickness);
+            // Level sanity (dev): per material, source grains must cover the cups' fill-line volume.
+            for (int c = 0; c < cups.Count; c++)
+            {
+                int need = 0, have = 0;
+                for (int k = 0; k < cups.Count; k++) if (cups[k].AcceptedMaterialId == cups[c].AcceptedMaterialId) need += cups[k].Required;
+                for (int k = 0; k < sources.Count; k++) if (sources[k].MaterialId == cups[c].AcceptedMaterialId) have += sources[k].Initial;
+                if (have < need) Debug.LogWarning($"[LevelSpawner] {levelData.levelId}: material {cups[c].AcceptedMaterialId} has {have} grains in sources but cups need {need} to reach the fill line — level is unwinnable.", this);
+            }
+            // DEV placeholder visuals + overlay until Source/Cup/DrawStroke prefabs exist (Phase C remaining work).
+            activeContext.RegisterParticipant(activeContext.LevelRoot.gameObject.AddComponent<SE001.Diagnostics.PhaseCDebugView>());
         }
 
         private void SpawnLayoutVisuals(SE001LevelJson levelData)

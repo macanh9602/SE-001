@@ -18,7 +18,7 @@ namespace SE001.Data
     [CreateAssetMenu(fileName = "SourceProfile", menuName = "SE001/Profiles/Source")]
     public sealed class SourceProfile : ScriptableObject { public float emissionRate = 16f; public int streamWidth = 6; public float valveOpenDelay = 0.2f; public float valveCloseRotateTime = 0.15f; public float hitPadding = 0.2f; }
     [CreateAssetMenu(fileName = "CupProfile", menuName = "SE001/Profiles/Cup")]
-    public sealed class CupProfile : ScriptableObject { public float wallThickness = 0.12f; }
+    public sealed class CupProfile : ScriptableObject { public float wallThickness = 0.12f; [Range(0f, 0.45f)] public float taper = 0.2f; [Range(0.3f, 1f)] public float fillLine = 0.85f; }
     [CreateAssetMenu(fileName = "DrawPathProfile", menuName = "SE001/Profiles/Draw Path")]
     public sealed class DrawPathProfile : ScriptableObject { public float drawThickness = 0.12f; public float minPointDistance = 0.08f; public int maxPointsPerStroke = 128; public int maxStrokes = 16; public float defaultInkBudget = 8f; public float drawStartDeadZone = 18f; public float extrudeHeight = 0.18f; }
     [CreateAssetMenu(fileName = "GameplayRuntimeProfile", menuName = "SE001/Profiles/Gameplay Runtime")]

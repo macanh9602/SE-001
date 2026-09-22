@@ -13,6 +13,8 @@ namespace SE001.System.Management
         private static LevelManager instance;
 
         [SerializeField] private LevelSpawner levelSpawner;
+        [SerializeField] private bool autoLoadFirstLevel = true;
+        [SerializeField] private string firstLevelId = "phase_c_level_01";
 
         private int nextGeneration;
         private LevelContext currentContext;
@@ -47,6 +49,14 @@ namespace SE001.System.Management
             if (levelSpawner == null)
             {
                 TryGetComponent(out levelSpawner);
+            }
+        }
+
+        private void Start()
+        {
+            if (autoLoadFirstLevel && !string.IsNullOrWhiteSpace(firstLevelId) && currentContext == null)
+            {
+                BeginLevel(firstLevelId);
             }
         }
 

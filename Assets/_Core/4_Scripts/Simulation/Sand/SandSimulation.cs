@@ -58,7 +58,9 @@ namespace SE001.Simulation.Sand
                 if (CanOccupy(x, y - 1) && nextCells[State.Index(x, y - 1)] == 0) targetY = y - 1;
                 else if (CanOccupy(x - 1, y - 1) && nextCells[State.Index(x - 1, y - 1)] == 0) { targetX = x - 1; targetY = y - 1; }
                 else if (CanOccupy(x + 1, y - 1) && nextCells[State.Index(x + 1, y - 1)] == 0) { targetX = x + 1; targetY = y - 1; }
-                else if (profile.enableLateralSlide && CanOccupy(x - increment, y) && nextCells[State.Index(x - increment, y)] == 0) targetX = x - increment;
+                // Lateral slide only toward a drop (cell below the target is free). Sliding on a flat surface made
+                // grains oscillate left/right forever (alternating scan) → visible jitter + never "stable" for lose.
+                else if (profile.enableLateralSlide && CanOccupy(x - increment, y) && nextCells[State.Index(x - increment, y)] == 0 && CanOccupy(x - increment, y - 1) && State.Cells[State.Index(x - increment, y - 1)] == 0) targetX = x - increment;
                 int target = State.Index(targetX, targetY); if (nextCells[target] == 0) { nextCells[target] = material; if (target != source) moved++; } else nextCells[source] = material;
                 occupied++;
             }

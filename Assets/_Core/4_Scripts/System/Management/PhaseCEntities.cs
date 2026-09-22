@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using SE001.Data;
 using SE001.Simulation.Sand;
@@ -6,25 +5,226 @@ using SE001.Simulation.Sand;
 namespace SE001.Gameplay
 {
     public enum SourceValveState { Closed, Opening, Open, Empty }
+
+    /// <summary>Finite sand source with a tap-toggled valve. Semantic only: no renderer access.</summary>
     public sealed class SourceDomain
     {
-        private readonly float openDelay; private readonly float rate; private readonly int width; private float opening;
+        private readonly float openDelay;
+        private readonly float grainsPerSecond;
+        private readonly int streamWidthCells;
+        private float openingTimer;
+        private float emitAccumulator;
+
         public SourceDomain(SourceData data, SourceProfile profile, int grainsPerUnit)
-        { StableId=data.stableId; MaterialId=(byte)data.materialId; Remaining=Mathf.Max(0,data.logicalAmount)*Mathf.Max(1,grainsPerUnit); openDelay=profile.valveOpenDelay; rate=data.emissionRate>0?data.emissionRate:profile.emissionRate; width=Mathf.Max(1,Mathf.RoundToInt(data.streamWidth>0?data.streamWidth:profile.streamWidth)); Position=data.position; State=data.startsOpen?SourceValveState.Open:SourceValveState.Closed; if(Remaining==0) State=SourceValveState.Empty; }
-        public string StableId { get; } public byte MaterialId { get; } public Vector2 Position { get; } public int Remaining { get; private set; } public SourceValveState State { get; private set; }
-        public void Toggle() { if(State==SourceValveState.Empty)return; if(State==SourceValveState.Open){State=SourceValveState.Closed;return;} if(State==SourceValveState.Opening){State=SourceValveState.Closed;opening=0;return;} State=SourceValveState.Opening; opening=0; }
+        {
+            StableId = data.stableId;
+            MaterialId = (byte)data.materialId;
+            Initial = Mathf.Max(0, data.logicalAmount) * Mathf.Max(1, grainsPerUnit);
+            Remaining = Initial;
+            openDelay = profile.valveOpenDelay;
+            // emissionRate is grains per 60 Hz step (sand-feel-lab 'rate'); converted to grains/second.
+            grainsPerSecond = (data.emissionRate > 0f ? data.emissionRate : profile.emissionRate) * 60f;
+            streamWidthCells = Mathf.Max(1, Mathf.RoundToInt(data.streamWidth > 0f ? data.streamWidth : profile.streamWidth));
+            Position = data.position;
+            State = Remaining == 0 ? SourceValveState.Empty : data.startsOpen ? SourceValveState.Open : SourceValveState.Closed;
+        }
+
+        public string StableId { get; }
+        public byte MaterialId { get; }
+        public Vector2 Position { get; }
+        public int Initial { get; }
+        public int Remaining { get; private set; }
+        public SourceValveState State { get; private set; }
+        public bool IsPouring => State == SourceValveState.Open || State == SourceValveState.Opening;
+
+        public void Toggle()
+        {
+            switch (State)
+            {
+                case SourceValveState.Empty: return;
+                case SourceValveState.Open:
+                case SourceValveState.Opening:
+                    State = SourceValveState.Closed;
+                    openingTimer = 0f;
+                    emitAccumulator = 0f;
+                    return;
+                default:
+                    State = SourceValveState.Opening;
+                    openingTimer = 0f;
+                    return;
+            }
+        }
+
+        /// <summary>Returns grains actually inserted. Blocked cells keep the amount for later steps.</summary>
         public int Emit(SandSimulation sim, float dt)
-        { if(State==SourceValveState.Empty||State==SourceValveState.Closed)return 0; if(State==SourceValveState.Opening){opening+=dt;if(opening<openDelay)return 0;State=SourceValveState.Open;} if(Remaining<=0){State=SourceValveState.Empty;return 0;} int cx=Mathf.FloorToInt(Position.x/sim.CellSize); int cy=Mathf.FloorToInt(Position.y/sim.CellSize); int inserted=0; int half=width/2; for(int x=cx-half;x<=cx+half&&inserted<Mathf.CeilToInt(rate*dt)&&inserted<Remaining;x++) if(sim.TryEmit(x,cy,MaterialId))inserted++; Remaining-=inserted; if(Remaining==0)State=SourceValveState.Empty; return inserted; }
+        {
+            if (State == SourceValveState.Empty || State == SourceValveState.Closed) return 0;
+            if (State == SourceValveState.Opening)
+            {
+                openingTimer += dt;
+                if (openingTimer < openDelay) return 0;
+                State = SourceValveState.Open;
+            }
+
+            emitAccumulator += grainsPerSecond * dt;
+            int budget = Mathf.Min(Mathf.FloorToInt(emitAccumulator), Remaining);
+            if (budget <= 0) return 0;
+
+            int cx = Mathf.FloorToInt(Position.x / sim.CellSize);
+            int cy = Mathf.FloorToInt(Position.y / sim.CellSize);
+            int half = streamWidthCells / 2;
+            int inserted = 0;
+            // Two rows so the stream stays dense when the first row is still occupied.
+            for (int row = 0; row < 2 && inserted < budget; row++)
+                for (int x = cx - half; x <= cx + half && inserted < budget; x++)
+                    if (sim.TryEmit(x, cy - row, MaterialId)) inserted++;
+
+            emitAccumulator -= inserted;
+            if (emitAccumulator > grainsPerSecond) emitAccumulator = grainsPerSecond; // do not bank unlimited backlog
+            Remaining -= inserted;
+            if (Remaining == 0) State = SourceValveState.Empty;
+            return inserted;
+        }
     }
 
+    /// <summary>
+    /// Cup geometry from CupData + CupProfile only (never from the mesh).
+    /// position = bottom-center, size = outer width (at the mouth) / height. Tapered bucket:
+    /// bottom width = size.x * (1 - taper). Slanted side walls + bottom block sand; top open until full.
+    /// Full = sand volume reaches the fill line (fillLine * interior height) → Required grains derive
+    /// from geometry; GD requiredAmount is the displayed logical target.
+    /// </summary>
     public sealed class CupDomain
     {
+        private readonly float taper;
+        private readonly float fillLine;
+        private float wall;
+        private int outerMinY, outerMaxY;
+        private int[] rowMinX, rowMaxX; // sink span per row, index = y - MinY (min > max = empty row)
+
         public CupDomain(CupData data, CupProfile profile, int grainsPerUnit, float cellSize)
-        { StableId=data.stableId; AcceptedMaterialId=(byte)data.acceptedMaterialId; Position=data.position; Size=data.size; Required=Mathf.Max(1,data.requiredAmount)*Mathf.Max(1,grainsPerUnit); BuildSink(profile.wallThickness,cellSize); }
-        public string StableId {get;} public byte AcceptedMaterialId {get;} public Vector2 Position {get;} public Vector2 Size {get;} public int Required {get;} public int Collected {get;private set;} public bool Full=>Collected>=Required; public bool ForeignDetected {get;private set;}
-        public int MinX{get;private set;} public int MaxX{get;private set;} public int MinY{get;private set;} public int MaxY{get;private set;}
-        private void BuildSink(float wall,float cell){MinX=Mathf.CeilToInt((Position.x-Size.x*.5f+wall)/cell);MaxX=Mathf.FloorToInt((Position.x+Size.x*.5f-wall)/cell);MinY=Mathf.CeilToInt((Position.y-wall+wall)/cell);MaxY=Mathf.FloorToInt((Position.y+Size.y*.5f-wall)/cell);}
-        public void RegisterWalls(SandSimulation sim,float cell,float wall){int x0=Mathf.FloorToInt((Position.x-Size.x*.5f)/cell),x1=Mathf.CeilToInt((Position.x+Size.x*.5f)/cell), y0=Mathf.FloorToInt((Position.y-Size.y*.5f)/cell),y1=Mathf.CeilToInt((Position.y+Size.y*.5f)/cell);int t=Mathf.Max(1,Mathf.CeilToInt(wall/cell));for(int x=x0;x<=x1;x++){for(int k=0;k<t;k++){sim.SetCupWall(x,y0+k,true);sim.SetCupWall(x,y1-k,true);}}for(int y=y0;y<=y1;y++){for(int k=0;k<t;k++){sim.SetCupWall(x0+k,y,true);sim.SetCupWall(x1-k,y,true);}}}
-        public bool Collect(SandSimulation sim){if(Full)return false;bool changed=false;for(int y=MinY;y<=MaxY&&!Full;y++)for(int x=MinX;x<=MaxX&&!Full;x++){byte m=sim.State.Cells[sim.State.Index(x,y)];if(m==0)continue;if(m!=AcceptedMaterialId){ForeignDetected=true;return false;}sim.Remove(x,y);Collected++;changed=true;}return changed;}
+        {
+            StableId = data.stableId;
+            AcceptedMaterialId = (byte)data.acceptedMaterialId;
+            Position = data.position;
+            Size = data.size;
+            RequiredLogical = Mathf.Max(1, data.requiredAmount);
+            taper = profile.taper;
+            fillLine = profile.fillLine;
+            BuildCells(profile.wallThickness, cellSize);
+        }
+
+        public string StableId { get; }
+        public byte AcceptedMaterialId { get; }
+        public Vector2 Position { get; }
+        public Vector2 Size { get; }
+        public int RequiredLogical { get; }
+        public int Required { get; private set; }
+        public int Capacity { get; private set; }
+        public int Collected { get; private set; }
+        public bool Full => Collected >= Required;
+        public bool ForeignDetected { get; private set; }
+        public byte ForeignMaterialId { get; private set; }
+        public float FillRatio => Mathf.Clamp01(Collected / (float)Required);
+        public int CollectedLogical => Mathf.Min(RequiredLogical, Mathf.FloorToInt(FillRatio * RequiredLogical + 0.0001f));
+        /// <summary>Wall thickness actually used (board units), shared by mask and visuals.</summary>
+        public float EffectiveWall => wall;
+        public float Taper => taper;
+        public float FillLineY { get; private set; }
+        public int MinY { get; private set; }
+        public int MaxY { get; private set; }
+
+        private float OuterHalfWidthAt(float y)
+        {
+            float t = Mathf.Clamp01((y - Position.y) / Size.y);
+            return Mathf.Lerp(Size.x * (1f - taper) * 0.5f, Size.x * 0.5f, t);
+        }
+
+        private void BuildCells(float wallThickness, float cell)
+        {
+            wall = Mathf.Max(wallThickness, cell * 2.5f); // >= 2 cells everywhere: no diagonal leaks through slanted walls
+            outerMinY = Mathf.FloorToInt(Position.y / cell);
+            outerMaxY = Mathf.CeilToInt((Position.y + Size.y) / cell) - 1;
+            MinY = Mathf.CeilToInt((Position.y + wall) / cell);
+            MaxY = outerMaxY;
+            int rows = Mathf.Max(0, MaxY - MinY + 1);
+            rowMinX = new int[rows];
+            rowMaxX = new int[rows];
+            float interiorTop = Position.y + Size.y;
+            FillLineY = Position.y + wall + (interiorTop - Position.y - wall) * fillLine;
+            Capacity = 0;
+            Required = 0;
+            for (int r = 0; r < rows; r++)
+            {
+                int y = MinY + r;
+                float yc = (y + 0.5f) * cell;
+                float inner = OuterHalfWidthAt(yc) - wall;
+                rowMinX[r] = Mathf.CeilToInt((Position.x - inner) / cell - 0.5f);
+                rowMaxX[r] = Mathf.FloorToInt((Position.x + inner) / cell - 0.5f);
+                int span = Mathf.Max(0, rowMaxX[r] - rowMinX[r] + 1);
+                Capacity += span;
+                if (yc <= FillLineY) Required += span;
+            }
+
+            Required = Mathf.Max(1, Required);
+        }
+
+        public void RegisterWalls(SandSimulation sim, float cell, float wallThickness)
+        {
+            for (int y = outerMinY; y <= outerMaxY; y++)
+            {
+                float yc = (y + 0.5f) * cell;
+                float outer = OuterHalfWidthAt(yc);
+                int x0 = Mathf.FloorToInt((Position.x - outer) / cell);
+                int x1 = Mathf.CeilToInt((Position.x + outer) / cell) - 1;
+                bool bottom = yc < Position.y + wall;
+                for (int x = x0; x <= x1; x++)
+                {
+                    float dx = Mathf.Abs((x + 0.5f) * cell - Position.x);
+                    if (dx > outer) continue;
+                    if (bottom || dx > outer - wall) sim.SetCupWall(x, y, true);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sand physically fills the cup: grains stay in the simulation and pile inside the walls.
+        /// Collected = accepted grains currently inside the sink. Returns the change since last call.
+        /// </summary>
+        public int Collect(SandSimulation sim)
+        {
+            if (Full || ForeignDetected) return 0;
+            int count = 0;
+            for (int r = 0; r < rowMinX.Length; r++)
+            {
+                int y = MinY + r;
+                for (int x = rowMinX[r]; x <= rowMaxX[r]; x++)
+                {
+                    if (!sim.IsOccupied(x, y)) continue;
+                    byte material = sim.State.Cells[sim.State.Index(x, y)];
+                    if (material != AcceptedMaterialId)
+                    {
+                        ForeignDetected = true;
+                        ForeignMaterialId = material;
+                        return 0;
+                    }
+
+                    count++;
+                }
+            }
+
+            int delta = count - Collected;
+            Collected = Mathf.Min(count, Required);
+            if (Full) CloseMouth(sim);
+            return delta;
+        }
+
+        /// <summary>Full cup: the open top row becomes wall so further sand piles on top.</summary>
+        private void CloseMouth(SandSimulation sim)
+        {
+            int r = rowMinX.Length - 1;
+            if (r < 0) return;
+            for (int x = rowMinX[r]; x <= rowMaxX[r]; x++) sim.SetCupWall(x, MaxY, true);
+        }
     }
 }

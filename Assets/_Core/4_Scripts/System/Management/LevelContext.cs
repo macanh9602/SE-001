@@ -68,6 +68,7 @@ namespace SE001.System.Management
         public SandSimulation SandSimulation { get; private set; }
         /// <summary>Board bounds in board-space units, origin at (0,0). Zero when the level has no authored data.</summary>
         public Vector2 BoardSize { get; internal set; }
+        public float DrawInkBudget { get; internal set; }
         public bool IsDisposed => disposed;
 
         public void RegisterParticipant(ILevelLifecycleParticipant participant)

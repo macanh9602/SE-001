@@ -14,6 +14,10 @@ namespace SE001.Elements.Sand
         private SandSimulation simulation;
         private MaterialPropertyBlock propertyBlock;
         private Mesh generatedSurface;
+        private Color32[] palette;
+
+        /// <summary>Index = materialId. Null → single sandColor.</summary>
+        public void SetPalette(Color32[] value) { palette = value; }
 
         public void Bind(SandSimulation value)
         {
@@ -40,7 +44,7 @@ namespace SE001.Elements.Sand
         {
             if (simulation == null || texture == null) return;
             byte[] cells = simulation.State.Cells;
-            for (int i = 0; i < cells.Length; i++) pixels[i] = cells[i] == 0 ? emptyColor : sandColor;
+            for (int i = 0; i < cells.Length; i++) { byte m = cells[i]; pixels[i] = m == 0 ? emptyColor : (palette != null && m < palette.Length ? palette[m] : sandColor); }
             texture.SetPixels32(pixels);
             texture.Apply(false, false);
         }
