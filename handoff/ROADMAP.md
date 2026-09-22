@@ -16,7 +16,7 @@
 |---|---|---|---|
 | A | Foundation | DONE / PASS | Architecture alignment and lifecycle foundation |
 | B | Layout + Simulation Foundation | DONE / PASS | Canonical JSON, SVG import, shared geometry/masks, 3D layout, SandSimulation, SandField, integration |
-| C | Complete Playable Core | CURRENT / PARTIAL | Source, Cup, Draw, GameplayManager, accounting, win/lose; HUD and progression closure remain |
+| C | Complete Playable Core | DONE / CLOSURE PASS | Three authored levels, production visuals, progression, HUD result flow, playthroughs, reload, and performance evidence |
 | D | GD Production Pipeline | PLANNED | Progression/save/sequence, production Level Editor, SVG workflow, validation, preview, unsaved Play Test |
 | E | Feel + Performance + Ship Quality | PLANNED | Sand feel, VFX/material/texture/shadow/quality tiers, device performance |
 

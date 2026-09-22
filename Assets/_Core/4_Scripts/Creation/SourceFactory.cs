@@ -24,7 +24,7 @@ namespace SE001.Creation
             instance.name = "SandSource_" + parameters.Domain.StableId;
             visual.Bind(
                 parameters.Domain,
-                parameters.Runtime != null ? parameters.Runtime.materialPalette : null,
+                parameters.Runtime != null ? parameters.Runtime.colorProfile : null,
                 parameters.Runtime != null ? parameters.Runtime.visualMaterials : null,
                 parameters.Runtime != null ? parameters.Runtime.juiceProfile : null);
             return visual;

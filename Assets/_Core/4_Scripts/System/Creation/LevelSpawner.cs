@@ -150,6 +150,8 @@ namespace SE001.System.Creation
             }
             activeContext.RegisterParticipant(
                 activeContext.LevelRoot.gameObject.AddComponent<SE001.HUD.PhaseCHudView>());
+            activeContext.RegisterParticipant(
+                activeContext.LevelRoot.gameObject.AddComponent<SE001.HUD.PhaseCResultHudController>());
             // DebugView is intentionally not part of production presentation ownership.
         }
 
@@ -180,6 +182,8 @@ namespace SE001.System.Creation
                 DestroyOwnedRoot(instance.transform);
                 throw new MissingComponentException("SandField prefab requires SandFieldVisual.");
             }
+            ColorProfile colorProfile = gameplayProfile != null ? gameplayProfile.colorProfile : null;
+            visual.SetPalette(colorProfile != null ? colorProfile.BuildSandLookup() : null);
             visual.Bind(activeContext.SandSimulation);
         }
 

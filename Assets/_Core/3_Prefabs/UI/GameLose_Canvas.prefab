@@ -583,7 +583,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7715528124371779292}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 7502060621486761191}
+        m_TargetAssemblyTypeName: LosePanel, Assembly-CSharp
+        m_MethodName: RestartLevel
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName:
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument:
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &4860512639081075095
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1256,6 +1268,8 @@ MonoBehaviour:
   cacheTapToHide: 0
   isAllowScrollCamera: 0
   blockTouched: 1
+  retryButton: {fileID: 606481173153584811}
+  resultLabel: {fileID: 2955805503233307879}
 --- !u!114 &2159370006903227241
 MonoBehaviour:
   m_ObjectHideFlags: 0

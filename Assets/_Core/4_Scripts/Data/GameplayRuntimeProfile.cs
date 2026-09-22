@@ -6,7 +6,7 @@ namespace SE001.Data
     [CreateAssetMenu(fileName = "GameplayRuntimeProfile", menuName = "SE001/Profiles/Gameplay Runtime")]
     public sealed class GameplayRuntimeProfile : ScriptableObject
     {
-        public MaterialPalette materialPalette;
+        public ColorProfile colorProfile;
         public SourceProfile sourceProfile;
         public CupProfile cupProfile;
         public DrawPathProfile drawPathProfile;

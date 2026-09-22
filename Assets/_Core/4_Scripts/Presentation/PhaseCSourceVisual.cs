@@ -15,7 +15,7 @@ namespace SE001.Presentation
         [SerializeField] private float visualDepth = -0.3f;
 
         private SourceDomain source;
-        private MaterialPalette palette;
+        private ColorProfile palette;
         private MaterialPropertyBlock block;
         private Material sourceMaterial;
         private Material nozzleMaterial;
@@ -26,7 +26,7 @@ namespace SE001.Presentation
         public Renderer BodyRenderer => bodyRenderer;
         public Renderer NozzleRenderer => nozzleRenderer;
 
-        public void Bind(SourceDomain value, MaterialPalette valuePalette, PhaseCVisualMaterials materials, JuiceProfile juice)
+        public void Bind(SourceDomain value, ColorProfile valuePalette, PhaseCVisualMaterials materials, JuiceProfile juice)
         {
             source = value ?? throw new global::System.ArgumentNullException(nameof(value));
             palette = valuePalette;

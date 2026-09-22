@@ -17,14 +17,3 @@ MonoBehaviour:
   maxStepsPerFrame: 4
   maxCells: 262144
   enableLateralSlide: 1
-  slide: 0.98
-  airMomentumRetention: 0
-  airborneMinSpeed: 2
-  airDropProbe: 3
-  slopeAccel: 0.3
-  splashDownhillBias: 0.95
-  slopeProbe: 6
-  momentumCarry: 0.9
-  maxSlideCells: 4
-  flowOrderedRows: 1
-  flowOrderThreshold: 1

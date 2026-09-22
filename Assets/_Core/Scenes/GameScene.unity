@@ -770,7 +770,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levelSpawner: {fileID: 1743770822}
   autoLoadFirstLevel: 1
-  firstLevelId: phase_c_level_02
+  firstLevelId: phase_c_level_01
+  levelSequence: {fileID: 11400000, guid: 327e7a2610a0c604596996985e4f92d5, type: 2}
 --- !u!114 &1743770822
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -786,7 +787,7 @@ MonoBehaviour:
   sandSimulationProfile: {fileID: 11400000, guid: bffe3b555195f2948b2ca0b382d1b105, type: 2}
   prefabProfile: {fileID: 11400000, guid: 21989156fdc2fb344aadeeb526716169, type: 2}
   layoutVisualProfile: {fileID: 11400000, guid: cda9bb85a4c552b4bbebb4d190586107, type: 2}
-  gameplayProfile: {fileID: 0}
+  gameplayProfile: {fileID: 11400000, guid: b53580d5710d6c24aa8bcdc27bd0233f, type: 2}
   simulationCellSize: 0.1
   simulationMaxCells: 262144
 --- !u!1 &1745629824

@@ -36,7 +36,7 @@ public abstract class UIPanels<T> : MonoBehaviour where T : Component
         get
         {
             if (instance != null) return instance;
-            instance = FindAnyObjectByType<T>();
+            instance = FindAnyObjectByType<T>(FindObjectsInactive.Include);
             if (instance == null)
             {
                 GameObject g = new GameObject(typeof(T).Name);
@@ -156,6 +156,17 @@ public abstract class UIPanels<T> : MonoBehaviour where T : Component
         return default;
     }
 
+    public bool HasPanelSource<T>() where T : Panel
+    {
+        for (int i = 0; i < listPanelSource.Count; i++)
+        {
+            if (listPanelSource[i] is T)
+                return true;
+        }
+
+        return false;
+    }
+
     public void GetActivePanels<T>(List<T> lst) where T : Panel
     {
         lst.Clear();
@@ -237,7 +248,9 @@ public abstract class UIPanels<T> : MonoBehaviour where T : Component
             panels.Insert(0, p);
         }
         else
-            panels.Add(p); //.Push(p);
+        {
+            panels.Add(p);
+        }
 
         UpdateActiveScroll();
         return p;

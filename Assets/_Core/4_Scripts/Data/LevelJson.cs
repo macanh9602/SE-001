@@ -14,6 +14,7 @@ namespace SE001.Data
         public List<SourceData> sources = new List<SourceData>();
         public List<CupData> cups = new List<CupData>();
         public float drawInkBudget;
+        public bool requiresDrawing;
 
         public static SE001LevelJson FromJson(string json)
         {
@@ -40,9 +41,26 @@ namespace SE001.Data
         }
     }
 
-    [Serializable] public sealed class BoardData { public Vector2 size = Vector2.one; public List<PolygonContourData> wallContours = new List<PolygonContourData>(); }
-    [Serializable] public sealed class StaticObstacleData { public string stableId = string.Empty; public List<PolygonContourData> contours = new List<PolygonContourData>(); public string styleId = string.Empty; }
-    [Serializable] public sealed class PolygonContourData { public List<Vector2> points = new List<Vector2>(); }
+    [Serializable]
+    public sealed class BoardData
+    {
+        public Vector2 size = Vector2.one;
+        public List<PolygonContourData> wallContours = new List<PolygonContourData>();
+    }
+
+    [Serializable]
+    public sealed class StaticObstacleData
+    {
+        public string stableId = string.Empty;
+        public List<PolygonContourData> contours = new List<PolygonContourData>();
+        public string styleId = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class PolygonContourData
+    {
+        public List<Vector2> points = new List<Vector2>();
+    }
     [Serializable]
     public sealed class SourceData
     {
@@ -55,5 +73,13 @@ namespace SE001.Data
         public float emissionRate;
         public float streamWidth;
     }
-    [Serializable] public sealed class CupData { public string stableId = string.Empty; public int acceptedMaterialId = 1; public Vector2 position; public Vector2 size = Vector2.one; public int requiredAmount; }
+    [Serializable]
+    public sealed class CupData
+    {
+        public string stableId = string.Empty;
+        public int acceptedMaterialId = 1;
+        public Vector2 position;
+        public Vector2 size = Vector2.one;
+        public int requiredAmount;
+    }
 }

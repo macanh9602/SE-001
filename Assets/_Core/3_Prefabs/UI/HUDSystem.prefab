@@ -148,31 +148,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383b11d0eb8941345b59c3e1ae33f663, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HUDSystem
-  serializationData:
-    SerializedFormat: 2
-    SerializedBytes: 
-    ReferencedUnityObjects: []
-    SerializedBytesString: 
-    Prefab: {fileID: 0}
-    PrefabModificationsReferencedUnityObjects: []
-    PrefabModifications: []
-    SerializationNodes:
-    - Name: panels
-      Entry: 7
-      Data: 0|System.Collections.Generic.List`1[[Panel, Assembly-CSharp]], mscorlib
-    - Name: 
-      Entry: 12
-      Data: 0
-    - Name: 
-      Entry: 13
-      Data: 
-    - Name: 
-      Entry: 8
-      Data: 
   rootUI: {fileID: 1291255516690817297}
   listPanelSource:
-  - {fileID: 142496787449621600, guid: 73fe12c922956044cb828bd537a5569f, type: 3}
-  - {fileID: 8891750307618901419, guid: ae5cd17c05745a648844282332672f3f, type: 3}
+  - {fileID: 7502060621486761191, guid: 85cbb42b5b8dd904e9646276e4557c0d, type: 3}
+  - {fileID: 3477413640553076426, guid: ba040ab3a0d969b499f157ef64cafaa1, type: 3}
 --- !u!1 &7127446723626837846
 GameObject:
   m_ObjectHideFlags: 0

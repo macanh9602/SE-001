@@ -9,21 +9,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e1557c1fcb9453f4ba5b4e7b41226479, type: 3}
-  m_Name: PhaseCMaterialPalette
+  m_Script: {fileID: 11500000, guid: 18137469b9e1d2d4f9ea95379ad0fa2f, type: 3}
+  m_Name: PhaseCColorProfile
   m_EditorClassIdentifier: 
   entries:
-  - materialId: 1
+  - colorId: 1
     sandColor:
       serializedVersion: 2
       rgba: 4283384296
     uiColor:
       serializedVersion: 2
       rgba: 4283384296
-  - materialId: 2
+    displayName: Coral
+  - colorId: 2
     sandColor:
       serializedVersion: 2
       rgba: 4294929199
     uiColor:
       serializedVersion: 2
       rgba: 4294929199
+    displayName: Blue

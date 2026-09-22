@@ -15,11 +15,23 @@ namespace SE001.Editor
         private static void CreateDefaults()
         {
             string folder = "Assets/_Core/Resources/Profiles";
-            MaterialPalette palette = GetOrCreate<MaterialPalette>(folder + "/PhaseCMaterialPalette.asset");
-            palette.entries = new List<MaterialPaletteEntry>
+            ColorProfile colorProfile = GetOrCreate<ColorProfile>(folder + "/PhaseCColorProfile.asset");
+            colorProfile.entries = new List<ColorProfileEntry>
             {
-                new MaterialPaletteEntry { materialId = 1, sandColor = new Color32(232, 65, 79, 255), uiColor = new Color32(232, 65, 79, 255) },
-                new MaterialPaletteEntry { materialId = 2, sandColor = new Color32(47, 107, 255, 255), uiColor = new Color32(47, 107, 255, 255) }
+                new ColorProfileEntry
+                {
+                    colorId = 1,
+                    sandColor = new Color32(232, 65, 79, 255),
+                    uiColor = new Color32(232, 65, 79, 255),
+                    displayName = "Coral"
+                },
+                new ColorProfileEntry
+                {
+                    colorId = 2,
+                    sandColor = new Color32(47, 107, 255, 255),
+                    uiColor = new Color32(47, 107, 255, 255),
+                    displayName = "Blue"
+                }
             };
             SourceProfile source = GetOrCreate<SourceProfile>(folder + "/PhaseCSourceProfile.asset");
             source.bodySize = new Vector2(0.8f, 1.2f);
@@ -27,7 +39,7 @@ namespace SE001.Editor
             DrawPathProfile draw = GetOrCreate<DrawPathProfile>(folder + "/PhaseCDrawPathProfile.asset");
             JuiceProfile juice = GetOrCreate<JuiceProfile>(folder + "/PhaseCJuiceProfile.asset");
             GameplayRuntimeProfile runtime = GetOrCreate<GameplayRuntimeProfile>(folder + "/PhaseCGameplayRuntimeProfile.asset");
-            runtime.materialPalette = palette;
+            runtime.colorProfile = colorProfile;
             runtime.sourceProfile = source;
             runtime.cupProfile = cup;
             runtime.drawPathProfile = draw;
@@ -49,9 +61,11 @@ namespace SE001.Editor
             runtime.levelSequence = sequence;
             sequence.levels = new List<LevelSequenceEntry>
             {
-                new LevelSequenceEntry { levelId = "phase_c_level_02" }
+                new LevelSequenceEntry { levelId = "phase_c_level_01" },
+                new LevelSequenceEntry { levelId = "phase_c_level_02" },
+                new LevelSequenceEntry { levelId = "phase_c_level_03" }
             };
-            EditorUtility.SetDirty(palette);
+            EditorUtility.SetDirty(colorProfile);
             EditorUtility.SetDirty(source);
             EditorUtility.SetDirty(runtime);
             EditorUtility.SetDirty(sequence);

@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -21,18 +22,21 @@ namespace SE001.Editor
             GameObject owner = new GameObject("PhaseCPerfCapture");
             LevelManager manager = owner.AddComponent<LevelManager>();
             StringBuilder report = new StringBuilder();
-            report.AppendLine("# Phase C C-R1 performance capture");
+            report.AppendLine("# Phase C C4 performance capture");
             report.AppendLine();
             report.AppendLine("EditMode capture using `GameplayManager.AdvanceSteps` in chunks of 60. GC delta is approximate.");
             report.AppendLine();
-            report.AppendLine("| Level | Grid | Steps | Max grains | Avg ms/step | Max ms/step | GC delta bytes | Result |");
-            report.AppendLine("|---|---:|---:|---:|---:|---:|---:|---|");
+            report.AppendLine("| Level | Grid | Steps | Max grains | Sand surface renderers | Avg ms/step | Max ms/step | GC delta bytes | Result |");
+            report.AppendLine("|---|---:|---:|---:|---:|---:|---:|---:|---|");
 
             try
             {
-                string[] levels = { "phase_c_level_02" };
+                string[] levels = { "phase_c_level_01", "phase_c_level_02", "phase_c_level_03" };
                 for (int i = 0; i < levels.Length; i++) report.AppendLine(CaptureLevel(manager, levels[i]));
-                string path = Path.Combine(Directory.GetCurrentDirectory(), "handoff/phase-C-complete-playable-core/perf-C-R1.md");
+                string evidenceFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(), "handoff/phase-C-complete-playable-core/evidence");
+                Directory.CreateDirectory(evidenceFolder);
+                string path = Path.Combine(evidenceFolder, "phase-c-perf-c4.md");
                 File.WriteAllText(path, report.ToString(), Encoding.UTF8);
                 AssetDatabase.Refresh();
                 UnityEngine.Debug.Log("SE001 Phase C performance capture written to " + path);
@@ -48,6 +52,7 @@ namespace SE001.Editor
         {
             manager.BeginLevel(levelId);
             GameplayManager gameplay = manager.CurrentContext.LevelRoot.GetComponent<GameplayManager>();
+            CommitRepresentativeStrokes(gameplay, levelId);
             for (int i = 0; i < gameplay.Sources.Count; i++)
                 if (!gameplay.Sources[i].IsPouring) gameplay.ToggleSource(gameplay.Sources[i].StableId);
 
@@ -75,8 +80,10 @@ namespace SE001.Editor
             int gcDelta = (int)GC.GetTotalMemory(false) - gcBefore;
             string result = gameplay.State == GameState.Playing ? "STEP_CAP" : gameplay.State.ToString();
             Vector2Int grid = new Vector2Int(manager.CurrentContext.SandSimulation.State.Width, manager.CurrentContext.SandSimulation.State.Height);
+            int sandSurfaceRenderers = CountSandSurfaceRenderers(manager.CurrentContext.LevelRoot);
             manager.UnloadCurrentLevel();
-            return $"| {levelId} | {grid.x}x{grid.y} | {steps} | {maxGrains} | {avgMsPerStep:0.000} | {maxMsPerStep:0.000} | {gcDelta} | {result} |";
+            return $"| {levelId} | {grid.x}x{grid.y} | {steps} | {maxGrains} | {sandSurfaceRenderers} | " +
+                $"{avgMsPerStep:0.000} | {maxMsPerStep:0.000} | {gcDelta} | {result} |";
         }
 
         private static int CountGrains(byte[] cells)
@@ -84,6 +91,37 @@ namespace SE001.Editor
             int count = 0;
             for (int i = 0; i < cells.Length; i++) if (cells[i] != 0) count++;
             return count;
+        }
+
+        private static int CountSandSurfaceRenderers(Transform levelRoot)
+        {
+            MeshFilter[] filters = levelRoot.GetComponentsInChildren<MeshFilter>(true);
+            int count = 0;
+            for (int i = 0; i < filters.Length; i++)
+                if (filters[i].sharedMesh != null && filters[i].sharedMesh.name == "SandFieldSurface") count++;
+            return count;
+        }
+
+        private static void CommitRepresentativeStrokes(GameplayManager gameplay, string levelId)
+        {
+            if (levelId == "phase_c_level_02")
+            {
+                gameplay.CommitStroke(Line(new Vector2(3f, 14f), new Vector2(4.5f, 8.6f), 12), 0.3f);
+                gameplay.CommitStroke(Line(new Vector2(4.5f, 8.2f), new Vector2(3f, 6f), 8), 0.3f);
+            }
+            else if (levelId == "phase_c_level_03")
+            {
+                gameplay.CommitStroke(Line(new Vector2(5f, 12f), new Vector2(6f, 12f), 4), 0.3f);
+                gameplay.CommitStroke(Line(new Vector2(5f, 6f), new Vector2(6f, 6f), 4), 0.3f);
+            }
+        }
+
+        private static List<Vector2> Line(Vector2 start, Vector2 end, int points)
+        {
+            List<Vector2> result = new List<Vector2>(points);
+            for (int i = 0; i < points; i++)
+                result.Add(Vector2.Lerp(start, end, i / (float)(points - 1)));
+            return result;
         }
     }
 }

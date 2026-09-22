@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e5881c2b2368cf4ba7f90d195051feb, type: 3}
   m_Name: PhaseCGameplayRuntimeProfile
   m_EditorClassIdentifier: 
-  materialPalette: {fileID: 11400000, guid: d4d3765c43985e34dba726eed14425cf, type: 2}
+  colorProfile: {fileID: 11400000, guid: 8e92134f24ef2624e98fa75fa24cc005, type: 2}
   sourceProfile: {fileID: 11400000, guid: 95a18833893415d449302bd75dc33093, type: 2}
   cupProfile: {fileID: 11400000, guid: f498e89b81871f446ab1739e3680483b, type: 2}
   drawPathProfile: {fileID: 11400000, guid: 8f3fc432f7255c84cb31515f306e7b09, type: 2}

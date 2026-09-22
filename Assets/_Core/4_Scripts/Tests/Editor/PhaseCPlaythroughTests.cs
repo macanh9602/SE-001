@@ -33,7 +33,7 @@ namespace SE001.Tests
         [Test]
         public void Playthrough_Level01_TapOnly_Wins()
         {
-            GameplayManager game = Load("phase_c_level_02");
+            GameplayManager game = Load("phase_c_level_01");
             game.ToggleSource("source_coral");
             RunToEnd(game);
             Assert.That(game.State, Is.EqualTo(GameState.Won), Describe(game));
@@ -44,27 +44,28 @@ namespace SE001.Tests
         {
             GameplayManager game = Load("phase_c_level_02");
             game.ToggleSource("source_coral");
+            game.ToggleSource("source_blue");
             RunToEnd(game);
             Assert.That(game.State, Is.EqualTo(GameState.Lost), Describe(game));
             Assert.That(game.LastLoseReason, Is.EqualTo(LoseReason.NotFilled));
         }
 
         [Test]
-        public void Playthrough_Level02_ScriptedDraw_Wins()
+        public void Playthrough_Level02_TwoColors_Wins()
         {
             GameplayManager game = Load("phase_c_level_02");
-            // Ramp under the plank's right edge (x≈7.9) guiding sand down-right into the cup at x=9.6.
-            Assert.That(game.CommitStroke(Line(new Vector2(7.5f, 6.2f), new Vector2(9.3f, 3.1f), 12), 0.3f), Is.True);
+            Assert.That(game.CommitStroke(Line(new Vector2(3f, 14f), new Vector2(4.5f, 8.6f), 12), 0.3f), Is.True);
+            Assert.That(game.CommitStroke(Line(new Vector2(4.5f, 8.2f), new Vector2(3f, 6f), 8), 0.3f), Is.True);
             game.ToggleSource("source_coral");
+            game.ToggleSource("source_blue");
             RunToEnd(game);
             Assert.That(game.State, Is.EqualTo(GameState.Won), Describe(game));
         }
 
         [Test]
-        public void Playthrough_Level03_WrongRoute_LosesWrongCup()
+        public void Playthrough_Level03_WrongCup_Loses()
         {
-            GameplayManager game = Load("phase_c_level_02");
-            // Ramp carrying coral sand (x=3.0) over the obstacle into the blue cup (x=9.45).
+            GameplayManager game = Load("phase_c_level_03");
             Assert.That(game.CommitStroke(Line(new Vector2(2.3f, 12.2f), new Vector2(7.7f, 8.8f), 16), 0.3f), Is.True);
             game.ToggleSource("source_coral");
             RunToEnd(game);
@@ -73,9 +74,11 @@ namespace SE001.Tests
         }
 
         [Test]
-        public void Playthrough_Level03_Correct_Wins()
+        public void Playthrough_Level03_TwoStrokes_Wins()
         {
-            GameplayManager game = Load("phase_c_level_02");
+            GameplayManager game = Load("phase_c_level_03");
+            Assert.That(game.CommitStroke(Line(new Vector2(5f, 12f), new Vector2(6f, 12f), 4), 0.3f), Is.True);
+            Assert.That(game.CommitStroke(Line(new Vector2(5f, 6f), new Vector2(6f, 6f), 4), 0.3f), Is.True);
             game.ToggleSource("source_coral");
             game.ToggleSource("source_blue");
             RunToEnd(game);
@@ -118,6 +121,27 @@ namespace SE001.Tests
             Assert.That(source.HitTest(bodyCenter + new Vector2(1.5f, 0f), 0.2f), Is.False, "Far away must not hit.");
         }
 
+        [Test]
+        public void GameOver_SimKeepsSettling()
+        {
+            GameplayManager game = Load("phase_c_level_02");
+            Assert.That(game.CommitStroke(Line(new Vector2(3f, 14f), new Vector2(4.5f, 8.6f), 12), 0.3f), Is.True);
+            Assert.That(game.CommitStroke(Line(new Vector2(4.5f, 8.2f), new Vector2(3f, 6f), 8), 0.3f), Is.True);
+            game.ToggleSource("source_coral");
+            game.ToggleSource("source_blue");
+            RunUntilStateChange(game);
+
+            byte[] before = (byte[])game.Context.SandSimulation.State.Cells.Clone();
+            game.AdvanceSteps(1);
+            byte[] after = game.Context.SandSimulation.State.Cells;
+            int changedCells = 0;
+            for (int i = 0; i < before.Length; i++)
+                if (before[i] != after[i]) changedCells++;
+
+            Assert.That(game.State, Is.EqualTo(GameState.Won));
+            Assert.That(changedCells, Is.GreaterThan(0), "Post-result sand must continue settling.");
+        }
+
         private GameplayManager Load(string levelId)
         {
             levelManager.BeginLevel(levelId);
@@ -138,6 +162,15 @@ namespace SE001.Tests
             int played = 0;
             while (game.State == GameState.Playing && played < MaxSteps) played += game.AdvanceSteps(100);
             game.AdvanceSteps(2000);
+            return played;
+        }
+
+        private static int RunUntilStateChange(GameplayManager game)
+        {
+            int played = 0;
+            while (game.State == GameState.Playing && played < MaxSteps)
+                played += game.AdvanceSteps(100);
+            Assert.That(game.State, Is.Not.EqualTo(GameState.Playing), "Gameplay did not reach a result state.");
             return played;
         }
 

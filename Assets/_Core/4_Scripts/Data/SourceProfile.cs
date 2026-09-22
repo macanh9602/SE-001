@@ -7,7 +7,7 @@ namespace SE001.Data
     {
         public Vector2 bodySize = new Vector2(0.8f, 1.2f);
         public float emissionRate = 16f;
-        public int streamWidth = 1;
+        public int streamWidth = 6;
         public float valveOpenDelay = 0.2f;
         public float valveCloseRotateTime = 0.15f;
         public float hitPadding = 0.2f;

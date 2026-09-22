@@ -30187,7 +30187,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2337289526322120180}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 3477413640553076426}
+        m_TargetAssemblyTypeName: WinPanel, Assembly-CSharp
+        m_MethodName: NextLevel
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName:
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument:
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2965960479021145895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -45700,10 +45712,11 @@ MonoBehaviour:
   popupBase: {fileID: 8505706994903957030}
   hasPopupAnimation: 1
   preventBgScroll: 0
-  tapToHide: 1
+  tapToHide: 0
   cacheTapToHide: 0
   isAllowScrollCamera: 0
   blockTouched: 1
+  nextButton: {fileID: 848046133108493775}
 --- !u!114 &8505706994903957030
 MonoBehaviour:
   m_ObjectHideFlags: 0

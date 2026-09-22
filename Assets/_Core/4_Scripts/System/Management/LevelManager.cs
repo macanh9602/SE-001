@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using SE001.Data;
 using SE001.System.Creation;
 using UnityEngine;
 
@@ -14,11 +16,13 @@ namespace SE001.System.Management
 
         [SerializeField] private LevelSpawner levelSpawner;
         [SerializeField] private bool autoLoadFirstLevel = true;
-        private const string RequiredLevelId = "phase_c_level_02";
-        [SerializeField] private string firstLevelId = RequiredLevelId;
+        [SerializeField] private string firstLevelId = "phase_c_level_01";
+        [SerializeField] private PhaseCLevelSequence levelSequence;
 
         private int nextGeneration;
         private LevelContext currentContext;
+        private readonly LevelReadinessGate readiness = new LevelReadinessGate();
+        private bool isLoading;
 
         public event Action<LevelContext> LevelReady;
         public event Action<LevelContext> LevelWillUnload;
@@ -26,18 +30,30 @@ namespace SE001.System.Management
         public static LevelManager Instance => instance;
         public LevelSpawner Spawner => levelSpawner;
         public LevelContext CurrentContext => currentContext;
-        public LevelReadinessGate Readiness { get; } = new LevelReadinessGate();
-        public bool IsLoading { get; private set; }
+        public LevelReadinessGate Readiness => readiness;
+        public bool IsLoading
+        {
+            get => isLoading;
+            private set => isLoading = value;
+        }
         public bool IsReady => currentContext != null && !currentContext.IsDisposed && Readiness.IsOpen;
 
         public bool CanBeginNextLevel()
         {
-            return false;
+            EnsureLevelSequence();
+            if (!IsReady || levelSequence == null || levelSequence.levels == null)
+                return false;
+            int index = FindCurrentLevelIndex();
+            return index >= 0 && index + 1 < levelSequence.levels.Count;
         }
 
         public bool BeginNextLevel()
         {
-            return false;
+            if (!CanBeginNextLevel())
+                return false;
+            string nextLevelId = levelSequence.levels[FindCurrentLevelIndex() + 1].levelId;
+            BeginLevel(nextLevelId);
+            return true;
         }
 
         private void Awake()
@@ -49,6 +65,7 @@ namespace SE001.System.Management
             }
 
             instance = this;
+            EnsureLevelSequence();
             if (levelSpawner == null && !TryGetComponent(out levelSpawner))
             {
                 throw new InvalidOperationException("LevelManager requires an explicitly wired LevelSpawner.");
@@ -73,12 +90,11 @@ namespace SE001.System.Management
 
         public void BeginLevel(string levelId)
         {
+            EnsureLevelSequence();
             if (string.IsNullOrWhiteSpace(levelId))
             {
                 throw new ArgumentException("A stable level id is required.", nameof(levelId));
             }
-
-            levelId = RequiredLevelId;
 
             if (IsLoading)
             {
@@ -193,6 +209,31 @@ namespace SE001.System.Management
             {
                 DestroyImmediate(target);
             }
+        }
+
+        private int FindCurrentLevelIndex()
+        {
+            if (currentContext == null || levelSequence == null || levelSequence.levels == null)
+                return -1;
+            for (int i = 0; i < levelSequence.levels.Count; i++)
+                if (levelSequence.levels[i].levelId == currentContext.LevelId)
+                    return i;
+            return -1;
+        }
+
+        public IReadOnlyList<LevelSequenceEntry> GetLevelSequence()
+        {
+            EnsureLevelSequence();
+            return levelSequence != null ? levelSequence.levels : Array.Empty<LevelSequenceEntry>();
+        }
+
+        private void EnsureLevelSequence()
+        {
+            if (levelSequence != null)
+                return;
+            GameplayRuntimeProfile runtime =
+                Resources.Load<GameplayRuntimeProfile>("Profiles/PhaseCGameplayRuntimeProfile");
+            levelSequence = runtime != null ? runtime.levelSequence : null;
         }
     }
 }

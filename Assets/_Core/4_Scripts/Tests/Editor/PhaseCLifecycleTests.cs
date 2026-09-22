@@ -28,7 +28,7 @@ namespace SE001.Tests
         [Test]
         public void PhaseC_ReloadTenTimes_NoVisualAccumulation()
         {
-            string[] levels = { "phase_c_level_02" };
+            string[] levels = { "phase_c_level_01", "phase_c_level_02", "phase_c_level_03" };
             int baselineMeshes = CountTransientMeshes();
             for (int levelIndex = 0; levelIndex < levels.Length; levelIndex++)
             {
@@ -43,10 +43,10 @@ namespace SE001.Tests
                     Assert.That(manager.CurrentContext.LevelRoot.childCount, Is.EqualTo(childCount));
                     Assert.That(
                         manager.CurrentContext.SourceRoot.GetComponentsInChildren<PhaseCSourceVisual>(),
-                        Has.Length.EqualTo(2));
+                        Has.Length.EqualTo(levelIndex == 0 ? 1 : 2));
                     Assert.That(
                         manager.CurrentContext.CupRoot.GetComponentsInChildren<PhaseCCupVisual>(),
-                        Has.Length.EqualTo(2));
+                        Has.Length.EqualTo(levelIndex == 0 ? 1 : 2));
                     Assert.That(
                         manager.CurrentContext.DynamicDrawRoot.Find("DrawPreview"),
                         Is.Not.Null);
@@ -64,7 +64,12 @@ namespace SE001.Tests
         [Test]
         public void PhaseC_NextFollowsSequence_DisabledOnLast()
         {
-            manager.BeginLevel("phase_c_level_02");
+            manager.BeginLevel("phase_c_level_01");
+            Assert.That(manager.CanBeginNextLevel(), Is.True);
+            Assert.That(manager.BeginNextLevel(), Is.True);
+            Assert.That(manager.CurrentContext.LevelId, Is.EqualTo("phase_c_level_02"));
+            Assert.That(manager.BeginNextLevel(), Is.True);
+            Assert.That(manager.CurrentContext.LevelId, Is.EqualTo("phase_c_level_03"));
             Assert.That(manager.CanBeginNextLevel(), Is.False);
             Assert.That(manager.BeginNextLevel(), Is.False);
         }

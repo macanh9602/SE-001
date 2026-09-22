@@ -19,7 +19,7 @@ namespace SE001.Presentation
 
         private readonly List<Mesh> generatedMeshes = new List<Mesh>();
         private CupDomain cup;
-        private MaterialPalette palette;
+        private ColorProfile palette;
         private PhaseCVisualMaterials materials;
         private MaterialPropertyBlock block;
         private MeshFilter fillFilter;
@@ -34,7 +34,7 @@ namespace SE001.Presentation
             DestroyGeneratedMeshes();
         }
 
-        public void Bind(CupDomain value, MaterialPalette valuePalette, PhaseCVisualMaterials valueMaterials)
+        public void Bind(CupDomain value, ColorProfile valuePalette, PhaseCVisualMaterials valueMaterials)
         {
             cup = value ?? throw new global::System.ArgumentNullException(nameof(value));
             palette = valuePalette;

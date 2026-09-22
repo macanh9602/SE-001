@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using SE001.Data;
 using SE001.Gameplay;
 using SE001.Geometry;
 using SE001.Simulation.Sand;
+using SE001.System.Management;
 using SE001.Presentation;
 using UnityEngine;
 
@@ -39,7 +41,15 @@ namespace SE001.Tests
         public void CupGeometry_MatchesContractExample()
         {
             CupProfile profile = ScriptableObject.CreateInstance<CupProfile>();
-            CupDomain cup = new CupDomain(new CupData { stableId = "cup", acceptedMaterialId = 1, position = new Vector2(5.4f, 1f), size = new Vector2(2f, 1.5f), requiredAmount = 1 }, profile, 1, 0.1f);
+            CupData data = new CupData
+            {
+                stableId = "cup",
+                acceptedMaterialId = 1,
+                position = new Vector2(5.4f, 1f),
+                size = new Vector2(2f, 1.5f),
+                requiredAmount = 1
+            };
+            CupDomain cup = new CupDomain(data, profile, 1, 0.1f);
             Assert.That(cup.EffectiveWall, Is.EqualTo(0.25f).Within(0.0001f));
             Assert.That(cup.MinY, Is.EqualTo(12));
             Assert.That(cup.FillLineY, Is.GreaterThan(1.25f));
@@ -52,7 +62,15 @@ namespace SE001.Tests
             CupProfile profile = ScriptableObject.CreateInstance<CupProfile>();
             LayoutMaskSet masks = OpenBoard(120, 200);
             SandSimulation sim = new SandSimulation(Profile(), masks);
-            CupDomain cup = new CupDomain(new CupData { stableId = "cup", acceptedMaterialId = 1, position = new Vector2(5.4f, 1f), size = new Vector2(2f, 1.5f), requiredAmount = 1 }, profile, 1, 0.1f);
+            CupData data = new CupData
+            {
+                stableId = "cup",
+                acceptedMaterialId = 1,
+                position = new Vector2(5.4f, 1f),
+                size = new Vector2(2f, 1.5f),
+                requiredAmount = 1
+            };
+            CupDomain cup = new CupDomain(data, profile, 1, 0.1f);
             cup.RegisterWalls(sim, 0.1f, profile.wallThickness);
             Assert.That(sim.TryEmit(54, 12, 1), Is.True);
             cup.Collect(sim);
@@ -67,7 +85,15 @@ namespace SE001.Tests
         {
             CupProfile profile = ScriptableObject.CreateInstance<CupProfile>();
             SandSimulation sim = new SandSimulation(Profile(), OpenBoard(120, 200));
-            CupDomain cup = new CupDomain(new CupData { stableId = "cup", acceptedMaterialId = 1, position = new Vector2(5.4f, 1f), size = new Vector2(2f, 1.5f), requiredAmount = 1 }, profile, 1, 0.1f);
+            CupData data = new CupData
+            {
+                stableId = "cup",
+                acceptedMaterialId = 1,
+                position = new Vector2(5.4f, 1f),
+                size = new Vector2(2f, 1.5f),
+                requiredAmount = 1
+            };
+            CupDomain cup = new CupDomain(data, profile, 1, 0.1f);
             cup.RegisterWalls(sim, 0.1f, profile.wallThickness);
             for (int y = cup.MinY; y <= cup.MaxY; y++) for (int x = 40; x < 70; x++) sim.TryEmit(x, y, 1);
             cup.Collect(sim);
@@ -93,7 +119,7 @@ namespace SE001.Tests
         }
 
         [Test]
-        public void Sim_PileReachesStableState()
+        public void Sim_ReachesStableState()
         {
             SandSimulation sim = new SandSimulation(Profile(), OpenBoard(60, 60));
             for (int i = 0; i < 40; i++) sim.EmitRegion(28, 55, 32, 55, 1);
@@ -102,6 +128,34 @@ namespace SE001.Tests
             for (int i = 0; i < 2000 && (lastMoved = sim.Step()) > 0; i++) { }
             Assert.That(lastMoved, Is.EqualTo(0), "Pile never settled (endless jitter).");
             sim.Dispose();
+        }
+
+        [Test]
+        public void Stroke_TruncatedAtInk()
+        {
+            GameObject owner = new GameObject("StrokeInkGuard");
+            LevelManager manager = owner.AddComponent<LevelManager>();
+            try
+            {
+                manager.BeginLevel("phase_c_level_01");
+                GameplayManager gameplay = manager.CurrentContext.LevelRoot.GetComponent<GameplayManager>();
+                List<Vector2> accepted = null;
+                gameplay.StrokeCommitted += (points, thickness) => accepted = new List<Vector2>(points);
+                Vector2 start = new Vector2(1f, 10f);
+                Vector2 end = start + Vector2.right * gameplay.InkBudget * 2f;
+
+                Assert.That(gameplay.CommitStroke(new[] { start, end }, 0.3f), Is.True);
+                Assert.That(gameplay.InkRemaining, Is.EqualTo(0f).Within(0.0001f));
+                Assert.That(accepted, Is.Not.Null);
+                Assert.That(accepted.Count, Is.EqualTo(2));
+                Assert.That(Vector2.Distance(start, accepted[1]), Is.EqualTo(gameplay.InkBudget).Within(0.0001f));
+            }
+            finally
+            {
+                if (manager.CurrentContext != null)
+                    manager.UnloadCurrentLevel();
+                Object.DestroyImmediate(owner);
+            }
         }
 
         [Test]
@@ -144,13 +198,19 @@ namespace SE001.Tests
             SandSimulation c = new SandSimulation(Profile(), OpenBoard(40, 40), 2u);
             for (int i = 0; i < 60; i++)
             {
-                a.EmitRegion(18, 38, 22, 38, 1); b.EmitRegion(18, 38, 22, 38, 1); c.EmitRegion(18, 38, 22, 38, 1);
-                a.Step(); b.Step(); c.Step();
+                a.EmitRegion(18, 38, 22, 38, 1);
+                b.EmitRegion(18, 38, 22, 38, 1);
+                c.EmitRegion(18, 38, 22, 38, 1);
+                a.Step();
+                b.Step();
+                c.Step();
             }
 
             Assert.That(b.State.Cells, Is.EqualTo(a.State.Cells));
             Assert.That(c.State.Cells, Is.Not.EqualTo(a.State.Cells));
-            a.Dispose(); b.Dispose(); c.Dispose();
+            a.Dispose();
+            b.Dispose();
+            c.Dispose();
         }
 
         /// <summary>Drops grains onto a shallow (~1:4) ramp and returns the mean distance (cells) from the drop column where they rest.</summary>
@@ -166,9 +226,14 @@ namespace SE001.Tests
 
             for (int i = 0; i < 20; i++) sim.TryEmit(10 + (i % 3), 58, 1);
             for (int i = 0; i < 1500; i++) sim.Step();
-            float sum = 0f; int n = 0;
+            float sum = 0f;
+            int n = 0;
             for (int i = 0; i < sim.State.Cells.Length; i++)
-                if (sim.State.Cells[i] != 0) { sum += Mathf.Abs(i % sim.State.Width - 11f); n++; }
+                if (sim.State.Cells[i] != 0)
+                {
+                    sum += Mathf.Abs(i % sim.State.Width - 11f);
+                    n++;
+                }
             sim.Dispose();
             return n > 0 ? sum / n : 0f;
         }

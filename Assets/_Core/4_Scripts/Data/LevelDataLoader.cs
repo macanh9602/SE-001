@@ -1,4 +1,5 @@
 using System;
+using SE001.Simulation.Sand;
 using UnityEngine;
 
 namespace SE001.Data
@@ -11,9 +12,11 @@ namespace SE001.Data
             TextAsset asset = Resources.Load<TextAsset>("Levels/" + levelId);
             if (asset == null) throw new InvalidOperationException("Canonical level JSON was not found: " + levelId);
             SE001LevelJson level = SE001LevelJson.FromJson(asset.text);
-            MaterialPalette palette = Resources.Load<MaterialPalette>("Profiles/PhaseCMaterialPalette");
-            if (palette == null) throw new InvalidOperationException("Phase C MaterialPalette asset is missing.");
-            LevelDataValidator.Validate(level, palette);
+            ColorProfile colorProfile = Resources.Load<ColorProfile>("Profiles/PhaseCColorProfile");
+            if (colorProfile == null) throw new InvalidOperationException("Phase C ColorProfile asset is missing.");
+            SandSimulationProfile sandProfile = Resources.Load<SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile");
+            if (sandProfile == null) throw new InvalidOperationException("Phase C SandSimulationProfile asset is missing.");
+            LevelDataValidator.Validate(level, colorProfile, sandProfile.cellSize, sandProfile.maxCells);
             if (!string.Equals(level.levelId, levelId, StringComparison.Ordinal)) throw new FormatException("Level id does not match its resource path.");
             return level;
         }

@@ -23,13 +23,18 @@ namespace SE001.System.Management
         private Vector2 downScreen;
         private bool held;
         private bool drawing;
+        private Rect blockedGuiRect;
 
         /// <summary>Live preview points (board space) while dragging; for visuals only.</summary>
         public IReadOnlyList<Vector2> PreviewStroke => stroke;
         public bool IsDrawing => drawing;
         public float DrawThickness => drawThickness;
         /// <summary>Screen rect (GUI coords, y down) that should not start input, e.g. a dev overlay.</summary>
-        public Rect BlockedGuiRect { get; set; }
+        public Rect BlockedGuiRect
+        {
+            get => blockedGuiRect;
+            set => blockedGuiRect = value;
+        }
 
         public void Configure(DrawPathProfile profile, float hitPadding)
         {
@@ -55,7 +60,20 @@ namespace SE001.System.Management
             {
                 return;
             }
-            if (manager.State != GameState.Playing) { held = false; drawing = false; stroke.Clear(); return; }
+            if (HUDSystem.Instance != null && HUDSystem.Instance.BlockByPanel())
+            {
+                held = false;
+                drawing = false;
+                stroke.Clear();
+                return;
+            }
+            if (manager.State != GameState.Playing)
+            {
+                held = false;
+                drawing = false;
+                stroke.Clear();
+                return;
+            }
 
             Vector2 screen = Input.mousePosition;
             if (Input.GetMouseButtonDown(0))
@@ -110,7 +128,11 @@ namespace SE001.System.Management
                 SourceDomain source = manager.Sources[i];
                 if (!source.HitTest(boardPoint, sourceHitPadding)) continue;
                 float d = Vector2.Distance(boardPoint, source.Position + source.BodyOffset);
-                if (d < bestDistance) { best = source; bestDistance = d; }
+                if (d < bestDistance)
+                {
+                    best = source;
+                    bestDistance = d;
+                }
             }
 
             if (best != null) manager.ToggleSource(best.StableId);
@@ -129,7 +151,11 @@ namespace SE001.System.Management
             EventSystem es = EventSystem.current;
             if (es != null)
             {
-                if (uiPointer == null || uiPointerOwner != es) { uiPointer = new PointerEventData(es); uiPointerOwner = es; }
+                if (uiPointer == null || uiPointerOwner != es)
+                {
+                    uiPointer = new PointerEventData(es);
+                    uiPointerOwner = es;
+                }
                 uiPointer.position = screen;
                 uiHits.Clear();
                 es.RaycastAll(uiPointer, uiHits);

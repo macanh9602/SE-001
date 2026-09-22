@@ -19,7 +19,6 @@ namespace SE001.System.Management
         [Header("Level Selection")]
         [SerializeField, Min(1)] private int _firstLevelNumber = 1;
         [SerializeField, Min(1)] private int _lastLevelNumber = 1;
-        [SerializeField] private string _levelIdFormat = "level_{0:00}";
 
         private int selectedLevelNumber;
 
@@ -116,28 +115,32 @@ namespace SE001.System.Management
         private bool TryBuildLevelId(int levelNumber, out string levelId)
         {
             levelId = null;
-            if (string.IsNullOrWhiteSpace(_levelIdFormat))
+            ResolveLevelManager();
+            if (_levelManager == null)
             {
-                Debug.LogError("[ToolSelectLevelUI] Level Id Format is empty.", this);
+                Debug.LogError("[ToolSelectLevelUI] LevelManager is not available.", this);
                 return false;
             }
 
-            try
+            var sequence = _levelManager.GetLevelSequence();
+            int index = levelNumber - _firstLevelNumber;
+            if (index < 0 || index >= sequence.Count)
             {
-                levelId = string.Format(_levelIdFormat, levelNumber);
-                return !string.IsNullOrWhiteSpace(levelId);
-            }
-            catch (FormatException exception)
-            {
-                Debug.LogException(exception, this);
                 return false;
             }
+
+            levelId = sequence[index].levelId;
+            return !string.IsNullOrWhiteSpace(levelId);
         }
 
         private void NormalizeRange()
         {
             _firstLevelNumber = Mathf.Max(1, _firstLevelNumber);
-            _lastLevelNumber = Mathf.Max(_firstLevelNumber, _lastLevelNumber);
+            ResolveLevelManager();
+            if (_levelManager != null && _levelManager.GetLevelSequence().Count > 0)
+                _lastLevelNumber = _firstLevelNumber + _levelManager.GetLevelSequence().Count - 1;
+            else
+                _lastLevelNumber = Mathf.Max(_firstLevelNumber, _lastLevelNumber);
         }
 
         private void RefreshView()
@@ -159,7 +162,8 @@ namespace SE001.System.Management
 
             if (_btnLoadLv != null)
             {
-                _btnLoadLv.interactable = !string.IsNullOrWhiteSpace(_levelIdFormat);
+                _btnLoadLv.interactable = _levelManager != null &&
+                    _levelManager.GetLevelSequence().Count > 0;
             }
         }
     }
