@@ -1,60 +1,99 @@
 # Data Model — SE-001
 
-## 1. Ba loại data
+Data contract này triển khai architecture trong `SE001-ARCHITECTURE-BLUEPRINT.md`.
+
+## 1. Data categories
 
 | Loại | Ví dụ | Save? |
 |---|---|---|
-| Source of truth (authoring) | `SE001LevelJson`, entity stable IDs, authored layout/mask/source/cup data | Có |
-| Generated / baked | Validated lookup, resolved overrides, generated obstacle/simulation buffers | Không; regenerate được |
-| Runtime state | Per-level occupancy, sand cells, counters, pending emissions, semantic signals | Không; tạo khi load, hủy khi unload |
+| Authoring source-of-truth | `SE001LevelJson`, board, stable entity IDs, Source/Cup/StaticObstacle data | Có |
+| Generated/baked | Resolved lookup, valid/static masks, editor preview cache | Không; regenerate được |
+| Runtime state | Dynamic draw mask, sand buffers, counters, pending emissions, signals | Không; tạo/hủy theo level |
 
-Scene hierarchy, Mesh, Collider, debug geometry và ParticleSystem không phải source of truth.
+Scene hierarchy, Mesh, Collider, visual line, debug geometry và ParticleSystem không phải authoring
+source-of-truth.
 
-## 2. Level schema contract
+## 2. `SE001LevelJson`
 
-### `SE001LevelJson`
+| Field | Type | Contract |
+|---|---|---|
+| `schemaVersion` | int | Serialized contract version |
+| `levelId` | string | Stable unique level identifier |
+| `board` | object | Authored bounds/cell/valid-area contract |
+| `staticObstacles` | array | First-class authored obstacle definitions; có thể rỗng |
+| `sources` | array | Stable material source definitions; có thể rỗng |
+| `cups` | array | Stable collection target definitions; có thể rỗng |
 
-| Field | Type | Ý nghĩa | Bắt buộc |
-|---|---|---|---|
-| `schemaVersion` | int | Version của serialized contract | Có |
-| `levelId` | string | Stable level identifier | Có |
-| `board` | object | Authored board bounds/cell contract | Có |
-| `staticObstacles` | array | Stable obstacle definitions | Có, có thể rỗng |
-| `sources` | array | Stable material source definitions | Có, có thể rỗng |
-| `cups` | array | Stable collection target definitions | Có, có thể rỗng |
+Schema owner là Level Data feature. JSON nằm tại `Assets/_Core/Resources/Levels/`. Array index không
+phải identity; mọi entity dùng stable string ID.
 
-Schema owner là Level Data feature. File nằm tại `Assets/_Core/Resources/Levels/`; JSON là authoring source of truth.
+## 3. Entity contracts
 
-### Entity data
+### StaticObstacle
 
-Mọi entity dùng `stable id` dạng string; array index không phải identity. Reference tới ID không hợp lệ phải bị validator chặn.
+- Stable ID.
+- Authored polyline/shape points trong board space.
+- Thickness.
+- Optional presentation style ID.
+- Cùng data đi vào shared `ObstacleRasterizer` và presentation builder.
 
-## 3. Global vs level override
+Static obstacle mask là generated runtime data. Collider hoặc generated mesh không được serialize làm
+truth thay thế.
+
+### Source
+
+- Stable ID, material ID, authored position.
+- Logical material/grain amount.
+- Stream width/shape override chỉ khi product contract yêu cầu.
+
+Visual anchor có thể hỗ trợ alignment nhưng không quyết định logical emission position/count.
+
+### Cup
+
+- Stable ID, accepted material ID.
+- Authored sink shape/position/size.
+- Required count.
+- Foreign-material tolerance chỉ khi gameplay contract yêu cầu.
+
+Visual cup mesh không quyết định sink geometry.
+
+### Dynamic DrawStroke
+
+- Runtime source-of-truth là accepted player stroke command/state.
+- Không serialize ngược vào level JSON.
+- Dynamic mask dùng cùng board-space mapping/rasterization rules với StaticObstacle.
+- Retry/unload xóa cả visual stroke và dynamic mask.
+
+## 4. Runtime ownership
+
+- `LevelRuntimeState`: stable-ID index và semantic per-level records; non-static, không serialize.
+- `SandSimulation`: grain/material buffers, valid/static/dynamic masks và authoritative physical state.
+- `LevelContext`: lifetime/token và references do `LevelSpawner` tạo; không phải data source.
+- Editor `Document` chứa `SE001LevelJson`; `ViewState` và `DerivedState` không serialize vào JSON.
+
+## 5. Profiles and overrides
 
 | Giá trị | Global | Level override | Resolver |
 |---|---|---|---|
-| Simulation/feel tunable | Profile ScriptableObject | Chỉ khi story cho phép | Một resolver duy nhất |
-| Entity placement/count | Không | Level JSON | Level loader |
-| Presentation prefab/material | PrefabProfile | Không trong Story 000 | Factory/profile |
+| Simulation/feel tunable | Feature Profile | Chỉ khi story/data contract cho phép | Một resolver duy nhất |
+| Entity placement/count/geometry | Không | Level JSON | Level loader |
+| Presentation prefab/material | `PrefabProfile` | Không | Factory/profile |
 
-Override phải đi qua một resolver; không đọc `profile.X` và `level.X` rải rác. Field override null phải được phân biệt với object rỗng khi serializer/deserializer được implement.
+Không giữ hai nguồn cho cùng một sự thật. Optional override phải phân biệt rõ unset với giá trị hợp lệ.
 
-## 4. Save / load policy
+## 6. Validation and invariants
 
-- Bắt buộc save: authored level JSON và stable IDs.
-- Không save: generated grid/cache, scene hierarchy, runtime sand cells, occupancy hoặc transient signals.
-- RuntimeState tạo mới mỗi lần load level và bị cleanup khi unload.
-- Migration field mới có default an toàn không bắt buộc bump schema; đổi nghĩa field bắt buộc bump.
+- `schemaVersion` tồn tại và được hỗ trợ.
+- `levelId` và mọi entity stable ID unique; không dangling reference.
+- Board-space geometry hữu hạn, nằm trong contract cho phép và rasterize được.
+- Static mask seed trước dynamic mask và trước Source emission.
+- Runtime và Editor preview dùng cùng board mapper/rasterizer, có parity tests.
+- Accounting bảo toàn:
+  `emitted = inField + collected + spilled/lost + pending`.
+- Generated cache/runtime state không được save thay authoring data.
 
-## 5. Invariants
+## 7. Schema evolution
 
-- `schemaVersion` tồn tại.
-- `levelId` và entity IDs unique.
-- Không dangling reference.
-- Graph/adjacency deterministic, không duplicate edge hoặc cycle trái contract.
-- Sand accounting bảo toàn: `emitted = inField + collected + spilled/lost + pending`.
-- Static obstacle seed trước dynamic/player obstacle và trước source emission.
-
-## 6. Editor view state
-
-Selection, mode/tab, active layer, zoom, pan và panel width nằm trong `SessionState`/`EditorPrefs`, không serialize vào level JSON.
+- Field mới có safe default có thể không bump schema khi backward compatibility được test.
+- Đổi nghĩa/xóa/đổi type field bắt buộc bump schema và có migration/validation rõ.
+- Story thay serialization contract phải được Product Owner approve trước implementation.

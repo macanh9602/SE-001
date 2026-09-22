@@ -16,7 +16,7 @@ Excluded toàn roadmap này: **SDK / ads / analytics / IAP** và **final art pol
 | Physics authority | **Simulation-driven** | Sand grid quyết pose/chuyển động |
 | Physics dimension | **2D** | Gameplay trên board XY; không dùng Rigidbody làm authority |
 | Determinism | **Tolerance-based** | Không cần bit-exact replay; cần accounting/count deterministic |
-| Low-end target device | **BẮT BUỘC chọn model thật** | Story 001 + 014 cần số đo thật |
+| Low-end target device | **BẮT BUỘC chọn model thật** | Roadmap phase I cần device evidence thật |
 | Frame target | 60 fps mid / 30 fps low | Đang là project default |
 | Scene ownership | `GameScene` = bootstrap + gameplay | Giữ một scene boundary; tách ownership bằng module/component |
 | Gameplay start | source bắt đầu sau `pourStartDelay`; player được vẽ từ frame đầu và khi đang pour | Clone flow, vẫn cho tune delay |

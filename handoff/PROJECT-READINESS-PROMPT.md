@@ -1,6 +1,6 @@
 # PROJECT READINESS AUDIT
 
-> Chạy sau khi Template được copy vào project, trước Story 001.
+> Chạy sau khi Template được copy vào project, trước story đang được ROADMAP đánh dấu `EXECUTABLE`.
 > Chỉ audit và auto-fix mechanical/reversible setup; không implement gameplay.
 
 ```text
@@ -15,7 +15,7 @@ Không được mặc định `NEW_PROJECT` chỉ vì prompt được chạy sau
 toàn bộ p1-bootstrap như một project trắng.
 
 MỤC TIÊU:
-- Kiểm tra project đã đủ workflow/tooling để bắt đầu Story 001 chưa.
+- Kiểm tra project đã đủ workflow/tooling để chạy Story 001 Architecture Foundation Alignment chưa.
 - Tách riêng Template/workflow readiness và Project-specific readiness.
 - Không implement gameplay.
 - Không tự quyết project-level decision còn thiếu.
@@ -161,13 +161,13 @@ Git: PASS / ...
 Workflow: PASS / ...
 Bootstrap/adoption: X/Y complete hoặc baseline + N adoption gaps
 
-READY FOR STORY 001: YES / NO
+READY FOR ACTIVE STORY: YES / NO
 
 Nếu NO: chỉ liệt kê blockers theo thứ tự cần xử lý.
 Nếu cần Dev quyết: hỏi tối đa 2–4 câu multiple-choice, mỗi câu có đúng một option recommend
 và trade-off ngắn.
 Nếu YES, nói chính xác:
-"Project workflow ready. Có thể tạo/chạy Story 001."
+"Project workflow ready. Có thể chạy Story 001 Architecture Foundation Alignment."
 ```
 
 ## Cách dùng
@@ -177,4 +177,4 @@ Nếu YES, nói chính xác:
 3. Yêu cầu agent chạy file này.
 4. Agent audit và auto-fix mechanical setup.
 5. Dev trả lời blocker/decision còn thiếu.
-6. Chỉ sau khi `READY FOR STORY 001: YES` mới bắt đầu Story 001.
+6. Chỉ sau khi `READY FOR ACTIVE STORY: YES` mới chạy story được ROADMAP đánh dấu `EXECUTABLE`.

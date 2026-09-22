@@ -15,8 +15,8 @@ Mục tiêu không phải "có gameplay". Mục tiêu là **mọi story sau khô
 
 ## Bước 1 — Đọc GDD, hỏi cho đủ (enrich-context)
 
-**Trước Bước 1:** chạy `handoff/PROJECT-READINESS-PROMPT.md`. Không bắt đầu Story 001 khi audit
-chưa kết luận `READY FOR STORY 001: YES`.
+**Trước Bước 1:** chạy `handoff/PROJECT-READINESS-PROMPT.md`. Không chạy active story khi audit
+chưa kết luận `READY FOR ACTIVE STORY: YES`.
 
 Skill: `enrich-context`.
 
@@ -104,8 +104,8 @@ Checklist:
 ## Bước 6 — Dựng `handoff/`
 
 - [ ] `handoff/ROADMAP.md` — danh sách story dự kiến, sizing S/M/L
-- [ ] Chạy `handoff/PROJECT-READINESS-PROMPT.md` và xử lý blocker trước Story 001
-- [ ] Story 001 viết xong theo `templates/story.md`
+- [ ] Chạy `handoff/PROJECT-READINESS-PROMPT.md` và xử lý blocker trước active story
+- [ ] Story được ROADMAP đánh dấu `EXECUTABLE` đã viết xong theo `templates/story.md`
 - [ ] `handoff/START-PROMPT.md` / `handoff/RUN-STORY-PROMPT.md` đã trỏ đúng tên game
 
 ---

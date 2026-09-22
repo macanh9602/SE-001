@@ -2,6 +2,27 @@
 
 > Append-only. Decision mới đặt ở trên cùng. Project-level decision ghi ở đây; micro-decision ghi trong story implementation notes.
 
+## D-005 — Architecture Blueprint supersedes the former execution roadmap
+
+Status: Accepted — 2026-09-22
+
+### Chốt
+
+- `SE001-ARCHITECTURE-BLUEPRINT.md` là project architecture source-of-truth của SE-001.
+- Story 001–014 cũ bị xóa khỏi active handoff; Git history là historical record của chúng.
+- Story 000A cũ được archive dưới `handoff/archive/` và không được execute.
+- Roadmap mới chỉ materialize story kế tiếp sau khi gate trước đã PASS. Story executable đầu tiên là
+  `handoff/story-001-architecture-foundation-alignment/story.md`.
+
+### Hệ quả
+
+- D-004 và mọi reference Story 001–014 trước decision này chỉ còn giá trị lịch sử; device gate mới
+  thuộc phase I và chỉ được materialize sau các architecture gate trước.
+- Product scope sand, Source, Cup, obstacle, draw path, editor, progression và performance không bị
+  loại bỏ; chỉ execution decomposition bị thay thế.
+- `LevelManager` giữ lifecycle/selection, `LevelSpawner` sở hữu composition + spawn/unload,
+  `GameplayManager` sở hữu per-level gameplay orchestration.
+
 ## D-004 — Device gates deferred to Story 014
 
 Status: Accepted — 2026-09-22
@@ -19,7 +40,7 @@ Status: Accepted — 2026-09-22
 ## D-003 — Giữ `Assets/_Core/4_Scripts` làm canonical script structure
 
 Status: Accepted — 2026-09-22
-Story: `handoff/story-000A-core-runtime-foundation/story.md`
+Story: `handoff/archive/story-000A-core-runtime-foundation/story.md` (historical, superseded)
 Supersedes: D-001 code-root, assembly-placement và legacy-folder clauses
 
 ### Vấn đề

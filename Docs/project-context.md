@@ -1,7 +1,7 @@
 # Project Context — SE-001 Salt/Pepper Sand Clone
 
 Version: 0.1
-Stage: Prototype / Discovery
+Stage: Architecture alignment
 Primary platform: Mobile
 
 ## 1. Product context
@@ -24,11 +24,12 @@ Primary platform: Mobile
 | Thứ | File |
 |---|---|
 | Project guardrail | `AGENTS.md` + file này |
-| System architecture | `standards/system-design.md` |
-| Game architecture | `Docs/runtime-architecture.md` |
-| Data contract | `Docs/data-model.md` |
+| Generic system guardrails | `standards/system-design.md` |
+| Project architecture source-of-truth | `SE001-ARCHITECTURE-BLUEPRINT.md` |
+| Applied runtime contract | `Docs/runtime-architecture.md` |
+| Serialization/data contract | `Docs/data-model.md` |
 | Vocabulary | `Docs/glossary.md` |
-| Scope / acceptance | `handoff/story-XXX-*/story.md` |
+| Active scope / acceptance | `handoff/ROADMAP.md` + active `handoff/story-XXX-*/story.md` |
 | Project decisions | `Docs/decision-log.md` |
 
 ## 3. Project facts

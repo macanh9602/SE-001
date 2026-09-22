@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><title>Story 001 Architecture Foundation Alignment — Implementation Notes</title></head>
+<body>
+<h1>Story 001 — Architecture Foundation Alignment</h1>
+
+<h2>Frontier Preflight</h2>
+<pre>Provider: codex-with-chatgpt
+Mode: AUTO
+Project mode: EXISTING_PROJECT_ADOPTION
+C2C provider: PASS
+Connector transport: PASS
+Workspace mapping: PASS
+Workspace readability: PASS
+Project identity: PASS (SE-001)
+Branch: main
+Initial preflight HEAD: main @ bc599d1
+Adoption baseline after fast-forward: main @ 6f7d08f
+Post-fast-forward workspace/HEAD match: PASS (connector and local both 6f7d08f)
+Frontier readiness: LOCAL FALLBACK
+Provider failure: operation unavailable in current Codex session
+Reason: connector exposed read-only workspace tools but no callable PLAN operation</pre>
+
+<h2>Decision / Deviation / Trade-off / Risk</h2>
+<ul>
+  <li>Pending implementation.</li>
+</ul>
+
+<h2>Performance</h2>
+<pre>CPU: Pending.
+GPU / draw call: N/A unless smoke presentation changes.
+GC: Pending idle-after-load measurement.
+Memory: Pending 10-cycle root/context check.
+Measurement: Unity Profiler/tests during implementation; device gate belongs to phase I.</pre>
+
+<h2>Verification</h2>
+<table border="1" cellspacing="0" cellpadding="6">
+  <tr><th>Check</th><th>Status</th><th>Evidence</th></tr>
+  <tr><td>Pre-change baseline compile/console</td><td>TODO</td><td>Run before implementation.</td></tr>
+  <tr><td>Unity compile</td><td>TODO</td><td></td></tr>
+  <tr><td>EditMode tests</td><td>TODO</td><td></td></tr>
+  <tr><td>PlayMode/smoke lifecycle</td><td>TODO</td><td></td></tr>
+  <tr><td>10-cycle lifecycle</td><td>TODO</td><td></td></tr>
+  <tr><td>git diff --check</td><td>TODO</td><td></td></tr>
+</table>
+
+<h2>Semantic deviations</h2>
+<p>NONE recorded; implementation not started.</p>
+
+<h2>Closure</h2>
+<p>Status: TODO. Phase B must not be materialized before this story closes PASS.</p>
+</body>
+</html>

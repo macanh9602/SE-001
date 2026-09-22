@@ -1,79 +1,58 @@
-# Roadmap — SE-001 Salt/Pepper Sand Clone
+# Roadmap — SE-001 Architecture-Gated Implementation
 
-> Scope: clone core loop của `Salt & Pepper, Don't mix em up`; improvement duy nhất có chủ đích là **sand feel**.
-> Excluded: SDK/ads/analytics/IAP và final art polish.
+> Architecture source-of-truth: `SE001-ARCHITECTURE-BLUEPRINT.md`.
+> Chỉ story có status `EXECUTABLE` mới được chạy. Phase description không phải execution spec.
 
-## Giai đoạn
+## Materialization rule
 
-- P1 Bootstrap: Story 000
-- P2 Technical slice: Story 001
-- P3 Core loop: Story 002–009
-- P6 Feel pass (sand-specific, không final art): Story 010
-- P4 Level editor: Story 011–012
-- Meta/progression: Story 013
-- Ship-prep performance gate: Story 014
+- Chỉ materialize story kế tiếp sau khi story/gate trước PASS và closure hoàn tất.
+- Không tạo trước full spec cho phase B–I; khi materialize phải đọc lại blueprint và evidence mới nhất.
+- Story 000 là historical bootstrap evidence. Story 000A đã archive/supersede.
+- Story 001–014 của roadmap cũ đã bị D-005 retire; Git history giữ historical record.
 
-## Story
+## Active story
 
-| # | Tên | Size | Trạng thái | Phụ thuộc | Decision |
+| Story | Tên | Size | Status | Dependency | Source |
 |---|---|---|---|---|---|
-| 000 | Project contract + bootstrap ready | M | DONE | User Setup Gate | Identity / architecture |
-| 001 | Powder sand technical slice proves feel + budget | M | TODO | 000 | Sand feasibility |
-| 002 | Production sand simulation core | M | TODO | 001 | Simulation contract |
-| 003 | Powder renderer + profiles | M | TODO | 002 | Visual/data |
-| 004 | Level data + board runtime | M | TODO | 000,002 | Data/runtime |
-| 005 | Player-drawn paths become dynamic obstacles | M | TODO | 004 | Input/simulation |
-| 006 | Salt/pepper sources emit finite material streams | M | TODO | 003,004 | Spawner/simulation |
-| 007 | Cups collect, separate and audit materials | M | TODO | 004,006 | Domain/accounting |
-| 008 | Gameplay rules reach deterministic win/lose | M | TODO | 005,007 | Domain |
-| 009 | Full playable loop: load → play → result → retry/next | M | TODO | 008 | Core loop/HUD |
-| 010 | Sand interaction VFX: stream, impact, slide, edge-leave | M | TODO | 009 | Feel/presentation |
-| 011 | Level editor can open/save core level data | M | TODO | 009 | Editor foundation |
-| 012 | Level editor authoring + validation + preview | L | TODO | 011 | Editor UX |
-| 013 | Progression/save + ordered level sequence | M | TODO | 009,011 | Meta without SDK |
-| 014 | Performance + quality scaling + device gate | M | TODO | 010,012,013 | Ship prep |
+| 000 | Project contract + bootstrap | M | HISTORICAL / DONE | — | `story-000-project-contract-bootstrap/` |
+| 001 | Architecture Foundation Alignment | M | **EXECUTABLE** | 000, D-005 | `story-001-architecture-foundation-alignment/story.md` |
 
-## Mốc
+Không có story implementation nào khác executable tại thời điểm này.
 
-| Mốc | Quan sát được | Story |
+## Gated implementation sequence
+
+| Phase | Capability giữ lại | Gate để materialize story |
 |---|---|---|
-| Foundation ready | Project identity/contracts rõ, compile baseline sạch | 000 |
-| Technical feasibility | Powder sand chạy với drawn obstacle và có số đo trên device | 001 |
-| Sand runtime production | Simulation + render production, không legacy dependency | 002–003 |
-| Gameplay slice | Vẽ path, source đổ, cup collect, win/lose đúng | 004–008 |
-| Playable loop | Load → play → result → retry/next trên device | 009 |
-| Sand feel pass | Stream/impact/slide/edge feedback bounded và pooled | 010 |
-| Editor ready | GD tự tạo/sửa/validate/playtest level | 011–012 |
-| Progression ready | Save level progress + next/retry | 013 |
-| Non-SDK ship prep | Quality tier + stress/device gate đạt budget | 014 |
+| A | Foundation Alignment | Story 001 closure PASS |
+| B | StaticObstacle vertical slice: Data → Factory → prefab/View → simulation mask → editor preview | A PASS; ownership/root lifecycle đã verify |
+| C | SandSimulation + SandField visual | B PASS; shared board mapper/rasterizer parity đã verify |
+| D | Source vertical slice | C PASS; simulation accepts deterministic semantic emit commands |
+| E | Cup vertical slice | D PASS; accounting inputs và sink geometry contract ổn định |
+| F | Player Draw vertical slice | E PASS; dynamic mask dùng shared geometry và pooled DrawStroke View |
+| G | GameplayManager, end-state và playable load/play/result/retry loop | F PASS; full command/accounting flow testable |
+| G2 | Progression/save và ordered level sequence | G PASS; playable loop/level identity ổn định |
+| H | Level Editor production flow | G2 PASS; runtime loader/spawner và level identity/progression contract ổn định |
+| I | Sand feel/VFX, quality scaling và device performance | G2 + H PASS; production flow feature-complete |
 
-## Không nằm trong roadmap này
+## Product scope preserved
 
-- SDK / ads / analytics / IAP / attribution.
-- Final art polish, production environment art, final UI skin.
-- Gameplay gimmick không có trong source-of-truth/reference đã xác nhận.
+- Powder sand feel và simulation-driven 2D authority.
+- Static obstacles và player-drawn dynamic paths.
+- Finite Source streams, Cup collection/accounting, deterministic win/lose.
+- Full playable loop, progression/save và ordered levels.
+- Level Editor: New/Open/Edit/Validate/Save/unsaved Play Test.
+- Mobile performance: Redmi 9A low-end target, 60 fps mid / 30 fps low.
 
----
+## Excluded
 
-## Rủi ro đang theo dõi
+- SDK, ads, analytics, IAP và attribution.
+- Final art polish hoặc gameplay gimmick chưa được Product Owner chốt.
 
-| Rủi ro | Dấu hiệu sẽ thấy | Ứng phó | Trạng thái |
-|---|---|---|---|
+## Risks tracked
 
----
-
-## Câu hỏi còn mở ở mức dự án
-
-| Câu hỏi | Owner | Chặn cái gì | Hạn |
-|---|---|---|---|
-
-Câu hỏi trong phạm vi một story ⇒ `handoff/story-XXX/open-questions.html`, không để ở đây.
-
----
-
-## Nợ kỹ thuật
-
-| Nợ | Từ story | Vì sao chấp nhận | Phải trả khi |
-|---|---|---|---|
-
-Nợ từ technical slice ghi ở đây ngay khi slice kết thúc, đừng đợi tới lúc ship.
+| Risk | Guard |
+|---|---|
+| Codex chạy phase description như story | Chỉ status `EXECUTABLE` + concrete `story.md` mới được chạy |
+| Root ownership quay lại `LevelContext`/`LevelManager` | Story 001 verify `LevelSpawner` ownership trước feature work |
+| Editor/runtime obstacle drift | Một shared mapper/rasterizer, parity test trước Sand/Source expansion |
+| Mobile cost tăng âm thầm | Không GameObject-per-grain; profile/buffer/pool contract và phase I device gate |

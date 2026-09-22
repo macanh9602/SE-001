@@ -1,5 +1,8 @@
 # Story 000 — Project contract và bootstrap sẵn sàng
 
+> **HISTORICAL / DONE / NOT AN ACTIVE EXECUTION SPEC.** Giữ lại làm bootstrap evidence. Active work
+> bắt đầu từ `handoff/ROADMAP.md` và story được roadmap đánh dấu executable.
+
 > Execution mode: **DIRECT**  
 > Frontier collaboration: **INHERIT**  
 > Size: **M**
@@ -84,7 +87,8 @@
 - [ ] `Docs/project-context.md` có namespace, asmdef strategy, target device, physics authority/dimension/determinism.
 - [ ] `Docs/runtime-architecture.md` có layer map tối thiểu cho Sand, Level, Input, Cup, Source, HUD.
 - [ ] `Docs/data-model.md` xác định source-of-truth/generated/runtime-state.
-- [ ] `handoff/ROADMAP.md` có Story 001–014.
+- [x] Historical acceptance at closure: roadmap/story pack existed at the time. It was later
+  superseded by D-005 and the Architecture Blueprint.
 
 ## 7. Cần hỏi trước khi làm
 

@@ -13,11 +13,12 @@ Bạn đang làm Unity mobile game [TÊN GAME].
 1. AGENTS.md                       — guardrail, luật cứng
 2. workflow/loop.md                — nhịp làm việc, story sizing
 3. Docs/project-context.md         — stack, thiết bị chuẩn, fact đã chốt (🔒 = contract, không tự đổi)
-4. standards/system-design.md      — kiến trúc bắt buộc
-5. Docs/runtime-architecture.md    — kiến trúc cụ thể của game này
-6. Docs/data-model.md              — cái gì là source of truth
-7. Docs/glossary.md                — một khái niệm một tên
-8. handoff/ROADMAP.md              — đang ở đâu, làm gì tiếp
+4. standards/system-design.md      — generic architecture guardrails
+5. SE001-ARCHITECTURE-BLUEPRINT.md — project architecture source-of-truth
+6. Docs/runtime-architecture.md    — applied runtime contract
+7. Docs/data-model.md              — serialization/data source of truth
+8. Docs/glossary.md                — một khái niệm một tên
+9. handoff/ROADMAP.md              — story nào đang EXECUTABLE
 
 Đọc thêm skill/playbook chỉ khi task chạm đúng phần đó — tra ở skills/README.md
 và playbooks/README.md. Không load hết.
@@ -57,7 +58,7 @@ VIỆC ĐẦU TIÊN:
 
 ```
 Chạy handoff/PROJECT-READINESS-PROMPT.md trước để audit Template/workflow readiness và
-Project-specific readiness. Chỉ tiếp tục khi prompt kết luận READY FOR STORY 001: YES.
+Project-specific readiness. Chỉ tiếp tục khi prompt kết luận READY FOR ACTIVE STORY: YES.
 
 Chạy playbooks/p1-bootstrap.md. Bắt đầu từ Bước 1: hỏi tôi theo batch trắc nghiệm
 để điền Docs/. GDD ở [đường dẫn]. Đừng hỏi lại thứ GDD đã trả lời.

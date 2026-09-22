@@ -1,84 +1,116 @@
 # Runtime Architecture — SE-001
 
-Đây là instance của `standards/system-design.md` cho SE-001. Story 000 chỉ chốt ownership và module boundary; feature behavior được implement ở các story sau.
+Đây là runtime contract áp dụng từ `SE001-ARCHITECTURE-BLUEPRINT.md`. Blueprint là project
+architecture source-of-truth; file này mô tả ownership cần giữ ổn định khi implement.
 
-## 1. Layer map
-
-| Layer | Owner / module contract |
-|---|---|
-| Bootstrap | `GameScene` là scene duy nhất; `SE001.System.Management.LevelManager` boot foundation runtime |
-| Profile | Feature profiles trong module tương ứng; tunables không nằm trong Domain |
-| Level Data | `SE001LevelJson` từ `Assets/_Core/Resources/Levels/`; Story 000A chỉ dùng smoke context |
-| Save / Progress | Chưa implement; sẽ là module progression riêng, không thuộc Story 000 |
-| Spawner | Source feature phát lệnh spawn/pour; không quyết định sand movement |
-| Factory | Feature-scoped factory tạo/bind prefab hoặc pooled view |
-| Domain | Cup, Source, level rules và accounting; không reference Visual |
-| Simulation | Sand grid Simulation-driven 2D; là authority cho sand pose/transition |
-| RuntimeState | `SE001.System.Management.LevelRuntimeState`, per-level foundation; feature state thêm ở story sau |
-| Scheduler | Chỉ thêm khi behavior kéo dài nhiều nhịp; timing đọc từ Profile |
-| Visual | Sand renderer, cup/source views, HUD presentation; đọc state/signal |
-| Bridge | `LevelReadinessGate` và lifecycle contracts; adapter gameplay thêm ở story sau |
-| HUD | `IHudPresenter` + bridge; gameplay không phụ thuộc UI framework cụ thể |
-| Editor | Level authoring/validation/preview; document state tách view state |
-
-## 2. Feature boundaries
-
-| Feature | Domain responsibility | Non-responsibility |
-|---|---|---|
-| Sand | Material state, movement commands/signals, count conservation | UI, ParticleSystem, win/lose |
-| Level | Authored entities, stable IDs, load/validate/unload | Generated grid serialization |
-| Input | Chuyển pointer/touch thành command/path intent | Tự sửa sand state hoặc gameplay result |
-| Cup | Collection intent và semantic collection result | Raw Renderer/Collider query |
-| Source | Finite material emission intent và source state | Tự resolve sand physics |
-| HUD | Present counters/result/feedback qua bridge | Gameplay decisions |
-
-## 3. Placement contract
-
-- Gameplay plane: 2D XY.
-- Z/depth chỉ dành cho presentation ordering; không dùng để quyết gameplay.
-- Camera ownership thuộc Bootstrap/scene setup; feature không tự ghi camera.
-- Scene root và prefab scale là authored data; runtime không tạo GameObject per grain/cell.
-
-## 4. Spawn / unload lifecycle
-
-Theo blueprint `standards/system-design.md §5`: cancel token cũ → cleanup level cũ → load/validate JSON → resolve Profile/override → tạo RuntimeState → seed static obstacle → tạo source/cup/view qua factory/pool → build generated simulation state → phát `OnLevelSpawned`.
-
-## 5. Query contract
-
-| Query | Complexity | Source |
-|---|---|---|
-| Stable ID lookup | O(1) | Per-level RuntimeState index |
-| Obstacle/mask lookup | O(1) | Simulation mask owner |
-| Cup/source state | O(1) | Domain RuntimeState |
-| Neighbor movement | O(out-degree) | Simulation grid |
-
-## 6. Physics / Simulation contract
-
-- Physics authority mode: Simulation-driven.
-- Physics dimension: 2D board XY.
-- Determinism: Tolerance-based; emitted/in-field/collected/spilled/pending accounting deterministic.
-- Simulation owner: persistent sand grid buffers và deterministic single-writer step.
-- Domain → Simulation: semantic commands (emit, draw obstacle, collect), không raw Rigidbody dependency.
-- Simulation → Domain: semantic state/signals (settled, collected, spilled, edge-leave).
-- Runtime pose authoritative: có, trong Simulation; renderer chỉ present state.
-
-## 7. Core runtime foundation
-
-- Canonical code root là `Assets/_Core/4_Scripts`; không có runtime framework tree song song.
-- `LevelManager` chỉ orchestration/lifecycle: begin, reload, unload và readiness.
-- `LevelContext` sở hữu level lifetime token, per-level `LevelRuntimeState`, root hierarchy và lifecycle participants.
-- `LevelRuntimeState` không static, không serialize và chưa chứa sand/cup/source/gameplay rule.
-- `LevelReadinessGate` đóng trước unload/cancel và mở sau khi context foundation sẵn sàng.
-- Foundation smoke context dùng ID development-only `foundation_smoke`; không phải production level JSON.
-
-## 8. Generated data
+## 1. Runtime ownership
 
 ```text
-SE001LevelJson (authoring source)
-    ↓ validate / resolve
-RuntimeState + obstacle masks + sand grid (generated/runtime)
-    ↓
-Visual/HUD presentation
+GameScene
+  → LevelManager             lifecycle + level selection
+  → LevelSpawner             validate/resolve + composition + spawn/unload
+  → Factories                prefab/pool acquisition + binding
+  → GameplayManager          per-level gameplay orchestration
+  → Domain / SandSimulation  semantic rules / authoritative sand state
+  → Visual / HUD             replaceable presentation
 ```
 
-Generated grid/cache không serialize trong Story 000; regenerate khi load. Parity tests thuộc story implement data/simulation tương ứng.
+| Owner | Trách nhiệm | Không sở hữu |
+|---|---|---|
+| `LevelManager` | Begin/load/reload/unload, readiness coordination | Spawn details, roots, gameplay rule |
+| `LevelSpawner` | Load/validate/resolve, create runtime objects and roots, factory order, cleanup | Level selection, win/lose |
+| `LevelContext` | Carry level ID, token and references created by Spawner | Tự tạo roots hoặc gameplay content |
+| `LevelRuntimeState` | Per-level stable-ID indexes and semantic records | Sand cell/native buffers, global singleton state |
+| `GameplayManager` | Ordered per-level emit → simulate → collect → account → end-state flow | Scene selection, prefab acquisition |
+| `SandSimulation` | Sand buffers, masks, fixed-step state and semantic contact results | HUD, prefab appearance, end UI |
+| Factory | Acquire prefab/pool instance, validate and bind create parameters | Gameplay decisions |
+| Visual/HUD | Render state and feedback | Gameplay authority hoặc raw simulation decisions |
+
+## 2. Scene and dependency contract
+
+- `GameScene` là scene duy nhất cho bootstrap và gameplay.
+- Scene-authored `LevelManager` có explicit dependency tới `LevelSpawner`, `GameplayManager`, input,
+  pool provider và HUD bridge/provider.
+- Không production auto-create manager bằng `RuntimeInitializeOnLoadMethod`.
+- `foundation_smoke` không tự chạy trong production; smoke harness chỉ nằm ở Tests/Development.
+- Canonical code root là `Assets/_Core/4_Scripts`; không tạo tree `Assets/_Core/Scripts` song song.
+
+## 3. Entity composition
+
+Source, Cup, StaticObstacle và DrawStroke tuân contract Data / Domain nếu có semantic state /
+Visual / Factory. Root behavior giữ composition; child `View` thay art được mà không đổi gameplay
+geometry.
+
+- Source emission geometry và amount đến từ authored data/domain, không từ mesh.
+- Cup sink geometry đến từ authored data, không infer từ Renderer/Collider.
+- StaticObstacle truth là stable ID + points/shape + thickness; visual và simulation cùng đọc data đó.
+- DrawStroke visual được pool; dynamic obstacle mask là simulation state riêng.
+- Sand dùng một hoặc ít render surfaces, không một GameObject/Transform cho mỗi grain/cell.
+
+## 4. Profiles and factories
+
+- `PrefabProfile` sở hữu prefab references, shared presentation assets và pool prewarm hints; không
+  chứa gameplay rules.
+- Simulation/interaction tunables thuộc feature Profiles; level override chỉ tồn tại khi data contract
+  cho phép và phải đi qua một resolver.
+- Factory chỉ dùng cho Unity object/prefab/pool lifecycle. Pure services, validators, rasterizers,
+  runtime records và `SandSimulation` được construct trực tiếp bởi owner phù hợp.
+- Mọi pooled entity có deterministic release/reset và full acquire/bind.
+
+## 5. Load lifecycle
+
+```text
+LevelManager.LoadLevel(id)
+→ close readiness/input
+→ LevelSpawner cleanup previous level
+→ load + validate + resolve authored data
+→ create level token + LevelRuntimeState + SandSimulation
+→ create LevelRoot and Board/Obstacle/Source/Cup/DynamicDraw/SandVisual/Vfx roots
+→ seed board valid mask
+→ seed static obstacle mask
+→ create obstacle visuals → cups → sources → SandField
+→ bind GameplayManager → bind input
+→ LevelReady → open readiness/input
+```
+
+Static obstacle simulation state phải tồn tại trước khi Source có thể emit.
+
+## 6. Unload lifecycle
+
+```text
+close readiness/input
+→ LevelWillUnload
+→ input unbind
+→ cancel level token
+→ gameplay/domain cleanup
+→ recycle pooled views/entities
+→ dispose SandSimulation/native buffers
+→ dispose LevelRuntimeState
+→ destroy empty LevelRoot
+```
+
+Pool sống qua level; chỉ clear khi đổi scene/application lifecycle yêu cầu.
+
+## 7. Simulation and data flow
+
+- Physics authority: Simulation-driven 2D trên board XY.
+- Determinism: tolerance-based cho motion; accounting/count phải deterministic.
+- Input callback chỉ tạo command/path intent. Gameplay/simulation bridge commit theo deterministic order.
+- Domain nhận semantic signals; không ad-hoc query raw Renderer/Collider/Physics.
+- Accounting invariant:
+  `emitted = inField + collected + spilled/lost + pending`.
+
+## 8. Shared obstacle geometry
+
+Runtime và Level Editor dùng chung board-space mapper và obstacle rasterizer. Editor preview không có
+implementation xấp xỉ riêng. Rasterizer tạo static/dynamic masks từ cùng geometry contract; visual
+mesh/line chỉ là presentation.
+
+## 9. Mobile performance guardrails
+
+- Không GameObject-per-grain/cell; không procedural mesh rebuild mỗi frame.
+- Không allocation/LINQ/scene search trong hot path.
+- Runtime query O(1) hoặc O(out-degree); buffers được reuse và dispose theo level.
+- Pool Source, Cup, obstacle/draw views và VFX lặp lại.
+- CPU, GPU, GC, draw call và memory được đo theo `standards/performance-budget.md`; device gate cuối
+  thuộc roadmap phase I.
