@@ -1,18 +1,18 @@
 using System;
+using SE001.System.Creation;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace SE001.System.Management
 {
     /// <summary>Owns the lifecycle of the active level; gameplay rules live in feature owners.</summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(LevelSpawner))]
     [DefaultExecutionOrder(-1000)]
     public sealed class LevelManager : MonoBehaviour
     {
-        private const string GameSceneName = "GameScene";
-        private const string FoundationSmokeLevelId = "foundation_smoke";
-
         private static LevelManager instance;
+
+        [SerializeField] private LevelSpawner levelSpawner;
 
         private int nextGeneration;
         private LevelContext currentContext;
@@ -21,46 +21,67 @@ namespace SE001.System.Management
         public event Action<LevelContext> LevelWillUnload;
 
         public static LevelManager Instance => instance;
+        public LevelSpawner Spawner => levelSpawner;
         public LevelContext CurrentContext => currentContext;
         public LevelReadinessGate Readiness { get; } = new LevelReadinessGate();
         public bool IsLoading { get; private set; }
         public bool IsReady => currentContext != null && !currentContext.IsDisposed && Readiness.IsOpen;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void EnsureGameSceneRuntime()
-        {
-            if (SceneManager.GetActiveScene().name != GameSceneName || instance != null)
-            {
-                return;
-            }
-
-            var root = new GameObject(nameof(LevelManager));
-            root.AddComponent<LevelManager>();
-        }
-
         private void Awake()
         {
             if (instance != null && instance != this)
             {
-                Destroy(gameObject);
+                DestroyOwnedObject(gameObject);
                 return;
             }
 
             instance = this;
-            BeginLevel(FoundationSmokeLevelId);
+            if (levelSpawner == null && !TryGetComponent(out levelSpawner))
+            {
+                throw new InvalidOperationException("LevelManager requires an explicitly wired LevelSpawner.");
+            }
+        }
+
+        private void OnValidate()
+        {
+            if (levelSpawner == null)
+            {
+                TryGetComponent(out levelSpawner);
+            }
         }
 
         public void BeginLevel(string levelId)
         {
+            if (string.IsNullOrWhiteSpace(levelId))
+            {
+                throw new ArgumentException("A stable level id is required.", nameof(levelId));
+            }
+
+            if (IsLoading)
+            {
+                throw new InvalidOperationException("A level lifecycle operation is already in progress.");
+            }
+
             IsLoading = true;
             Readiness.Close();
-            UnloadCurrentLevel();
 
             try
             {
-                currentContext = LevelContext.Create(levelId, ++nextGeneration, transform);
+                UnloadCurrentLevelCore();
+                currentContext = levelSpawner.SpawnLevel(levelId, ++nextGeneration);
                 Readiness.Open();
                 LevelReady?.Invoke(currentContext);
+            }
+            catch
+            {
+                Readiness.Close();
+                if (currentContext != null)
+                {
+                    levelSpawner.UnloadLevel(currentContext);
+                    currentContext = null;
+                }
+
+                throw;
             }
             finally
             {
@@ -70,10 +91,33 @@ namespace SE001.System.Management
 
         public void ReloadCurrentLevel()
         {
-            BeginLevel(currentContext == null ? FoundationSmokeLevelId : currentContext.LevelId);
+            if (currentContext == null)
+            {
+                throw new InvalidOperationException("Cannot reload before a level has been loaded.");
+            }
+
+            BeginLevel(currentContext.LevelId);
         }
 
         public void UnloadCurrentLevel()
+        {
+            if (IsLoading)
+            {
+                throw new InvalidOperationException("A level lifecycle operation is already in progress.");
+            }
+
+            IsLoading = true;
+            try
+            {
+                UnloadCurrentLevelCore();
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private void UnloadCurrentLevelCore()
         {
             Readiness.Close();
 
@@ -84,8 +128,14 @@ namespace SE001.System.Management
 
             LevelContext context = currentContext;
             currentContext = null;
-            LevelWillUnload?.Invoke(context);
-            context.Dispose();
+            try
+            {
+                LevelWillUnload?.Invoke(context);
+            }
+            finally
+            {
+                levelSpawner.UnloadLevel(context);
+            }
         }
 
         public void RegisterParticipant(ILevelLifecycleParticipant participant)
@@ -105,8 +155,21 @@ namespace SE001.System.Management
                 return;
             }
 
-            UnloadCurrentLevel();
+            Readiness.Close();
+            UnloadCurrentLevelCore();
             instance = null;
+        }
+
+        private static void DestroyOwnedObject(GameObject target)
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(target);
+            }
+            else
+            {
+                DestroyImmediate(target);
+            }
         }
     }
 }

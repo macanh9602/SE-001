@@ -15,15 +15,16 @@
 | Story | Tên | Size | Status | Dependency | Source |
 |---|---|---|---|---|---|
 | 000 | Project contract + bootstrap | M | HISTORICAL / DONE | — | `story-000-project-contract-bootstrap/` |
-| 001 | Architecture Foundation Alignment | M | **EXECUTABLE** | 000, D-005 | `story-001-architecture-foundation-alignment/story.md` |
+| 001 | Architecture Foundation Alignment | M | **DONE — CLOSURE PASS** | 000, D-005 | `story-001-architecture-foundation-alignment/story.md` |
 
-Không có story implementation nào khác executable tại thời điểm này.
+Không có story implementation nào executable tại thời điểm này. Phase B đã mở gate để materialize
+story kế tiếp, nhưng chưa phải execution spec và chưa được triển khai.
 
 ## Gated implementation sequence
 
 | Phase | Capability giữ lại | Gate để materialize story |
 |---|---|---|
-| A | Foundation Alignment | Story 001 closure PASS |
+| A | Foundation Alignment | **PASS — Story 001 closed** |
 | B | StaticObstacle vertical slice: Data → Factory → prefab/View → simulation mask → editor preview | A PASS; ownership/root lifecycle đã verify |
 | C | SandSimulation + SandField visual | B PASS; shared board mapper/rasterizer parity đã verify |
 | D | Source vertical slice | C PASS; simulation accepts deterministic semantic emit commands |

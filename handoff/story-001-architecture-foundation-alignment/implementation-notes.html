@@ -14,40 +14,77 @@ Workspace mapping: PASS
 Workspace readability: PASS
 Project identity: PASS (SE-001)
 Branch: main
-Initial preflight HEAD: main @ bc599d1
-Adoption baseline after fast-forward: main @ 6f7d08f
-Post-fast-forward workspace/HEAD match: PASS (connector and local both 6f7d08f)
+HEAD match: PASS (connector and local both f5b3523)
 Frontier readiness: LOCAL FALLBACK
 Provider failure: operation unavailable in current Codex session
 Reason: connector exposed read-only workspace tools but no callable PLAN operation</pre>
 
 <h2>Decision / Deviation / Trade-off / Risk</h2>
 <ul>
-  <li>Pending implementation.</li>
+  <li>Workspace repair before execution: restored <code>SE001-ARCHITECTURE-BLUEPRINT.md</code> from
+  <code>TrashStuff/</code> to the canonical root path referenced by project docs.</li>
+  <li><code>TrashStuff/test_tool.svg</code> remains untouched and is not a Story 001 dependency.</li>
+  <li>Local implementation decision: keep the existing synchronous public lifecycle API for this
+  foundation slice; <code>LevelSpawner</code> becomes the sole composition owner. Async loading is
+  deferred until an authored loader has a real asynchronous dependency.</li>
+  <li>Local implementation decision: keep <code>LevelManager.Instance</code> only as a compatibility
+  accessor for development UI; remove all production auto-creation and automatic smoke loading.</li>
+  <li>Runtime teardown deactivates and detaches the owned root before deferred
+  <code>Destroy</code>. This preserves one active composition during same-frame reload bursts without
+  using <code>DestroyImmediate</code> in a player.</li>
+  <li>Known baseline risk: opening/restoring <code>GameScene</code> reports five missing prefab instances
+  for GUID <code>94608a88bec540644a868314f6d41687</code>. This predates and is outside Story 001;
+  no Story 001 script warning/error was emitted.</li>
 </ul>
 
+<h2>Foundation Ownership Audit</h2>
+<table border="1" cellspacing="0" cellpadding="6">
+  <tr><th>Current item</th><th>Target owner</th><th>Action</th></tr>
+  <tr><td><code>LevelManager</code> begin/reload/unload/readiness</td><td><code>LevelManager</code></td><td>KEEP; delegate composition and cleanup.</td></tr>
+  <tr><td><code>RuntimeInitializeOnLoadMethod</code> manager creation</td><td>None</td><td>REMOVE from production.</td></tr>
+  <tr><td>Automatic <code>foundation_smoke</code> in <code>Awake</code></td><td>Tests/Development</td><td>REMOVE from production startup.</td></tr>
+  <tr><td>Root and <code>LevelRuntimeState</code> creation in <code>LevelContext</code></td><td><code>LevelSpawner</code></td><td>MOVE; inject complete references into context.</td></tr>
+  <tr><td>Cancellation, participant cleanup, state disposal</td><td><code>LevelContext</code></td><td>KEEP lifecycle state; Spawner destroys owned hierarchy afterward.</td></tr>
+  <tr><td><code>LevelReadinessGate</code></td><td><code>LevelManager</code></td><td>KEEP; close before unload/load, open after complete context.</td></tr>
+  <tr><td><code>GameplayManager</code>/<code>GameplayInputController</code></td><td>Later gameplay phases</td><td>Do not resurrect commented CH013 semantics.</td></tr>
+</table>
+
 <h2>Performance</h2>
-<pre>CPU: Pending.
-GPU / draw call: N/A unless smoke presentation changes.
-GC: Pending idle-after-load measurement.
-Memory: Pending 10-cycle root/context check.
-Measurement: Unity Profiler/tests during implementation; device gate belongs to phase I.</pre>
+<pre>CPU: Lifecycle work is request-driven only; no Update/LateUpdate polling was added.
+GPU / draw call: No renderer, material, mesh, camera, or presentation object was added.
+GC: Level load allocates one context/state/token and empty hierarchy; idle path allocates nothing.
+Memory: 10 same-frame reload cycles retained one active root/context; unload retained zero active roots.
+Measurement: deterministic EditMode tests plus MCP Play Mode scene smoke; device gate remains phase I.</pre>
 
 <h2>Verification</h2>
 <table border="1" cellspacing="0" cellpadding="6">
   <tr><th>Check</th><th>Status</th><th>Evidence</th></tr>
-  <tr><td>Pre-change baseline compile/console</td><td>TODO</td><td>Run before implementation.</td></tr>
-  <tr><td>Unity compile</td><td>TODO</td><td></td></tr>
-  <tr><td>EditMode tests</td><td>TODO</td><td></td></tr>
-  <tr><td>PlayMode/smoke lifecycle</td><td>TODO</td><td></td></tr>
-  <tr><td>10-cycle lifecycle</td><td>TODO</td><td></td></tr>
-  <tr><td>git diff --check</td><td>TODO</td><td></td></tr>
+  <tr><td>Pre-change baseline compile/console</td><td>PASS</td><td>Unity 6000.0.70f1 compile request completed; MCP console returned 0 error/warning.</td></tr>
+  <tr><td>Pre-change EditMode tests</td><td>PASS</td><td>Job <code>b25dc67b83fb466495971fb3330c1792</code> succeeded; observed <code>CakeRoll</code> finished, no failures.</td></tr>
+  <tr><td>Pre-change PlayMode tests</td><td>PASS</td><td>Job <code>252af3cecc7f49a0b9903492fa5d2861</code> succeeded; observed <code>CakeRoll</code> finished, no failures.</td></tr>
+  <tr><td>Unity compile</td><td>PASS</td><td>Unity domain compile completed with no Story 001 error/warning. <code>Assembly-CSharp.csproj</code> and <code>Assembly-CSharp-Editor.csproj</code> build with 0 errors; existing generated-project/package warnings remain.</td></tr>
+  <tr><td>EditMode tests</td><td>PASS</td><td>Final job <code>a5d6be2dd7f146b1996a7d4c1f9186ec</code>: 4/4 passed, including ownership, cancellation order and 10 reload cycles.</td></tr>
+  <tr><td>PlayMode test runner</td><td>PASS</td><td>Job <code>f9b98a8e2e684dd9bff7948cdb395244</code> succeeded; <code>CakeRoll</code> passed. MCP summary reports total 0 despite returning the passed result; deterministic smoke below is the Story 001 lifecycle authority.</td></tr>
+  <tr><td>PlayMode scene smoke</td><td>PASS</td><td><code>GameScene</code>: exactly one scene-authored manager/spawner, no startup context, begin/reload/unload completed.</td></tr>
+  <tr><td>10-cycle lifecycle</td><td>PASS</td><td>10 same-frame reloads: generation 1 → 11; each prior token cancelled/context disposed; active manager roots stayed 1; unload ended at 0.</td></tr>
+  <tr><td>Console</td><td>PASS WITH BASELINE NOTE</td><td>No Story 001 script errors/warnings. Scene restore still reports the pre-existing missing-prefab GUID listed above.</td></tr>
+  <tr><td>git diff --check</td><td>PASS</td><td>Final scoped worktree check completed after scene YAML whitespace cleanup.</td></tr>
 </table>
 
 <h2>Semantic deviations</h2>
-<p>NONE recorded; implementation not started.</p>
+<p>NONE. The synchronous public lifecycle API remains intact; authored data loading stays a later seam.
+No serialization, gameplay semantics, feature scope, or layer contract changed.</p>
 
 <h2>Closure</h2>
-<p>Status: TODO. Phase B must not be materialized before this story closes PASS.</p>
+<p>Status: <strong>PASS / DONE</strong>. Phase A gate is closed successfully. Phase B may now be
+materialized as a separate story, but no Phase B/SVG implementation is included in this diff.</p>
+
+<h2>Harvest</h2>
+<ol>
+  <li>Pattern generic: deactivate + detach owned runtime hierarchy before deferred player destroy during synchronous reload → propose for <code>standards/anti-patterns.md</code> after reuse/evidence in another project.</li>
+  <li>Repeated question: none.</li>
+  <li>Repeated bug: none; this same-frame root visibility issue was caught before production use.</li>
+  <li>Reusable asset: none.</li>
+</ol>
 </body>
 </html>

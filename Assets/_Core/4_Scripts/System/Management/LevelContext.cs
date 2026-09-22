@@ -5,24 +5,43 @@ using UnityEngine;
 
 namespace SE001.System.Management
 {
-    /// <summary>Owns all transient objects and cancellation state for one loaded level.</summary>
+    /// <summary>Owns one level's lifetime state and receives its hierarchy from LevelSpawner.</summary>
     public sealed class LevelContext : IDisposable
     {
         private readonly List<ILevelLifecycleParticipant> participants = new List<ILevelLifecycleParticipant>();
         private readonly CancellationTokenSource lifetimeSource = new CancellationTokenSource();
         private bool disposed;
 
-        private LevelContext(string levelId, int generation, Transform owner)
+        internal LevelContext(
+            string levelId,
+            int generation,
+            LevelRuntimeState runtimeState,
+            Transform levelRoot,
+            Transform boardRoot,
+            Transform obstacleRoot,
+            Transform sourceRoot,
+            Transform cupRoot,
+            Transform dynamicDrawRoot,
+            Transform sandVisualRoot,
+            Transform vfxRoot)
         {
+            if (string.IsNullOrWhiteSpace(levelId))
+            {
+                throw new ArgumentException("A level context requires a stable level id.", nameof(levelId));
+            }
+
             LevelId = levelId;
             Generation = generation;
             LifetimeToken = lifetimeSource.Token;
-            RuntimeState = new LevelRuntimeState();
-
-            LevelRoot = CreateChild("LevelRoot", owner);
-            BoardRoot = CreateChild("BoardRoot", LevelRoot);
-            SimulationRoot = CreateChild("SimulationRoot", LevelRoot);
-            VisualRoot = CreateChild("VisualRoot", LevelRoot);
+            RuntimeState = runtimeState ?? throw new ArgumentNullException(nameof(runtimeState));
+            LevelRoot = levelRoot != null ? levelRoot : throw new ArgumentNullException(nameof(levelRoot));
+            BoardRoot = boardRoot != null ? boardRoot : throw new ArgumentNullException(nameof(boardRoot));
+            ObstacleRoot = obstacleRoot != null ? obstacleRoot : throw new ArgumentNullException(nameof(obstacleRoot));
+            SourceRoot = sourceRoot != null ? sourceRoot : throw new ArgumentNullException(nameof(sourceRoot));
+            CupRoot = cupRoot != null ? cupRoot : throw new ArgumentNullException(nameof(cupRoot));
+            DynamicDrawRoot = dynamicDrawRoot != null ? dynamicDrawRoot : throw new ArgumentNullException(nameof(dynamicDrawRoot));
+            SandVisualRoot = sandVisualRoot != null ? sandVisualRoot : throw new ArgumentNullException(nameof(sandVisualRoot));
+            VfxRoot = vfxRoot != null ? vfxRoot : throw new ArgumentNullException(nameof(vfxRoot));
         }
 
         public string LevelId { get; }
@@ -31,24 +50,13 @@ namespace SE001.System.Management
         public LevelRuntimeState RuntimeState { get; }
         public Transform LevelRoot { get; }
         public Transform BoardRoot { get; }
-        public Transform SimulationRoot { get; }
-        public Transform VisualRoot { get; }
+        public Transform ObstacleRoot { get; }
+        public Transform SourceRoot { get; }
+        public Transform CupRoot { get; }
+        public Transform DynamicDrawRoot { get; }
+        public Transform SandVisualRoot { get; }
+        public Transform VfxRoot { get; }
         public bool IsDisposed => disposed;
-
-        public static LevelContext Create(string levelId, int generation, Transform owner)
-        {
-            if (string.IsNullOrWhiteSpace(levelId))
-            {
-                throw new ArgumentException("A level context requires a stable level id.", nameof(levelId));
-            }
-
-            if (owner == null)
-            {
-                throw new ArgumentNullException(nameof(owner));
-            }
-
-            return new LevelContext(levelId, generation, owner);
-        }
 
         public void RegisterParticipant(ILevelLifecycleParticipant participant)
         {
@@ -85,18 +93,6 @@ namespace SE001.System.Management
             participants.Clear();
             RuntimeState.Dispose();
             lifetimeSource.Dispose();
-
-            if (LevelRoot != null)
-            {
-                UnityEngine.Object.Destroy(LevelRoot.gameObject);
-            }
-        }
-
-        private static Transform CreateChild(string name, Transform parent)
-        {
-            var child = new GameObject(name).transform;
-            child.SetParent(parent, false);
-            return child;
         }
 
         private void EnsureNotDisposed()

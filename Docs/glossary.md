@@ -19,6 +19,8 @@
 | Source of truth | Data authored duy nhất được save | `AuthoringData` |
 | Generated data | Data có thể regenerate từ authoring | `GeneratedData` |
 | RuntimeState | State sinh theo level load, chết khi unload | `RuntimeState` |
+| LevelSpawner | Owner composition tạo/dọn per-level runtime state và roots | `LevelSpawner` |
+| LevelContext | Lifetime/token và references của đúng một level generation; không tạo hierarchy | `LevelContext` |
 | Simulation-driven | Simulation custom là authority cho sand pose/transition | `SimulationDriven` |
 | Semantic signal | Kết quả domain/simulation truyền qua contract | `SemanticSignal` |
 | Feature-scoped assembly | Assembly tách theo feature và vai trò Runtime/Editor/Tests | `*.Runtime`, `*.Editor`, `*.Tests` |

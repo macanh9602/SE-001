@@ -3,7 +3,7 @@
 > Execution mode: **DIRECT**  
 > Frontier collaboration: **INHERIT → AUTO**  
 > Size: **M**  
-> Roadmap status: **EXECUTABLE**
+> Roadmap status: **DONE — CLOSURE PASS**
 
 ## Goal
 
@@ -107,29 +107,29 @@ Không dùng archived Story 000A làm execution contract.
 
 ### Ownership
 
-- [ ] `LevelManager` không tạo runtime roots/feature objects và delegate composition cho `LevelSpawner`.
-- [ ] `LevelSpawner` là owner duy nhất của create/cleanup cho `LevelRoot` và child roots.
-- [ ] `LevelContext` chỉ nhận/giữ references; không tự dựng hierarchy.
-- [ ] `LevelRuntimeState` per-level, non-static; không chứa sand buffers.
-- [ ] Không production auto-create manager hoặc automatic `foundation_smoke` startup.
-- [ ] `GameScene` có explicit dependency wiring, không duplicate manager/spawner sau reload.
+- [x] `LevelManager` không tạo runtime roots/feature objects và delegate composition cho `LevelSpawner`.
+- [x] `LevelSpawner` là owner duy nhất của create/cleanup cho `LevelRoot` và child roots.
+- [x] `LevelContext` chỉ nhận/giữ references; không tự dựng hierarchy.
+- [x] `LevelRuntimeState` per-level, non-static; không chứa sand buffers.
+- [x] Không production auto-create manager hoặc automatic `foundation_smoke` startup.
+- [x] `GameScene` có explicit dependency wiring, không duplicate manager/spawner sau reload.
 
 ### Lifecycle
 
-- [ ] Load đóng readiness/input cho tới khi context và binding hoàn tất.
-- [ ] Reload cleanup/cancel/dispose context cũ trước khi context mới ready.
-- [ ] Unload theo order contract và bỏ active context/root.
-- [ ] Old async callback/generation không ghi được vào context mới.
-- [ ] Pool provider, nếu hiện diện, sống qua reload và không bị clear theo level.
+- [x] Load đóng readiness/input cho tới khi context và binding hoàn tất.
+- [x] Reload cleanup/cancel/dispose context cũ trước khi context mới ready.
+- [x] Unload theo order contract và bỏ active context/root.
+- [x] Old async callback/generation không ghi được vào context mới (generation + cancelled lifetime; không có async loader trong slice này).
+- [x] Pool provider N/A: foundation hiện không có pool provider để clear hoặc recreate.
 
 ### Verification
 
-- [ ] Unity compile sạch; console không có error/warning mới do story.
-- [ ] EditMode tests cho ownership/lifecycle logic PASS.
-- [ ] PlayMode hoặc deterministic smoke: load → reload → unload PASS.
-- [ ] Lặp load/reload/unload 10 lần: manager count, active context và root count không tăng dần.
-- [ ] `git diff --check` PASS; final diff không chứa feature implementation ngoài foundation.
-- [ ] `implementation-notes.html` có evidence thật, semantic deviations và closure status.
+- [x] Unity compile sạch; console không có error/warning mới do story.
+- [x] EditMode tests cho ownership/lifecycle logic PASS.
+- [x] PlayMode hoặc deterministic smoke: load → reload → unload PASS.
+- [x] Lặp load/reload/unload 10 lần: manager count, active context và root count không tăng dần.
+- [x] `git diff --check` PASS; final diff không chứa feature implementation ngoài foundation.
+- [x] `implementation-notes.html` có evidence thật, semantic deviations và closure status.
 
 ## Mobile performance
 
