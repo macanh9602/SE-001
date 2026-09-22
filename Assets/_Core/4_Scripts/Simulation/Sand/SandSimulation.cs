@@ -98,6 +98,15 @@ namespace SE001.Simulation.Sand
             {
                 if (rowCount[y] == 0) continue;
                 bool leftToRight = (NextUInt() & 1u) == 0u;
+                if (profile.flowOrderedRows)
+                {
+                    float rowMomentum = 0f;
+                    int rowStart = y * width;
+                    for (int k = 0; k < width; k++)
+                        if (cells[rowStart + k] != 0) rowMomentum += mom[rowStart + k];
+                    // Process the leading grain first so a sliding train advances together.
+                    if (Math.Abs(rowMomentum) > profile.flowOrderThreshold) leftToRight = rowMomentum < 0f;
+                }
                 for (int k = 0; k < width; k++)
                 {
                     int x = leftToRight ? k : width - 1 - k;
@@ -122,11 +131,25 @@ namespace SE001.Simulation.Sand
                     if (fell == 0)
                     {
                         bool movedHere = false;
+                        if (profile.momentumCarry > 0f && cy > 0)
+                        {
+                            // Resting on a faster-sliding grain: ride along so the layer flows as a sheet.
+                            int below = i - width;
+                            if (cells[below] != 0 && Math.Abs(mom[below]) > Math.Abs(m))
+                                m = m * (1f - profile.momentumCarry) + mom[below] * profile.momentumCarry;
+                        }
+
+                        int downhill = profile.slopeAccel > 0f ? DownhillSide(cx, cy) : 0;
                         if (v > 1.5f && splash > 0f)
                         {
-                            if (Math.Abs(m) < 0.2f) m = NextFloat() < 0.5f ? -0.2f : 0.2f;
+                            if (Math.Abs(m) < 0.2f)
+                                m = downhill != 0 && NextFloat() < profile.splashDownhillBias
+                                    ? downhill * 0.2f
+                                    : (NextFloat() < 0.5f ? -0.2f : 0.2f);
                             m += Math.Sign(m) * (v - 1f) * splash * 0.5f;
                         }
+
+                        if (downhill != 0) m += downhill * profile.slopeAccel;
 
                         float am = Math.Abs(m);
                         int d = am > 0.15f ? Math.Sign(m) : (NextFloat() < 0.5f ? -1 : 1);
@@ -151,7 +174,26 @@ namespace SE001.Simulation.Sand
                         if (!movedHere && Math.Abs(m) > 0.3f)
                         {
                             int dd = Math.Sign(m);
-                            if (IsFree(cx + dd, cy)) { cx += dd; m *= slide; movedHere = true; }
+                            int maxCells = profile.maxSlideCells;
+                            if (maxCells > 1)
+                            {
+                                float speed = Math.Abs(m);
+                                int cellsToMove = (int)speed + (NextFloat() < speed - (int)speed ? 1 : 0);
+                                if (cellsToMove < 1) cellsToMove = 1;
+                                if (cellsToMove > maxCells) cellsToMove = maxCells;
+                                for (int slideStep = 0; slideStep < cellsToMove; slideStep++)
+                                {
+                                    if (!IsFree(cx + dd, cy)) break;
+                                    cx += dd;
+                                    movedHere = true;
+                                    // Stepped past a lip into open air: stop here and let it drop straight (no walking off the edge).
+                                    if (profile.airDropProbe > 0 && IsOpenBelow(cx, cy, profile.airDropProbe)) break;
+                                    if (IsFree(cx, cy - 1)) cy--; // follow the ramp step down
+                                }
+
+                                m *= movedHere ? slide : -0.2f;
+                            }
+                            else if (IsFree(cx + dd, cy)) { cx += dd; m *= slide; movedHere = true; }
                             else m *= -0.2f;
                         }
 
@@ -168,6 +210,8 @@ namespace SE001.Simulation.Sand
                     else
                     {
                         if (fell < n) v = 1f + (v - 1f) * 0.3f;
+                        bool released = profile.airDropProbe > 0 && IsOpenBelow(cx, cy, profile.airDropProbe);
+                        if (released) m *= profile.airMomentumRetention; // left the edge: drop straight, no sideways drift
                         float am = Math.Abs(m);
                         if (am > 0.4f && NextFloat() < am * 0.35f)
                         {
@@ -175,7 +219,8 @@ namespace SE001.Simulation.Sand
                             if (IsFree(cx + dd, cy)) cx += dd;
                         }
 
-                        m *= 0.985f;
+                        // Only damp when truly airborne; 1-cell staircase drops on a ramp keep slide momentum.
+                        if (!released && v >= profile.airborneMinSpeed) m *= profile.airMomentumRetention;
                     }
 
                     if (m > 2f) m = 2f;
@@ -225,6 +270,42 @@ namespace SE001.Simulation.Sand
 
             step = 0;
             return false;
+        }
+
+        /// <summary>Side (-1/+1) whose nearest drop along the row is closer within slopeProbe; 0 = flat/ambiguous.</summary>
+        private int DownhillSide(int x, int y)
+        {
+            int reach = profile.slopeProbe;
+            int left = int.MaxValue, right = int.MaxValue;
+            for (int d = 1; d <= reach; d++)
+            {
+                if (!IsFree(x - d, y)) break;
+                if (IsFree(x - d, y - 1)) { left = d; break; }
+            }
+
+            for (int d = 1; d <= reach; d++)
+            {
+                if (!IsFree(x + d, y)) break;
+                if (IsFree(x + d, y - 1)) { right = d; break; }
+            }
+
+            if (left == right) return 0;
+            return left < right ? -1 : 1;
+        }
+
+        /// <summary>No surface within 'depth' cells below: only empty cells or grains that are themselves falling (v ≥ 1).
+        /// Falling grains count as air so the upper layer of a sheet also releases at the lip.</summary>
+        private bool IsOpenBelow(int x, int y, int depth)
+        {
+            for (int d = 1; d <= depth; d++)
+            {
+                int yy = y - d;
+                if (!CanOccupy(x, yy)) return false;
+                int j = yy * State.Width + x;
+                if (State.Cells[j] != 0 && State.Velocity[j] < 1f) return false;
+            }
+
+            return true;
         }
 
         private bool PathFree(int x, int y, int dir, int distance)
