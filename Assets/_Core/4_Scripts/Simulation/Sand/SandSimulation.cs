@@ -59,7 +59,7 @@ namespace SE001.Simulation.Sand
             State.Cells[index] = materialId;
             State.Shade[index] = (byte)(NextUInt() & 0xFF);
             State.Velocity[index] = NextFloat() * 0.6f;
-            State.Momentum[index] = (NextFloat() - 0.5f) * profile.spawnMomentumRange;
+            State.Momentum[index] = (NextFloat() - 0.5f) * 0.3f;
             State.RowCount[y]++;
             State.OccupiedCount++;
             State.EmittedCount++;
@@ -124,7 +124,7 @@ namespace SE001.Simulation.Sand
                         bool movedHere = false;
                         if (v > 1.5f && splash > 0f)
                         {
-                            if (Math.Abs(m) < profile.contactJitter) m = NextFloat() < 0.5f ? -profile.contactJitter : profile.contactJitter;
+                            if (Math.Abs(m) < 0.2f) m = NextFloat() < 0.5f ? -0.2f : 0.2f;
                             m += Math.Sign(m) * (v - 1f) * splash * 0.5f;
                         }
 
@@ -175,7 +175,7 @@ namespace SE001.Simulation.Sand
                             if (IsFree(cx + dd, cy)) cx += dd;
                         }
 
-                        m *= profile.airHorizontalDamping;
+                        m *= 0.985f;
                     }
 
                     if (m > 2f) m = 2f;

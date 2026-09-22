@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bodySize: {x: 0.8, y: 1.2}
   emissionRate: 16
-  streamWidth: 1
+  streamWidth: 6
   valveOpenDelay: 0.2
   valveCloseRotateTime: 0.15
   hitPadding: 0.2

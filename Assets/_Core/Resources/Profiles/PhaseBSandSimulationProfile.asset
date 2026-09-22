@@ -17,14 +17,3 @@ MonoBehaviour:
   maxStepsPerFrame: 4
   maxCells: 262144
   enableLateralSlide: 1
-  gravityCellsPerStep2: 0.3
-  maxFallCellsPerStep: 4
-  repose: 0.15
-  slide: 0.9
-  splash: 0
-  airHorizontalDamping: 0.15
-  spawnMomentumRange: 0
-  contactJitter: 0
-  dispersion: 5
-  grainsPerUnit: 12
-  stableStepsForLose: 30

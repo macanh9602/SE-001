@@ -26,12 +26,6 @@ namespace SE001.Simulation.Sand
         [Range(0f, 0.98f)] public float slide = 0.95f;
         [Tooltip("Impact speed converted to sideways momentum on landing (lab splash).")]
         [Range(0f, 1f)] public float splash = 0.5f;
-        [Tooltip("Horizontal momentum retained while a grain is airborne. Lower values make the stream fall straight after leaving a surface.")]
-        [Range(0f, 1f)] public float airHorizontalDamping = 0.15f;
-        [Tooltip("Spawn horizontal momentum range. Zero removes emitter-side lateral spread.")]
-        [Range(0f, 1f)] public float spawnMomentumRange = 0f;
-        [Tooltip("Landing momentum jitter. Zero removes contact spray.")]
-        [Range(0f, 1f)] public float contactJitter = 0f;
         [Tooltip("Avalanche reach in cells (replaces lab random 'flow' so piles level without endless jitter). 1 = 45° piles.")]
         [Range(1, 8)] public int dispersion = 5;
 
