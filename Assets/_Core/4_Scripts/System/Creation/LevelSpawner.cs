@@ -57,7 +57,8 @@ namespace SE001.System.Creation
             {
                 SE001LevelJson levelData = null;
                 bool hasAuthoredData = Resources.Load<TextAsset>("Levels/" + levelId) != null;
-                if (!hasAuthoredData) Debug.LogWarning("[LevelSpawner] No level data at Resources/Levels/" + levelId + ".json; spawning empty roots only.", this);
+                if (!hasAuthoredData)
+                    Debug.LogWarning("[LevelSpawner] No level data at Resources/Levels/" + levelId + ".json; spawning empty roots only.", this);
                 if (hasAuthoredData) levelData = LevelDataLoader.Load(levelId);
                 runtimeState = new LevelRuntimeState();
                 levelRoot = CreateRoot("LevelRoot", transform);
@@ -86,10 +87,12 @@ namespace SE001.System.Creation
                 {
                     activeContext.BoardSize = levelData.board.size;
                     activeContext.DrawInkBudget = levelData.drawInkBudget;
-                    SandSimulationProfile profile = gameplayProfile != null && gameplayProfile.sandProfile != null ? gameplayProfile.sandProfile : sandSimulationProfile;
+                    SandSimulationProfile profile = gameplayProfile != null && gameplayProfile.sandProfile != null
+                        ? gameplayProfile.sandProfile
+                        : sandSimulationProfile;
                     if (profile == null) throw new InvalidOperationException("Phase C requires a SandSimulationProfile asset.");
                     LayoutMaskSet masks = LayoutRasterizer.Rasterize(levelData, profile.cellSize, profile.maxCells);
-                    activeContext.AttachSimulation(new SandSimulation(profile, masks));
+                    activeContext.AttachSimulation(new SandSimulation(profile, masks, SandSimulation.SeedFrom(levelId)));
                     SpawnLayoutVisuals(levelData);
                     SpawnSandField();
                     BindPhaseCGameplay(levelData, profile);
@@ -129,11 +132,18 @@ namespace SE001.System.Creation
                 int need = 0, have = 0;
                 for (int k = 0; k < cups.Count; k++) if (cups[k].AcceptedMaterialId == cups[c].AcceptedMaterialId) need += cups[k].Required;
                 for (int k = 0; k < sources.Count; k++) if (sources[k].MaterialId == cups[c].AcceptedMaterialId) have += sources[k].Initial;
-                if (have < need) Debug.LogWarning($"[LevelSpawner] {levelData.levelId}: material {cups[c].AcceptedMaterialId} has {have} grains in sources but cups need {need} to reach the fill line — level is unwinnable.", this);
+                if (have < need)
+                {
+                    string warning = $"[LevelSpawner] {levelData.levelId}: material {cups[c].AcceptedMaterialId} has {have} grains " +
+                        $"in sources but cups need {need} to reach the fill line; level is unwinnable.";
+                    Debug.LogWarning(warning, this);
+                }
             }
-            activeContext.RegisterParticipant(activeContext.LevelRoot.gameObject.AddComponent<SE001.HUD.PhaseCHudView>());
-            // DEV placeholder visuals remain until Source/Cup/DrawStroke prefabs exist.
-            activeContext.RegisterParticipant(activeContext.LevelRoot.gameObject.AddComponent<SE001.Diagnostics.PhaseCDebugView>());
+            activeContext.RegisterParticipant(
+                activeContext.LevelRoot.gameObject.AddComponent<SE001.HUD.PhaseCHudView>());
+            // Debug presentation is Play Mode only; EditMode lifecycle tests must not allocate debug meshes.
+            if (Application.isPlaying)
+                activeContext.RegisterParticipant(activeContext.LevelRoot.gameObject.AddComponent<SE001.Diagnostics.PhaseCDebugView>());
         }
 
         private void SpawnLayoutVisuals(SE001LevelJson levelData)
@@ -142,8 +152,15 @@ namespace SE001.System.Creation
             if (layoutVisualProfile == null) layoutVisualProfile = Resources.Load<LayoutVisualProfile>("Profiles/PhaseBLayoutVisualProfile");
             if (prefabProfile == null || layoutVisualProfile == null) return;
             LayoutVisualFactory factory = new LayoutVisualFactory();
-            for (int i = 0; i < levelData.board.wallContours.Count; i++) factory.Create(prefabProfile.boardWallPrefab, activeContext.BoardRoot, levelData.board.wallContours[i].points, layoutVisualProfile, true);
-            for (int i = 0; i < levelData.staticObstacles.Count; i++) for (int c = 0; c < levelData.staticObstacles[i].contours.Count; c++) factory.Create(prefabProfile.staticObstaclePrefab, activeContext.ObstacleRoot, levelData.staticObstacles[i].contours[c].points, layoutVisualProfile, false);
+            for (int i = 0; i < levelData.board.wallContours.Count; i++)
+                factory.Create(prefabProfile.boardWallPrefab, activeContext.BoardRoot,
+                    levelData.board.wallContours[i].points, layoutVisualProfile, true);
+            for (int i = 0; i < levelData.staticObstacles.Count; i++)
+            {
+                for (int c = 0; c < levelData.staticObstacles[i].contours.Count; c++)
+                    factory.Create(prefabProfile.staticObstaclePrefab, activeContext.ObstacleRoot,
+                        levelData.staticObstacles[i].contours[c].points, layoutVisualProfile, false);
+            }
         }
 
         private void SpawnSandField()
@@ -151,7 +168,11 @@ namespace SE001.System.Creation
             if (prefabProfile == null || prefabProfile.sandFieldPrefab == null || activeContext.SandSimulation == null) return;
             GameObject instance = Instantiate(prefabProfile.sandFieldPrefab, activeContext.SandVisualRoot, false);
             SandFieldVisual visual = instance.GetComponent<SandFieldVisual>();
-            if (visual == null) { DestroyOwnedRoot(instance.transform); throw new MissingComponentException("SandField prefab requires SandFieldVisual."); }
+            if (visual == null)
+            {
+                DestroyOwnedRoot(instance.transform);
+                throw new MissingComponentException("SandField prefab requires SandFieldVisual.");
+            }
             visual.Bind(activeContext.SandSimulation);
         }
 

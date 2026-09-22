@@ -12,6 +12,7 @@ namespace SE001.Data
         public DrawPathProfile drawPathProfile;
         public JuiceProfile juiceProfile;
         public PhaseCLevelSequence levelSequence;
+        public PhaseCVisualMaterials visualMaterials;
         public SandSimulationProfile sandProfile;
         public PrefabProfile prefabProfile;
         public int grainsPerUnit = 12;

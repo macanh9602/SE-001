@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c3a076216debff40a4a888cdd660b7d, type: 3}
+  m_Name: PhaseCVisualMaterials
+  m_EditorClassIdentifier:
+  sourceMaterial: {fileID: 2100000, guid: 224c65da92ca39541a67e168c6c5aa40, type: 2}
+  cupMaterial: {fileID: 2100000, guid: 326e2ec173e72cc48a3fc1d836d9a93c, type: 2}
+  cupBackMaterial: {fileID: 2100000, guid: e8efe6081ae2cbd46bd831771e262e39, type: 2}
+  drawPathMaterial: {fileID: 2100000, guid: a176dce23f2672741b0769fe4e56594e, type: 2}

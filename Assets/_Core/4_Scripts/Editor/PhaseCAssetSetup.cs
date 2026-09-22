@@ -5,6 +5,7 @@ using SE001.Simulation.Sand;
 using UnityEditor;
 using UnityEngine;
 using SE001.Presentation;
+using System.IO;
 
 namespace SE001.Editor
 {
@@ -33,11 +34,15 @@ namespace SE001.Editor
             runtime.juiceProfile = juice;
             runtime.sandProfile = AssetDatabase.LoadAssetAtPath<SandSimulationProfile>(folder + "/PhaseBSandSimulationProfile.asset");
             runtime.prefabProfile = AssetDatabase.LoadAssetAtPath<PrefabProfile>(folder + "/PhaseBPrefabProfile.asset");
+            runtime.visualMaterials = AssetDatabase.LoadAssetAtPath<PhaseCVisualMaterials>(folder + "/PhaseCVisualMaterials.asset");
             if (runtime.prefabProfile != null)
             {
-                runtime.prefabProfile.sourcePrefab = GetOrCreateVisualPrefab("Assets/_Core/3_Prefabs/Gameplay/Source/SandSource.prefab", "SandSource", typeof(PhaseCSourceVisual), false);
-                runtime.prefabProfile.cupPrefab = GetOrCreateVisualPrefab("Assets/_Core/3_Prefabs/Gameplay/Cup/Cup.prefab", "Cup", typeof(PhaseCCupVisual), false);
-                runtime.prefabProfile.drawStrokePrefab = GetOrCreateVisualPrefab("Assets/_Core/3_Prefabs/Gameplay/Draw/DrawStroke.prefab", "DrawStroke", typeof(PhaseCDrawStrokeVisual), true);
+                runtime.prefabProfile.sourcePrefab = GetOrCreateVisualPrefab(
+                    "Assets/_Core/3_Prefabs/Gameplay/Source/SandSource.prefab", "SandSource", typeof(PhaseCSourceVisual), false);
+                runtime.prefabProfile.cupPrefab = GetOrCreateVisualPrefab(
+                    "Assets/_Core/3_Prefabs/Gameplay/Cup/Cup.prefab", "Cup", typeof(PhaseCCupVisual), false);
+                runtime.prefabProfile.drawStrokePrefab = GetOrCreateVisualPrefab(
+                    "Assets/_Core/3_Prefabs/Gameplay/Draw/DrawStroke.prefab", "DrawStroke", typeof(PhaseCDrawStrokeVisual), true);
                 EditorUtility.SetDirty(runtime.prefabProfile);
             }
             PhaseCLevelSequence sequence = GetOrCreate<PhaseCLevelSequence>(folder + "/PhaseCLevelSequence.asset");
@@ -56,6 +61,61 @@ namespace SE001.Editor
             AssetDatabase.Refresh();
         }
 
+        [MenuItem("SE001/Phase C/Create visual materials")]
+        private static void CreateVisualMaterials()
+        {
+            EnsureFolder("Assets/_Core/0_Texture2D/Dev");
+            EnsureFolder("Assets/_Core/1_Materials");
+            string texturePath = "Assets/_Core/0_Texture2D/Dev/dev_rounded_rect.png";
+            if (!File.Exists(Path.Combine(Directory.GetCurrentDirectory(), texturePath)))
+            {
+                Texture2D texture = new Texture2D(256, 256, TextureFormat.RGBA32, false, true);
+                Color32[] pixels = new Color32[256 * 256];
+                for (int y = 0; y < 256; y++)
+                    for (int x = 0; x < 256; x++)
+                    {
+                        float dx = Mathf.Abs(x - 127.5f) - 103f;
+                        float dy = Mathf.Abs(y - 127.5f) - 103f;
+                        float distance = Mathf.Max(dx, dy);
+                        pixels[y * 256 + x] = distance <= 0f ? Color.white : new Color(1f, 1f, 1f, Mathf.Clamp01(1f - distance / 24f));
+                    }
+                texture.SetPixels32(pixels);
+                texture.Apply(false, false);
+                File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), texturePath), texture.EncodeToPNG());
+                Object.DestroyImmediate(texture);
+                AssetDatabase.Refresh();
+            }
+
+            TextureImporter importer = AssetImporter.GetAtPath(texturePath) as TextureImporter;
+            if (importer != null)
+            {
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.alphaIsTransparency = true;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+            }
+
+            Texture2D sourceTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+            Shader spriteShader = Shader.Find("SE001/SpriteSurface");
+            Shader layoutShader = Shader.Find("SE001/LayoutSurface");
+            Material source = GetOrCreateMaterial("Assets/_Core/1_Materials/MAT_Source.mat", spriteShader, sourceTexture, new Color(1f, 0.82f, 0.18f, 1f));
+            Material cup = GetOrCreateMaterial("Assets/_Core/1_Materials/MAT_Cup.mat", spriteShader, sourceTexture, Color.white);
+            Material cupBack = GetOrCreateMaterial(
+                "Assets/_Core/1_Materials/MAT_CupBack.mat", spriteShader, sourceTexture, new Color(0.82f, 0.86f, 0.92f, 0.9f));
+            Material draw = GetOrCreateMaterial("Assets/_Core/1_Materials/MAT_DrawPath.mat", layoutShader, null, new Color(0.35f, 0.3f, 0.55f, 1f));
+            PhaseCVisualMaterials profile = GetOrCreate<PhaseCVisualMaterials>("Assets/_Core/Resources/Profiles/PhaseCVisualMaterials.asset");
+            profile.sourceMaterial = source;
+            profile.cupMaterial = cup;
+            profile.cupBackMaterial = cupBack;
+            profile.drawPathMaterial = draw;
+            GameplayRuntimeProfile runtime = GetOrCreate<GameplayRuntimeProfile>("Assets/_Core/Resources/Profiles/PhaseCGameplayRuntimeProfile.asset");
+            runtime.visualMaterials = profile;
+            EditorUtility.SetDirty(profile);
+            EditorUtility.SetDirty(runtime);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
         private static T GetOrCreate<T>(string path) where T : ScriptableObject
         {
             T asset = AssetDatabase.LoadAssetAtPath<T>(path);
@@ -63,6 +123,22 @@ namespace SE001.Editor
             asset = ScriptableObject.CreateInstance<T>();
             AssetDatabase.CreateAsset(asset, path);
             return asset;
+        }
+
+        private static Material GetOrCreateMaterial(string path, Shader shader, Texture2D texture, Color color)
+        {
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(shader) { name = Path.GetFileNameWithoutExtension(path) };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.shader = shader;
+            material.SetColor("_BaseColor", color);
+            if (texture != null) material.SetTexture("_BaseMap", texture);
+            if (material.HasProperty("_Cutoff")) material.SetFloat("_Cutoff", 0.5f);
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         private static GameObject GetOrCreateVisualPrefab(string path, string name, global::System.Type markerType, bool withMesh)
