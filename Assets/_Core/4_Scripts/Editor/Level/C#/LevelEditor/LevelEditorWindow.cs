@@ -23,7 +23,6 @@ namespace SE001.Editor.Level
         private LevelEditorCanvas boardCanvas;
         private ScrollView levelsPane;
         private ScrollView inspectorPane;
-        private TwoPaneSplitView outerSplit;
         private TwoPaneSplitView innerSplit;
         private Label documentStatus;
         private Label validationStatus;
@@ -101,6 +100,7 @@ namespace SE001.Editor.Level
                 derivedState.Clear();
                 cachedMaskLayoutId = string.Empty;
                 RefreshLayoutList();
+                RefreshEntityList();
                 RefreshCanvas();
                 RefreshInspector();
                 RefreshValidation();
@@ -111,6 +111,7 @@ namespace SE001.Editor.Level
             documentHost.Level.EnsureCollections();
             RebuildDerivedState();
             RefreshLayoutList();
+            RefreshEntityList();
             RefreshCanvas();
             RefreshInspector();
             RefreshValidation();
@@ -187,6 +188,7 @@ namespace SE001.Editor.Level
             viewState.selectionKind = kind;
             if (boardCanvas != null) boardCanvas.SetSelected(viewState.selectedStableId, kind);
             RefreshLayoutList();
+            RefreshEntityList();
             RefreshInspector();
         }
 

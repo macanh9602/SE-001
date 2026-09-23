@@ -11,11 +11,17 @@ namespace SE001.Editor.Level
     public sealed partial class LevelEditorWindow
     {
         private const int ListPageSize = 25;
-        private Button levelsToggle;
+        private Button editTab;
+        private Button levelBrowserTab;
         private Button generalToggle;
-        private VisualElement levelsSlot;
-        private bool compactLevels;
-        private bool levelsDrawerOpen;
+        private VisualElement editWorkspace;
+        private Button addSourceButton;
+        private Button addCupButton;
+        private Button addObstacleButton;
+        private Button entitiesToggle;
+        private ScrollView entitiesPane;
+        private VisualElement editBody;
+        private VisualElement levelBrowserContent;
 
         private void BuildChrome()
         {
@@ -26,16 +32,16 @@ namespace SE001.Editor.Level
             toolbar.AddToClassList("le-toolbar");
             toolbar.Add(MakeButton("New", NewDocument, "le-button"));
             toolbar.Add(MakeButton("Open", OpenDocument, "le-button"));
+            editTab = MakeButton("Edit", () => SetWorkspaceTab(false), "le-button");
+            editTab.AddToClassList("le-workspace-tab");
+            toolbar.Add(editTab);
             saveButton = MakeButton("Save", SaveDocument, "le-button-primary");
             saveAsButton = MakeButton("Save As", SaveDocumentAs, "le-button");
             toolbar.Add(saveButton);
             toolbar.Add(saveAsButton);
-            levelsToggle = MakeButton("Levels", ToggleLevelsPane, "le-button");
-            toolbar.Add(levelsToggle);
-            generalToggle = MakeButton("General", () => SelectEntity(string.Empty, LevelEditorSelectionKind.None),
-                "le-button");
-            generalToggle.tooltip = "Level settings, including Ink budget";
-            toolbar.Add(generalToggle);
+            levelBrowserTab = MakeButton("Level Browser", () => SetWorkspaceTab(true), "le-button");
+            levelBrowserTab.AddToClassList("le-workspace-tab");
+            toolbar.Add(levelBrowserTab);
             VisualElement spacer = new VisualElement();
             spacer.style.flexGrow = 1f;
             toolbar.Add(spacer);
@@ -43,18 +49,38 @@ namespace SE001.Editor.Level
             toolbar.Add(playTestButton);
             root.Add(toolbar);
 
-            if (viewState.levelsPaneWidth > 600f || viewState.levelsPaneWidth < 180f)
-                viewState.levelsPaneWidth = 190f;
             if (viewState.inspectorPaneWidth > 600f || viewState.inspectorPaneWidth < 240f)
                 viewState.inspectorPaneWidth = 280f;
-            outerSplit = new TwoPaneSplitView(0, viewState.levelsPaneWidth, TwoPaneSplitViewOrientation.Horizontal);
-            outerSplit.AddToClassList("le-outer-split");
-            levelsSlot = new VisualElement();
-            levelsSlot.AddToClassList("le-levels-slot");
+
+            VisualElement workspaceHost = new VisualElement();
+            workspaceHost.AddToClassList("le-workspace-host");
+
+            editWorkspace = new VisualElement();
+            editWorkspace.AddToClassList("le-edit-workspace");
+            VisualElement editActions = new VisualElement();
+            editActions.AddToClassList("le-edit-actions");
+            generalToggle = MakeButton("General", () => SelectEntity(string.Empty, LevelEditorSelectionKind.None),
+                "le-button-secondary");
+            generalToggle.tooltip = "Level settings, including Ink budget";
+            editActions.Add(generalToggle);
+            addSourceButton = MakeButton("Add Source", AddSource, "le-button-secondary");
+            addCupButton = MakeButton("Add Cup", AddCup, "le-button-secondary");
+            addObstacleButton = MakeButton("Add Obstacle", AddRotatingObstacle, "le-button-secondary");
+            editActions.Add(addSourceButton);
+            editActions.Add(addCupButton);
+            editActions.Add(addObstacleButton);
+            entitiesToggle = MakeButton("Entities", ToggleEntitiesDrawer, "le-button-secondary");
+            entitiesToggle.tooltip = "Show entities in the current level.";
+            editActions.Add(entitiesToggle);
+            editWorkspace.Add(editActions);
+
             levelsPane = new ScrollView(ScrollViewMode.Vertical);
             levelsPane.AddToClassList("le-levels-pane");
-            levelsSlot.Add(levelsPane);
-            outerSplit.Add(levelsSlot);
+            levelsPane.AddToClassList("le-level-browser-pane");
+            levelBrowserContent = new VisualElement();
+            levelBrowserContent.AddToClassList("le-level-browser-content");
+            levelsPane.Add(levelBrowserContent);
+            workspaceHost.Add(levelsPane);
 
             innerSplit = new TwoPaneSplitView(1, viewState.inspectorPaneWidth, TwoPaneSplitViewOrientation.Horizontal);
             innerSplit.AddToClassList("le-inner-split");
@@ -67,8 +93,17 @@ namespace SE001.Editor.Level
             inspectorPane = new ScrollView(ScrollViewMode.Vertical);
             inspectorPane.AddToClassList("le-inspector-pane");
             innerSplit.Add(inspectorPane);
-            outerSplit.Add(innerSplit);
-            root.Add(outerSplit);
+
+            editBody = new VisualElement();
+            editBody.AddToClassList("le-edit-body");
+            editBody.Add(innerSplit);
+            entitiesPane = new ScrollView(ScrollViewMode.Vertical);
+            entitiesPane.AddToClassList("le-entities-drawer");
+            entitiesPane.AddToClassList("le-pane-hidden");
+            editBody.Add(entitiesPane);
+            editWorkspace.Add(editBody);
+            workspaceHost.Add(editWorkspace);
+            root.Add(workspaceHost);
 
             VisualElement statusBar = new VisualElement();
             statusBar.AddToClassList("le-statusbar");
@@ -83,16 +118,17 @@ namespace SE001.Editor.Level
 
             root.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
             root.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
-            levelsSlot.RegisterCallback<GeometryChangedEvent>(evt =>
-            {
-                if (!compactLevels && evt.newRect.width >= 180f && evt.newRect.width <= 600f)
-                    viewState.levelsPaneWidth = evt.newRect.width;
-            });
             inspectorPane.RegisterCallback<GeometryChangedEvent>(evt =>
             {
                 if (evt.newRect.width >= 240f && evt.newRect.width <= 600f)
                     viewState.inspectorPaneWidth = evt.newRect.width;
             });
+            editBody.RegisterCallback<GeometryChangedEvent>(evt =>
+            {
+                if (entitiesPane != null)
+                    entitiesPane.EnableInClassList("le-entities-drawer-narrow", evt.newRect.width < 700f);
+            });
+            SetWorkspaceTab(false);
         }
 
         private static Button MakeButton(string text, global::System.Action action, string className)
@@ -103,56 +139,42 @@ namespace SE001.Editor.Level
             return button;
         }
 
-        private void ToggleLevelsPane()
+        private void SetWorkspaceTab(bool showBrowser)
         {
-            if (levelsPane == null) return;
-            if (compactLevels)
+            if (editWorkspace != null) editWorkspace.EnableInClassList("le-pane-hidden", showBrowser);
+            if (levelsPane != null) levelsPane.EnableInClassList("le-pane-hidden", !showBrowser);
+            if (editTab != null) editTab.EnableInClassList("le-button-selected", !showBrowser);
+            if (levelBrowserTab != null) levelBrowserTab.EnableInClassList("le-button-selected", showBrowser);
+            if (playTestButton != null) playTestButton.EnableInClassList("le-pane-hidden", showBrowser);
+            if (showBrowser) RefreshLayoutList();
+        }
+
+        private void ToggleEntitiesDrawer()
+        {
+            if (entitiesPane == null) return;
+            bool show = entitiesPane.ClassListContains("le-pane-hidden");
+            entitiesPane.EnableInClassList("le-pane-hidden", !show);
+            if (entitiesToggle != null) entitiesToggle.EnableInClassList("le-button-selected", show);
+            if (show)
             {
-                levelsDrawerOpen = !levelsDrawerOpen;
-                levelsPane.EnableInClassList("le-pane-hidden", !levelsDrawerOpen);
+                entitiesPane.BringToFront();
+                RefreshEntityList();
             }
-            else if (levelsSlot.resolvedStyle.width > 0f)
-                outerSplit.CollapseChild(0);
-            else
-                outerSplit.UnCollapse();
         }
 
         private void OnRootGeometryChanged(GeometryChangedEvent evt)
         {
-            float width = evt.newRect.width;
-            bool compact = width < 960f;
-            bool narrow = width < 700f;
-            if (levelsPane != null && compact != compactLevels)
-            {
-                compactLevels = compact;
-                levelsDrawerOpen = false;
-                if (compact)
-                {
-                    levelsPane.RemoveFromHierarchy();
-                    rootVisualElement.Add(levelsPane);
-                    levelsPane.AddToClassList("le-levels-overlay");
-                    levelsPane.AddToClassList("le-pane-hidden");
-                    levelsPane.BringToFront();
-                    outerSplit.CollapseChild(0);
-                }
-                else
-                {
-                    levelsPane.RemoveFromHierarchy();
-                    levelsPane.RemoveFromClassList("le-levels-overlay");
-                    levelsPane.RemoveFromClassList("le-pane-hidden");
-                    levelsSlot.Add(levelsPane);
-                    outerSplit.UnCollapse();
-                }
-            }
+            bool narrow = evt.newRect.width < 700f;
             if (inspectorPane != null) inspectorPane.EnableInClassList("le-inspector-narrow", narrow);
+            if (levelsPane != null) levelsPane.EnableInClassList("le-level-browser-narrow", narrow);
         }
 
         private void RefreshLayoutList()
         {
-            if (levelsPane == null) return;
-            levelsPane.Clear();
-            levelsPane.Add(new Label("Levels") { name = "levels-title" });
-            searchField = new TextField("Find layout or entity") { value = viewState.levelSearch, isDelayed = true };
+            if (levelBrowserContent == null) return;
+            levelBrowserContent.Clear();
+            levelBrowserContent.Add(new Label("Level Browser") { name = "levels-title" });
+            searchField = new TextField("Find level") { value = viewState.levelSearch, isDelayed = true };
             searchField.RegisterValueChangedCallback(evt =>
             {
                 viewState.levelSearch = evt.newValue ?? string.Empty;
@@ -163,28 +185,11 @@ namespace SE001.Editor.Level
                 viewState.visibleRotatingObstacles = ListPageSize;
                 RefreshLayoutList();
             });
-            levelsPane.Add(searchField);
+            levelBrowserContent.Add(searchField);
             string filter = viewState.levelSearch.Trim();
             AddSavedLevelRows(filter);
             Button openBake = MakeButton("Open Layout Bake", OpenLayoutBake, "le-button-secondary");
-            levelsPane.Add(openBake);
-            int visibleLayouts = 0;
-            for (int i = 0; i < layoutLibrary.Entries.Count; i++)
-                if (MatchesFilter(layoutLibrary.Entries[i].LayoutId, filter)) visibleLayouts++;
-            Foldout layoutsGroup = MakeGroup("Layouts", visibleLayouts, viewState.layoutsExpanded,
-                value => viewState.layoutsExpanded = value);
-            levelsPane.Add(layoutsGroup);
-            int shownLayouts = 0;
-            for (int i = 0; i < layoutLibrary.Entries.Count; i++)
-            {
-                LayoutBakeEntry entry = layoutLibrary.Entries[i];
-                if (!MatchesFilter(entry.LayoutId, filter)) continue;
-                if (shownLayouts++ >= viewState.visibleLayouts) continue;
-                AddLayoutRow(layoutsGroup, entry);
-            }
-            if (shownLayouts > viewState.visibleLayouts)
-                AddShowMore(layoutsGroup, () => viewState.visibleLayouts += ListPageSize);
-            AddEntityRows(filter);
+            levelBrowserContent.Add(openBake);
         }
 
         private void AddSavedLevelRows(string filter)
@@ -200,14 +205,13 @@ namespace SE001.Editor.Level
 
             Foldout group = MakeGroup("Saved Levels", matching, viewState.savedLevelsExpanded,
                 value => viewState.savedLevelsExpanded = value);
-            group.Add(MakeButton("New Level", NewDocument, "le-button-primary"));
 
             if (matching == 0)
             {
-                Label empty = new Label("No saved levels yet. Use New Level to create one.");
+                Label empty = new Label("No saved levels yet. Use New in the toolbar to create one.");
                 empty.AddToClassList("le-empty-state");
                 group.Add(empty);
-                levelsPane.Add(group);
+                levelBrowserContent.Add(group);
                 return;
             }
 
@@ -222,7 +226,7 @@ namespace SE001.Editor.Level
 
             if (shown > viewState.visibleSavedLevels)
                 AddShowMore(group, () => viewState.visibleSavedLevels += ListPageSize);
-            levelsPane.Add(group);
+            levelBrowserContent.Add(group);
         }
 
         private void AddSavedLevelRow(VisualElement parent, LevelEditorDocumentService.SavedLevelDescriptor descriptor)
@@ -278,94 +282,71 @@ namespace SE001.Editor.Level
             }, "le-button-secondary"));
         }
 
-        private void AddLayoutRow(VisualElement parent, LayoutBakeEntry entry)
+        private void RefreshEntityList()
         {
-            VisualElement row = new VisualElement();
-            row.AddToClassList("le-list-row");
-            Button select = MakeButton(entry.LayoutId, () => SelectLayout(entry.LayoutId), "le-list-button");
+            if (entitiesPane == null) return;
+            entitiesPane.Clear();
+            entitiesPane.Add(new Label("Entities") { name = "entities-title" });
             if (Document == null)
             {
-                select.SetEnabled(false);
-                select.tooltip = "Create or open a level before choosing its layout.";
-            }
-            row.Add(select);
-            Label badge = new Label(entry.Status.Headline);
-            badge.AddToClassList("le-badge");
-            badge.AddToClassList(StatusClass(entry.Status.State));
-            row.Add(badge);
-            if (Document != null && entry.LayoutId == Document.layoutId) row.AddToClassList("le-row-selected");
-            parent.Add(row);
-        }
-
-        private void AddEntityRows(string filter)
-        {
-            if (Document == null)
-            {
-                Label empty = new Label("No level open. Use New or Open to begin authoring.");
+                Label empty = new Label("No level is open.");
                 empty.AddToClassList("le-empty-state");
-                levelsPane.Add(empty);
-                levelsPane.Add(MakeButton("New Level", NewDocument, "le-button-primary"));
-                levelsPane.Add(MakeButton("Open Level", OpenDocument, "le-button-secondary"));
+                entitiesPane.Add(empty);
                 return;
             }
 
             Foldout sourcesGroup = MakeGroup("Sources", Document.sources.Count, viewState.sourcesExpanded,
                 value => viewState.sourcesExpanded = value);
-            sourcesGroup.Add(MakeButton("Add Source", AddSource, "le-button-secondary"));
-            levelsPane.Add(sourcesGroup);
-            int matchedSources = 0;
+            entitiesPane.Add(sourcesGroup);
+            int shownSources = 0;
             for (int i = 0; i < Document.sources.Count; i++)
             {
                 SourceData source = Document.sources[i];
-                if (source == null) continue;
-                string label = EntityDisplayName("Source", i + 1);
-                if (MatchesFilter(label, filter) || MatchesFilter(EntityColorName(source.materialId), filter) ||
-                    MatchesFilter(source.stableId, filter))
-                {
-                    if (matchedSources++ < viewState.visibleSources)
-                        AddEntityRow(sourcesGroup, label, source.stableId, LevelEditorSelectionKind.Source,
-                            source.materialId, LevelEditorGeometry.SourceSize(source));
-                }
+                if (source == null || shownSources >= viewState.visibleSources) continue;
+                AddEntityRow(sourcesGroup, EntityDisplayName("Source", i + 1), source.stableId,
+                    LevelEditorSelectionKind.Source, source.materialId, LevelEditorGeometry.SourceSize(source));
+                shownSources++;
             }
-            if (matchedSources > viewState.visibleSources)
-                AddShowMore(sourcesGroup, () => viewState.visibleSources += ListPageSize);
+            if (Document.sources.Count > viewState.visibleSources)
+                AddEntityShowMore(sourcesGroup, () => viewState.visibleSources += ListPageSize);
+
             Foldout cupsGroup = MakeGroup("Cups", Document.cups.Count, viewState.cupsExpanded,
                 value => viewState.cupsExpanded = value);
-            cupsGroup.Add(MakeButton("Add Cup", AddCup, "le-button-secondary"));
-            levelsPane.Add(cupsGroup);
-            int matchedCups = 0;
+            entitiesPane.Add(cupsGroup);
+            int shownCups = 0;
             for (int i = 0; i < Document.cups.Count; i++)
             {
                 CupData cup = Document.cups[i];
-                if (cup == null) continue;
-                string label = EntityDisplayName("Cup", i + 1);
-                if (MatchesFilter(label, filter) || MatchesFilter(EntityColorName(cup.acceptedMaterialId), filter) ||
-                    MatchesFilter(cup.stableId, filter))
-                {
-                    if (matchedCups++ < viewState.visibleCups)
-                        AddEntityRow(cupsGroup, label, cup.stableId, LevelEditorSelectionKind.Cup,
-                            cup.acceptedMaterialId, LevelEditorGeometry.CupSize(cup));
-                }
+                if (cup == null || shownCups >= viewState.visibleCups) continue;
+                AddEntityRow(cupsGroup, EntityDisplayName("Cup", i + 1), cup.stableId,
+                    LevelEditorSelectionKind.Cup, cup.acceptedMaterialId, LevelEditorGeometry.CupSize(cup));
+                shownCups++;
             }
-            if (matchedCups > viewState.visibleCups)
-                AddShowMore(cupsGroup, () => viewState.visibleCups += ListPageSize);
+            if (Document.cups.Count > viewState.visibleCups)
+                AddEntityShowMore(cupsGroup, () => viewState.visibleCups += ListPageSize);
 
             Foldout obstaclesGroup = MakeGroup("Rotating Obstacles", Document.rotatingObstacles.Count,
                 viewState.rotatingObstaclesExpanded, value => viewState.rotatingObstaclesExpanded = value);
-            obstaclesGroup.Add(MakeButton("Add Rotating Obstacle", AddRotatingObstacle, "le-button-secondary"));
-            levelsPane.Add(obstaclesGroup);
-            int matchedObstacles = 0;
+            entitiesPane.Add(obstaclesGroup);
+            int shownObstacles = 0;
             for (int i = 0; i < Document.rotatingObstacles.Count; i++)
             {
                 RotatingObstacleData obstacle = Document.rotatingObstacles[i];
-                if (obstacle == null) continue;
-                string label = EntityDisplayName("Rotating Obstacle", i + 1);
-                if (!MatchesFilter(label, filter) && !MatchesFilter(obstacle.stableId, filter)) continue;
-                if (matchedObstacles++ < viewState.visibleRotatingObstacles)
-                    AddRotatingObstacleRow(obstaclesGroup, label, obstacle);
+                if (obstacle == null || shownObstacles >= viewState.visibleRotatingObstacles) continue;
+                AddRotatingObstacleRow(obstaclesGroup, EntityDisplayName("Rotating Obstacle", i + 1), obstacle);
+                shownObstacles++;
             }
-            if (matchedObstacles > viewState.visibleRotatingObstacles)
-                AddShowMore(obstaclesGroup, () => viewState.visibleRotatingObstacles += ListPageSize);
+            if (Document.rotatingObstacles.Count > viewState.visibleRotatingObstacles)
+                AddEntityShowMore(obstaclesGroup, () => viewState.visibleRotatingObstacles += ListPageSize);
+        }
+
+        private void AddEntityShowMore(VisualElement group, Action reveal)
+        {
+            group.Add(MakeButton("Show more", () =>
+            {
+                reveal();
+                RefreshEntityList();
+            }, "le-button-secondary"));
         }
 
         private void AddRotatingObstacleRow(VisualElement parent, string label, RotatingObstacleData obstacle)
@@ -382,11 +363,6 @@ namespace SE001.Editor.Level
             parent.Add(row);
         }
 
-        private static string EntityDisplayName(string kind, int number)
-        {
-            return kind + " " + number;
-        }
-
         private string EntityColorName(int colorId)
         {
             ColorProfileEntry color;
@@ -399,7 +375,8 @@ namespace SE001.Editor.Level
             LevelEditorSelectionKind kind, int colorId, Vector2 size)
         {
             Button row = MakeButton(string.Empty, () => SelectEntity(stableId, kind), "le-list-button");
-            var previewKind = kind == LevelEditorSelectionKind.Source ? JarPreviewKind.Source : JarPreviewKind.Cup;
+            JarPreviewKind previewKind = kind == LevelEditorSelectionKind.Source
+                ? JarPreviewKind.Source : JarPreviewKind.Cup;
             Image preview = new Image
             {
                 image = JarPreviewUtility.GetPreview(previewKind, colorId, size, 1f),
@@ -410,18 +387,14 @@ namespace SE001.Editor.Level
             row.Add(preview);
             row.Add(new Label(label));
             row.tooltip = EntityColorName(colorId) + " | " + stableId;
-            if (viewState.selectedStableId == stableId && viewState.selectionKind == kind) row.AddToClassList("le-row-selected");
+            if (viewState.selectedStableId == stableId && viewState.selectionKind == kind)
+                row.AddToClassList("le-row-selected");
             parent.Add(row);
         }
 
-        private static string StatusClass(LayoutBakeState state)
+        private static string EntityDisplayName(string kind, int number)
         {
-            switch (state)
-            {
-                case LayoutBakeState.Ready: return "le-badge-success";
-                case LayoutBakeState.NeedsRebake: return "le-badge-warning";
-                default: return "le-badge-danger";
-            }
+            return kind + " " + number;
         }
     }
 }

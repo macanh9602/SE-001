@@ -1,0 +1,102 @@
+<div id="se001-level-browser-options" class="se001-level-browser-options">
+  <style>
+    #se001-level-browser-options {
+      color: #e7e9ee;
+      font: 13px/1.35 system-ui, sans-serif;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      max-width: 980px;
+    }
+    #se001-level-browser-options .se001-option {
+      background: #25272c;
+      border: 1px solid #4b4f58;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    #se001-level-browser-options h3,
+    #se001-level-browser-options p {
+      margin: 0;
+    }
+    #se001-level-browser-options h3 {
+      padding: 9px 10px 5px;
+      font-size: 13px;
+    }
+    #se001-level-browser-options p {
+      padding: 0 10px 9px;
+      color: #b9bec9;
+    }
+    #se001-level-browser-options .se001-shell {
+      min-height: 156px;
+      background: #1d1f23;
+      border-top: 1px solid #3d4149;
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+    }
+    #se001-level-browser-options .se001-toolbar {
+      display: flex;
+      gap: 5px;
+      color: #cbd0da;
+    }
+    #se001-level-browser-options .se001-button,
+    #se001-level-browser-options .se001-row {
+      background: #565a63;
+      border-radius: 3px;
+      padding: 5px 7px;
+    }
+    #se001-level-browser-options .se001-button.active {
+      background: #3d70ae;
+    }
+    #se001-level-browser-options .se001-content {
+      display: grid;
+      grid-template-columns: 1fr 1.7fr;
+      gap: 6px;
+    }
+    #se001-level-browser-options .se001-list {
+      display: grid;
+      align-content: start;
+      gap: 4px;
+    }
+    #se001-level-browser-options .se001-row {
+      color: #d7dae1;
+    }
+    #se001-level-browser-options .se001-row.selected {
+      background: #3d70ae;
+    }
+    #se001-level-browser-options .se001-inspector {
+      border: 1px solid #444851;
+      padding: 8px;
+      color: #cbd0da;
+    }
+    @media (max-width: 760px) {
+      #se001-level-browser-options {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <section class="se001-option">
+    <h3>A · Current</h3>
+    <p>Saved Levels shares the authoring workspace.</p>
+    <div class="se001-shell">
+      <div class="se001-toolbar"><span class="se001-button active">Levels</span><span class="se001-button">General</span></div>
+      <div class="se001-content"><div class="se001-list"><span class="se001-row">Saved Levels (14)</span><span class="se001-row">Level_01</span><span class="se001-row selected">Level_02</span></div><div class="se001-inspector">Edit Level_02<br><br>Source / Cup / Placement</div></div>
+    </div>
+  </section>
+  <section class="se001-option">
+    <h3>B · Separate tab (Recommended)</h3>
+    <p>Authoring stays focused; browser opens only when needed.</p>
+    <div class="se001-shell">
+      <div class="se001-toolbar"><span class="se001-button active">Edit Level_02</span><span class="se001-button">Level Browser</span></div>
+      <div class="se001-content"><div class="se001-list"><span class="se001-row selected">Level_02</span><span class="se001-row">Layout</span><span class="se001-row">Sources / Cups</span></div><div class="se001-inspector">Current level authoring<br><br>Canvas + Inspector</div></div>
+    </div>
+  </section>
+  <section class="se001-option">
+    <h3>C · Overlay drawer</h3>
+    <p>Keep one workspace; open the level list temporarily.</p>
+    <div class="se001-shell">
+      <div class="se001-toolbar"><span class="se001-button active">Edit Level_02</span><span class="se001-button">Levels</span></div>
+      <div class="se001-content"><div class="se001-list"><span class="se001-row selected">Canvas</span><span class="se001-row">Inspector</span></div><div class="se001-inspector">Levels drawer opens over canvas<br><br>Close after switching</div></div>
+    </div>
+  </section>
+</div>

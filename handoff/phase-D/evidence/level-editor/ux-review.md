@@ -65,3 +65,15 @@ Status: EXECUTED (2026-09-23; partial closure rows remain explicit)
 ## Fixes + re-run
 
 The placement fix was recompiled and retested. Fresh-document authoring produced one Source, one Cup, and zero validation issues. Remaining PENDING rows are intentionally not converted to PASS.
+
+## Follow-up review - Level Browser density
+
+Review source: Product Owner screenshot, approximately `1000x888`, Level Browser tab with 14 saved levels.
+
+| Severity | Task | Friction | Expected | Evidence | Fix direction |
+|---|---|---|---|---|---|
+| Medium | Browse many saved levels | Browser content stretched across the full window; each level used a tall two-row layout and Delete expanded to roughly half the screen width. This increased scroll cost and weakened the level-name hierarchy. | A bounded readable list with compact rows; status and destructive action remain visible without dominating the row. | Product Owner screenshot supplied in chat. | Added a max-width browser content column, compact one-row entries on wide windows, and narrow-window two-row fallback. Manual re-review remains pending. |
+
+### Follow-up re-run status
+
+Code fix applied and Unity reimport/compile completed with 0 console errors and 0 warnings. The visual re-run at wide and narrow window sizes remains `PENDING` because this session does not inject EditorWindow resize/click gestures.

@@ -1,0 +1,100 @@
+<div id="se001-entity-explorer-options" class="se001-entity-explorer-options">
+  <style>
+    #se001-entity-explorer-options {
+      color: #e7e9ee;
+      font: 13px/1.35 system-ui, sans-serif;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      max-width: 980px;
+    }
+    #se001-entity-explorer-options .se001-option {
+      background: #25272c;
+      border: 1px solid #4b4f58;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    #se001-entity-explorer-options h3,
+    #se001-entity-explorer-options p {
+      margin: 0;
+    }
+    #se001-entity-explorer-options h3 {
+      padding: 9px 10px 5px;
+      font-size: 13px;
+    }
+    #se001-entity-explorer-options p {
+      padding: 0 10px 9px;
+      color: #b9bec9;
+    }
+    #se001-entity-explorer-options .se001-shell {
+      min-height: 156px;
+      background: #1d1f23;
+      border-top: 1px solid #3d4149;
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+    }
+    #se001-entity-explorer-options .se001-toolbar {
+      display: flex;
+      gap: 5px;
+    }
+    #se001-entity-explorer-options .se001-button,
+    #se001-entity-explorer-options .se001-row {
+      background: #565a63;
+      border-radius: 3px;
+      padding: 5px 7px;
+    }
+    #se001-entity-explorer-options .se001-button.active,
+    #se001-entity-explorer-options .se001-row.selected {
+      background: #3d70ae;
+    }
+    #se001-entity-explorer-options .se001-content {
+      display: grid;
+      grid-template-columns: 0.9fr 1.8fr 0.9fr;
+      gap: 6px;
+    }
+    #se001-entity-explorer-options .se001-list,
+    #se001-entity-explorer-options .se001-inspector {
+      display: grid;
+      align-content: start;
+      gap: 4px;
+    }
+    #se001-entity-explorer-options .se001-inspector {
+      border: 1px solid #444851;
+      padding: 8px;
+      color: #cbd0da;
+    }
+    @media (max-width: 760px) {
+      #se001-entity-explorer-options {
+        grid-template-columns: 1fr;
+      }
+      #se001-entity-explorer-options .se001-content {
+        grid-template-columns: 1fr 1.5fr;
+      }
+    }
+  </style>
+  <section class="se001-option">
+    <h3>A · Edit drawer (Recommended)</h3>
+    <p>Current-level entity list opens only when needed.</p>
+    <div class="se001-shell">
+      <div class="se001-toolbar"><span class="se001-button active">Entities</span><span class="se001-button">Add Source</span><span class="se001-button">Add Cup</span></div>
+      <div class="se001-content"><div class="se001-list"><span class="se001-row">Sources (1)</span><span class="se001-row selected">Source 1</span><span class="se001-row">Cups (1)</span><span class="se001-row">Cup 1</span></div><div class="se001-inspector">Canvas / selected Source</div><div class="se001-inspector">Inspector<br><br>Source 1</div></div>
+    </div>
+  </section>
+  <section class="se001-option">
+    <h3>B · Permanent 3-column</h3>
+    <p>Fast access, but permanently reduces Canvas width.</p>
+    <div class="se001-shell">
+      <div class="se001-toolbar"><span class="se001-button active">Edit</span><span class="se001-button">Level Browser</span></div>
+      <div class="se001-content"><div class="se001-list"><span class="se001-row selected">Sources (1)</span><span class="se001-row">Cups (1)</span><span class="se001-row">Obstacles (0)</span></div><div class="se001-inspector">Canvas</div><div class="se001-inspector">Inspector</div></div>
+    </div>
+  </section>
+  <section class="se001-option">
+    <h3>C · Canvas only</h3>
+    <p>Lowest UI cost, but entity discovery becomes difficult.</p>
+    <div class="se001-shell">
+      <div class="se001-toolbar"><span class="se001-button active">Edit</span><span class="se001-button">Level Browser</span></div>
+      <div class="se001-content"><div class="se001-list"><span class="se001-row selected">Canvas</span></div><div class="se001-inspector">Select entities directly on Canvas</div><div class="se001-inspector">Inspector</div></div>
+    </div>
+  </section>
+</div>

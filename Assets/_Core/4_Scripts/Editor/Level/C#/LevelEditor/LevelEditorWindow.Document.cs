@@ -18,6 +18,7 @@ namespace SE001.Editor.Level
             viewState.selectedStableId = string.Empty;
             viewState.selectionKind = LevelEditorSelectionKind.None;
             derivedState.Clear();
+            SetWorkspaceTab(false);
             RefreshAll();
         }
 
@@ -63,6 +64,7 @@ namespace SE001.Editor.Level
             viewState.selectedStableId = string.Empty;
             viewState.selectionKind = LevelEditorSelectionKind.None;
             derivedState.Clear();
+            SetWorkspaceTab(false);
             RefreshAll();
         }
 
@@ -410,11 +412,13 @@ namespace SE001.Editor.Level
                 }
                 if (saveAsButton != null) saveAsButton.SetEnabled(false);
                 if (generalToggle != null) generalToggle.SetEnabled(false);
+                SetEntityCreationEnabled(false);
                 RefreshPlayTestState();
                 return;
             }
 
             if (generalToggle != null) generalToggle.SetEnabled(true);
+            SetEntityCreationEnabled(derivedState.Layout != null && derivedState.Masks != null);
             string path = string.IsNullOrWhiteSpace(documentHost.CurrentPath)
                 ? "Unsaved level"
                 : Path.GetFileName(documentHost.CurrentPath);
@@ -427,6 +431,13 @@ namespace SE001.Editor.Level
             }
             if (saveAsButton != null) saveAsButton.SetEnabled(canSave);
             RefreshPlayTestState();
+        }
+
+        private void SetEntityCreationEnabled(bool enabled)
+        {
+            if (addSourceButton != null) addSourceButton.SetEnabled(enabled);
+            if (addCupButton != null) addCupButton.SetEnabled(enabled);
+            if (addObstacleButton != null) addObstacleButton.SetEnabled(enabled);
         }
     }
 }
