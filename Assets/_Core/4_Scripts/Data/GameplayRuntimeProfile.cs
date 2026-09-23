@@ -17,7 +17,6 @@ namespace SE001.Data
         public JarVisualProfile jarVisualProfile;
         public SandSimulationProfile sandProfile;
         public PrefabProfile prefabProfile;
-        public int grainsPerUnit = 12;
         public int stableStepsForLose = 30;
         public float fixedStepHz = 60f;
     }

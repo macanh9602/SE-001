@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using SE001.Data;
 using SE001.Geometry;
 using SE001.Simulation.Sand;
-using SE001.Gameplay;
+using SE001.System.Management;
 using UnityEngine;
 
 namespace SE001.Editor.Level

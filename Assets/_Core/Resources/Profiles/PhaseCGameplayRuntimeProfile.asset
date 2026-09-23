@@ -23,6 +23,5 @@ MonoBehaviour:
   jarVisualProfile: {fileID: 11400000, guid: 091e3a63c27381b4f87746baefd09174, type: 2}
   sandProfile: {fileID: 11400000, guid: bffe3b555195f2948b2ca0b382d1b105, type: 2}
   prefabProfile: {fileID: 11400000, guid: 21989156fdc2fb344aadeeb526716169, type: 2}
-  grainsPerUnit: 12
   stableStepsForLose: 30
   fixedStepHz: 60

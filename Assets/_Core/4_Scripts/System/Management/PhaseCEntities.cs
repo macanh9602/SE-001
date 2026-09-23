@@ -104,8 +104,8 @@ namespace SE001.Gameplay
     /// Cup geometry from CupProfile only (never from the mesh).
     /// position = bottom-center, size = outer width (at the mouth) / height. Tapered bucket:
     /// bottom width = size.x * (1 - taper). Slanted side walls + bottom block sand; top open until full.
-    /// Full = sand volume reaches the fill line (fillLine * interior height) → Required grains derive
-    /// from geometry; GD requiredAmount is the displayed logical target.
+    /// Full = the authored logical target converted through SandSimulationProfile.grainsPerUnit.
+    /// Geometry still determines the physical Capacity; authoring validation blocks targets above it.
     /// </summary>
     public sealed class CupDomain
     {
@@ -132,6 +132,8 @@ namespace SE001.Gameplay
             taper = profile.taper;
             fillLine = profile.fillLine;
             BuildCells(profile.wallThickness, cellSize, visualProfile);
+            long targetGrains = (long)RequiredLogical * Mathf.Max(1, grainsPerUnit);
+            required = targetGrains > int.MaxValue ? int.MaxValue : (int)targetGrains;
         }
 
         public string StableId { get; }
@@ -199,7 +201,6 @@ namespace SE001.Gameplay
             float interiorTop = Position.y + Size.y;
             fillLineY = geometryBottom + wall + (interiorTop - geometryBottom - wall) * fillLine;
             capacity = 0;
-            required = 0;
             for (int r = 0; r < rows; r++)
             {
                 int y = minY + r;
@@ -209,10 +210,7 @@ namespace SE001.Gameplay
                 rowMaxX[r] = Mathf.FloorToInt((Position.x + inner) / cell - 0.5f);
                 int span = Mathf.Max(0, rowMaxX[r] - rowMinX[r] + 1);
                 capacity += span;
-                if (yc <= fillLineY) required += span;
             }
-
-            required = Mathf.Max(1, required);
         }
 
         public void RegisterWalls(SandSimulation sim, float cell, float wallThickness)

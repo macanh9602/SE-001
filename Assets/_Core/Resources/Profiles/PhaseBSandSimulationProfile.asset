@@ -17,3 +17,4 @@ MonoBehaviour:
   maxStepsPerFrame: 4
   maxCells: 262144
   enableLateralSlide: 1
+  grainsPerUnit: 115

@@ -128,11 +128,19 @@ namespace SE001.System.Creation
             input.Configure(gameplayProfile.drawPathProfile, sourceProfile.hitPadding);
             var sources = new List<SourceDomain>();
             var cups = new List<CupDomain>();
-            int grainsPerUnit = profile != null ? profile.grainsPerUnit : 12;
+            int grainsPerUnit = profile != null ? profile.grainsPerUnit : SandSimulationProfile.DefaultGrainsPerUnit;
             for (int i = 0; i < levelData.sources.Count; i++)
                 sources.Add(new SourceDomain(levelData.sources[i], sourceProfile, grainsPerUnit, gameplayProfile.jarVisualProfile));
             for (int i = 0; i < levelData.cups.Count; i++)
                 cups.Add(new CupDomain(levelData.cups[i], cupProfile, grainsPerUnit, profile.cellSize, gameplayProfile.jarVisualProfile));
+            for (int i = 0; i < cups.Count; i++)
+            {
+                if (cups[i].Required <= cups[i].Capacity) continue;
+                throw new InvalidOperationException(
+                    "Cup '" + cups[i].StableId + "' requires " + cups[i].Required +
+                    " grains but its physical capacity is " + cups[i].Capacity +
+                    ". Lower Required Amount or adjust the Cup profile.");
+            }
             gameplay.Configure(sources, cups, profile.cellSize, cupProfile.wallThickness);
             if (levelData.rotatingObstacles.Count > 0)
             {

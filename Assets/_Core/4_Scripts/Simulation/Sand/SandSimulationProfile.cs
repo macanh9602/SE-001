@@ -9,6 +9,8 @@ namespace SE001.Simulation.Sand
     [CreateAssetMenu(fileName = "SandSimulationProfile", menuName = "SE001/Profiles/Sand Simulation")]
     public sealed class SandSimulationProfile : ScriptableObject
     {
+        public const int DefaultGrainsPerUnit = 115;
+
         [Min(0.001f)] public float cellSize = 0.06f;
         [Min(0.001f)] public float fixedStepSeconds = 1f / 60f;
         [Min(1)] public int maxStepsPerFrame = 4;
@@ -35,7 +37,7 @@ namespace SE001.Simulation.Sand
 
         [Header("Gameplay scale")]
         [Tooltip("Simulation grains per GD logical unit.")]
-        [Min(1)] public int grainsPerUnit = 30;
+        [Min(1)] public int grainsPerUnit = DefaultGrainsPerUnit;
         [Min(1)] public int stableStepsForLose = 30;
     }
 }
