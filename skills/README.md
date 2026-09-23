@@ -28,6 +28,7 @@ Trước khi thêm hoặc restructure một skill → đọc `skills/AUTHORING.m
 | prototype · GDD chưa lock · cần spec nhanh để thử | `spec-feature/refs/spec-lite.md` |
 | procedural mesh · runtime generation · save architecture · custom rendering · editor foundation · rủi ro performance lớn | `technical-slice/` |
 | level editor · tool cho GD · authoring window · UI Toolkit · editor UX/responsive/splitter/input | `level-editor/` |
+| review editor usability · first use · visual hierarchy · responsive UX · GD workflow friction | `editor-ux-review/` |
 | "animation này chưa đã" · chuyển động · tween · juice · có video ref | `game-feel-motion/` |
 | độ khó · level generation · DDA · difficulty curve · booster trigger · "level dễ quá / khó quá" | `difficulty-design/` |
 | giải thích cơ chế cho GD · viết tooltip · chốt open question với GD · GD đọc số liệu sai | `gd-communication/` |

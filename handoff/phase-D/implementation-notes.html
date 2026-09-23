@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Phase D D0/D0.5 implementation notes</title>
+</head>
+<body>
+  <h1>Phase D — D0 + D0.5</h1>
+  <p>Added generic level-editor recipes and the editor UX review skill without embedding game-specific gameplay rules.</p>
+  <p>Moved runtime layout geometry to schema-3 <code>LayoutDefinition</code> and bit-packed <code>LayoutMaskAsset</code> resources. Runtime loads the baked mask and prefab; it does not rasterize on level load.</p>
+  <p>Added the SVG bake window, migration menu, deterministic bake tests, and evidence under <code>handoff/phase-D/evidence/</code>.</p>
+  <h2>Verification</h2>
+  <ul>
+    <li>Unity compile/reimport: no console errors or warnings.</li>
+    <li>D0.5 targeted EditMode tests: 8/8 passed.</li>
+    <li>Full EditMode suite: 62/64 passed; two existing Phase C Level 02 playthrough failures remain documented and were not changed.</li>
+    <li><code>git diff --check</code>: passed.</li>
+    <li>Scoped style gate for D0/D0.5-created or modified files: passed. The repository-wide gate still reports pre-existing C1 files outside this packet.</li>
+  </ul>
+</body>
+</html>

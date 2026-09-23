@@ -99,6 +99,7 @@ namespace SE001.Tests
         {
             return new SE001LevelJson
             {
+                schemaVersion = 2,
                 levelId = "authoring_fixture",
                 board = new BoardData
                 {

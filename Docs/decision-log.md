@@ -2,6 +2,26 @@
 
 > Append-only. Decision mới đặt ở trên cùng. Project-level decision ghi ở đây; micro-decision ghi trong story implementation notes.
 
+## D-007 — Baked layout asset is the runtime geometry source
+
+Status: Accepted — 2026-09-23
+Story: `handoff/phase-D/PHASE-D-EXECUTE-D0-D05.md`
+
+### Chốt
+
+- SVG contours are imported in Editor and baked through the existing `LayoutRasterizer` into a
+  bit-packed `LayoutMaskAsset` plus a prefab containing baked mesh references.
+- Schema 3 level JSON stores `layoutId` and entity data; it does not store wall contours or static
+  obstacle contours. Existing schema 2 levels migrate once through the Phase D menu command.
+- Runtime loads the baked mask and blocks on cell-size or data-length mismatch; it never silently
+  rasterizes a stale layout.
+
+### Hệ quả
+
+Runtime load no longer pays contour rasterization or layout mesh generation. Rebake is an Editor
+operation and preserves the `LayoutDefinition` asset identity. Layout prefabs contain presentation
+only; Source/Cup and simulation state remain level-owned runtime composition.
+
 ## D-006 — Source body size có thể author theo từng level
 
 Status: Accepted — 2026-09-22

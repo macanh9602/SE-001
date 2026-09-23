@@ -42,15 +42,8 @@ namespace SE001.Editor.Level
             error = string.Empty;
             try
             {
-                if (settings == null) throw new ArgumentNullException(nameof(settings));
-                if (settings.boardUnitsPerSvgUnit <= 0f) throw new ArgumentOutOfRangeException(nameof(settings.boardUnitsPerSvgUnit));
-                if (settings.curveTolerance <= 0f) throw new ArgumentOutOfRangeException(nameof(settings.curveTolerance));
-                XmlDocument document = new XmlDocument { PreserveWhitespace = false };
-                document.Load(sourcePath);
-                XmlElement root = document.DocumentElement;
-                if (root == null || root.LocalName != "svg") throw new FormatException("SVG root element is missing.");
-                Rect viewBox = ParseViewBox(root.GetAttribute("viewBox"));
-                SE001LevelJson level = ImportDocument(root, viewBox, settings);
+                SE001LevelJson level;
+                if (!TryParse(sourcePath, settings, out level, out error)) return false;
                 LevelDataValidator.Validate(level);
                 string json = level.ToJson(true) + "\n";
                 string previous = File.Exists(outputPath) ? File.ReadAllText(outputPath) : null;
@@ -69,6 +62,37 @@ namespace SE001.Editor.Level
             }
         }
 
+        public static bool TryParse(
+            string sourcePath,
+            PhaseBSvgImportSettings settings,
+            out SE001LevelJson level,
+            out string error)
+        {
+            level = null;
+            error = string.Empty;
+            try
+            {
+                if (settings == null) throw new ArgumentNullException(nameof(settings));
+                if (settings.boardUnitsPerSvgUnit <= 0f)
+                    throw new ArgumentOutOfRangeException(nameof(settings.boardUnitsPerSvgUnit));
+                if (settings.curveTolerance <= 0f)
+                    throw new ArgumentOutOfRangeException(nameof(settings.curveTolerance));
+                XmlDocument document = new XmlDocument { PreserveWhitespace = false };
+                document.Load(sourcePath);
+                XmlElement root = document.DocumentElement;
+                if (root == null || root.LocalName != "svg")
+                    throw new FormatException("SVG root element is missing.");
+                Rect viewBox = ParseViewBox(root.GetAttribute("viewBox"));
+                level = ImportDocument(root, viewBox, settings);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                error = exception.Message;
+                return false;
+            }
+        }
+
         private static SE001LevelJson ImportDocument(XmlElement root, Rect viewBox, PhaseBSvgImportSettings settings)
         {
             List<ImportedContour> contours = new List<ImportedContour>();
@@ -76,6 +100,7 @@ namespace SE001.Editor.Level
             if (contours.Count == 0) throw new FormatException("SVG contains no supported closed geometry.");
             SE001LevelJson level = new SE001LevelJson
             {
+                schemaVersion = 2,
                 levelId = "phase_c_level_02",
                 board = new BoardData { size = new Vector2(viewBox.width * settings.boardUnitsPerSvgUnit, viewBox.height * settings.boardUnitsPerSvgUnit) }
             };
@@ -86,7 +111,11 @@ namespace SE001.Editor.Level
             {
                 if (contours[i].Ignored) continue;
                 float area = Mathf.Abs(SignedArea(contours[i].Points));
-                if (area > largestArea) { largestArea = area; wallIndex = i; }
+                if (area > largestArea)
+                {
+                    largestArea = area;
+                    wallIndex = i;
+                }
             }
             if (settings.legacyTestFixture && wallIndex < 0) throw new FormatException("Legacy fixture has no wall geometry.");
             for (int i = 0; i < contours.Count; i++)
@@ -123,11 +152,21 @@ namespace SE001.Editor.Level
             }
             else if (localName == "rect")
             {
-                output.Add(new ImportedContour { StableId = SemanticId(element), Ignored = IsIgnored(element), Points = RectPoints(element, viewBox, settings) });
+                output.Add(new ImportedContour
+                {
+                    StableId = SemanticId(element),
+                    Ignored = IsIgnored(element),
+                    Points = RectPoints(element, viewBox, settings)
+                });
             }
             else if (localName == "circle")
             {
-                output.Add(new ImportedContour { StableId = SemanticId(element), Ignored = IsIgnored(element), Points = CirclePoints(element, viewBox, settings) });
+                output.Add(new ImportedContour
+                {
+                    StableId = SemanticId(element),
+                    Ignored = IsIgnored(element),
+                    Points = CirclePoints(element, viewBox, settings)
+                });
             }
             else if (localName != "svg" && localName != "g" && localName != "defs" && localName != "style")
             {
@@ -142,9 +181,25 @@ namespace SE001.Editor.Level
 
         private static List<Vector2> RectPoints(XmlElement element, Rect viewBox, PhaseBSvgImportSettings settings)
         {
-            float x = Number(element, "x"); float y = Number(element, "y"); float w = Number(element, "width"); float h = Number(element, "height");
-            float rx = Mathf.Clamp(Number(element, "rx"), 0f, w * 0.5f); float ry = Mathf.Clamp(Number(element, "ry"), 0f, h * 0.5f);
-            if (rx <= 0f || ry <= 0f) return MapPoints(new List<Vector2> { new Vector2(x, y), new Vector2(x + w, y), new Vector2(x + w, y + h), new Vector2(x, y + h) }, viewBox, settings);
+            float x = Number(element, "x");
+            float y = Number(element, "y");
+            float w = Number(element, "width");
+            float h = Number(element, "height");
+            float rx = Mathf.Clamp(Number(element, "rx"), 0f, w * 0.5f);
+            float ry = Mathf.Clamp(Number(element, "ry"), 0f, h * 0.5f);
+            if (rx <= 0f || ry <= 0f)
+            {
+                return MapPoints(
+                    new List<Vector2>
+                    {
+                        new Vector2(x, y),
+                        new Vector2(x + w, y),
+                        new Vector2(x + w, y + h),
+                        new Vector2(x, y + h)
+                    },
+                    viewBox,
+                    settings);
+            }
             List<Vector2> points = new List<Vector2>();
             AddArc(points, new Vector2(x + w - rx, y + ry), rx, ry, -90f, 0f, settings.roundedShapeSegments);
             AddArc(points, new Vector2(x + w - rx, y + h - ry), rx, ry, 0f, 90f, settings.roundedShapeSegments);
@@ -155,47 +210,228 @@ namespace SE001.Editor.Level
 
         private static List<Vector2> CirclePoints(XmlElement element, Rect viewBox, PhaseBSvgImportSettings settings)
         {
-            float cx = Number(element, "cx"); float cy = Number(element, "cy"); float radius = Number(element, "r");
+            float cx = Number(element, "cx");
+            float cy = Number(element, "cy");
+            float radius = Number(element, "r");
             if (radius <= 0f) throw new FormatException("circle radius must be positive.");
             List<Vector2> points = new List<Vector2>();
-            for (int i = 0; i < Mathf.Max(3, settings.circleSegments); i++) { float a = i * Mathf.PI * 2f / settings.circleSegments; points.Add(new Vector2(cx + Mathf.Cos(a) * radius, cy + Mathf.Sin(a) * radius)); }
+            for (int i = 0; i < Mathf.Max(3, settings.circleSegments); i++)
+            {
+                float angle = i * Mathf.PI * 2f / settings.circleSegments;
+                points.Add(new Vector2(
+                    cx + Mathf.Cos(angle) * radius,
+                    cy + Mathf.Sin(angle) * radius));
+            }
             return MapPoints(points, viewBox, settings);
         }
 
         private static void ParsePath(string data, Rect viewBox, PhaseBSvgImportSettings settings, List<Vector2> result)
         {
             MatchCollection matches = Regex.Matches(data, @"[A-Za-z]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?");
-            int index = 0; char command = '\0'; Vector2 current = Vector2.zero; Vector2 start = Vector2.zero; Vector2 control = Vector2.zero; bool hasControl = false; bool closed = false;
+            int index = 0;
+            char command = '\0';
+            Vector2 current = Vector2.zero;
+            Vector2 start = Vector2.zero;
+            bool closed = false;
             while (index < matches.Count)
             {
-                string token = matches[index++].Value; if (token.Length == 1 && char.IsLetter(token[0])) command = token[0]; else { index--; }
+                string token = matches[index++].Value;
+                if (token.Length == 1 && char.IsLetter(token[0]))
+                {
+                    command = token[0];
+                }
+                else
+                {
+                    index--;
+                }
                 if (command == '\0') throw new FormatException("Path command is missing.");
-                char absolute = char.ToUpperInvariant(command); bool relative = char.IsLower(command);
-                if (absolute == 'Z') { current = start; closed = true; command = '\0'; continue; }
-                int count = absolute == 'M' || absolute == 'L' ? 2 : absolute == 'H' || absolute == 'V' ? 1 : absolute == 'C' ? 6 : 0;
+                char absolute = char.ToUpperInvariant(command);
+                bool relative = char.IsLower(command);
+                if (absolute == 'Z')
+                {
+                    current = start;
+                    closed = true;
+                    command = '\0';
+                    continue;
+                }
+                int count = absolute == 'M' || absolute == 'L'
+                    ? 2
+                    : absolute == 'H' || absolute == 'V'
+                        ? 1
+                        : absolute == 'C' ? 6 : 0;
                 if (count == 0) throw new FormatException("Unsupported path command: " + command);
                 if (index + count > matches.Count) throw new FormatException("Incomplete path command: " + command);
-                float[] values = new float[count]; for (int i = 0; i < count; i++) values[i] = ParseFloat(matches[index++].Value);
-                if (absolute == 'M' || absolute == 'L') { Vector2 next = new Vector2(values[0], values[1]); if (relative) next += current; current = next; if (absolute == 'M') { start = current; command = relative ? 'l' : 'L'; } result.Add(current); hasControl = false; }
-                else if (absolute == 'H') { current.x = relative ? current.x + values[0] : values[0]; result.Add(current); hasControl = false; }
-                else if (absolute == 'V') { current.y = relative ? current.y + values[0] : values[0]; result.Add(current); hasControl = false; }
-                else { Vector2 c1 = new Vector2(values[0], values[1]); Vector2 c2 = new Vector2(values[2], values[3]); Vector2 end = new Vector2(values[4], values[5]); if (relative) { c1 += current; c2 += current; end += current; } int segments = Mathf.Clamp(Mathf.CeilToInt(Vector2.Distance(current, end) / settings.curveTolerance), 2, 128); for (int s = 1; s <= segments; s++) { float t = s / (float)segments; float u = 1f - t; result.Add(u * u * u * current + 3f * u * u * t * c1 + 3f * u * t * t * c2 + t * t * t * end); } current = end; control = c2; hasControl = true; }
+                float[] values = new float[count];
+                for (int i = 0; i < count; i++)
+                    values[i] = ParseFloat(matches[index++].Value);
+                if (absolute == 'M' || absolute == 'L')
+                {
+                    Vector2 next = new Vector2(values[0], values[1]);
+                    if (relative) next += current;
+                    current = next;
+                    if (absolute == 'M')
+                    {
+                        start = current;
+                        command = relative ? 'l' : 'L';
+                    }
+
+                    result.Add(current);
+                }
+                else if (absolute == 'H')
+                {
+                    current.x = relative ? current.x + values[0] : values[0];
+                    result.Add(current);
+                }
+                else if (absolute == 'V')
+                {
+                    current.y = relative ? current.y + values[0] : values[0];
+                    result.Add(current);
+                }
+                else
+                {
+                    Vector2 c1 = new Vector2(values[0], values[1]);
+                    Vector2 c2 = new Vector2(values[2], values[3]);
+                    Vector2 end = new Vector2(values[4], values[5]);
+                    if (relative)
+                    {
+                        c1 += current;
+                        c2 += current;
+                        end += current;
+                    }
+
+                    int segments = Mathf.Clamp(
+                        Mathf.CeilToInt(Vector2.Distance(current, end) / settings.curveTolerance),
+                        2,
+                        128);
+                    for (int segment = 1; segment <= segments; segment++)
+                    {
+                        float t = segment / (float)segments;
+                        float u = 1f - t;
+                        result.Add(
+                            u * u * u * current +
+                            3f * u * u * t * c1 +
+                            3f * u * t * t * c2 +
+                            t * t * t * end);
+                    }
+
+                    current = end;
+                }
             }
-            for (int i = 0; i < result.Count; i++) result[i] = MapPoint(result[i], viewBox, settings);
+            for (int i = 0; i < result.Count; i++)
+                result[i] = MapPoint(result[i], viewBox, settings);
             if (closed && result.Count > 1 && result[0] == result[result.Count - 1]) result.RemoveAt(result.Count - 1);
         }
 
-        private static List<Vector2> MapPoints(List<Vector2> points, Rect viewBox, PhaseBSvgImportSettings settings) { for (int i = 0; i < points.Count; i++) points[i] = MapPoint(points[i], viewBox, settings); return points; }
-        private static Vector2 MapPoint(Vector2 point, Rect viewBox, PhaseBSvgImportSettings settings) => new BoardSpaceMapper(viewBox, settings.boardUnitsPerSvgUnit).SvgToBoard(point);
-        private static float Number(XmlElement element, string name) => string.IsNullOrEmpty(element.GetAttribute(name)) ? 0f : ParseFloat(element.GetAttribute(name));
-        private static float ParseFloat(string value) => float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
-        private static Rect ParseViewBox(string value) { MatchCollection matches = NumberPattern.Matches(value); if (matches.Count != 4) throw new FormatException("SVG viewBox must contain four numbers."); return new Rect(ParseFloat(matches[0].Value), ParseFloat(matches[1].Value), ParseFloat(matches[2].Value), ParseFloat(matches[3].Value)); }
-        private static string SemanticId(XmlElement element) { string id = element.GetAttribute("id"); if (id.StartsWith("Obstacle_", StringComparison.OrdinalIgnoreCase)) return id.Substring("Obstacle_".Length); if (id.Equals("Board", StringComparison.OrdinalIgnoreCase) || id.Equals("Wall", StringComparison.OrdinalIgnoreCase)) return string.Empty; return string.Empty; }
-        private static bool IsIgnored(XmlElement element) { string id = element.GetAttribute("id"); return id.StartsWith("Ignore_", StringComparison.OrdinalIgnoreCase) || element.GetAttribute("class").IndexOf("st1", StringComparison.OrdinalIgnoreCase) >= 0; }
-        private static float SignedArea(List<Vector2> points) { float area = 0f; for (int i = 0; i < points.Count; i++) { Vector2 a = points[i]; Vector2 b = points[(i + 1) % points.Count]; area += a.x * b.y - b.x * a.y; } return area * 0.5f; }
-        private static void NormalizePoints(List<Vector2> points) { for (int i = points.Count - 1; i > 0; i--) if (points[i] == points[i - 1]) points.RemoveAt(i); if (points.Count > 1 && points[0] == points[points.Count - 1]) points.RemoveAt(points.Count - 1); }
-        private static void AddArc(List<Vector2> points, Vector2 center, float rx, float ry, float from, float to, int segments) { for (int i = 0; i < segments; i++) { float t = Mathf.Lerp(from, to, i / (float)segments) * Mathf.Deg2Rad; points.Add(center + new Vector2(Mathf.Cos(t) * rx, Mathf.Sin(t) * ry)); } }
-        private sealed class ImportedContour { public List<Vector2> Points = new List<Vector2>(); public string StableId; public bool Ignored; public bool Closed = true; }
+        private static List<Vector2> MapPoints(
+            List<Vector2> points,
+            Rect viewBox,
+            PhaseBSvgImportSettings settings)
+        {
+            for (int i = 0; i < points.Count; i++)
+                points[i] = MapPoint(points[i], viewBox, settings);
+            return points;
+        }
+
+        private static Vector2 MapPoint(
+            Vector2 point,
+            Rect viewBox,
+            PhaseBSvgImportSettings settings)
+        {
+            BoardSpaceMapper mapper = new BoardSpaceMapper(viewBox, settings.boardUnitsPerSvgUnit);
+            return mapper.SvgToBoard(point);
+        }
+
+        private static float Number(XmlElement element, string name)
+        {
+            string value = element.GetAttribute(name);
+            return string.IsNullOrEmpty(value) ? 0f : ParseFloat(value);
+        }
+
+        private static float ParseFloat(string value)
+        {
+            return float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+        }
+
+        private static Rect ParseViewBox(string value)
+        {
+            MatchCollection matches = NumberPattern.Matches(value);
+            if (matches.Count != 4)
+                throw new FormatException("SVG viewBox must contain four numbers.");
+            return new Rect(
+                ParseFloat(matches[0].Value),
+                ParseFloat(matches[1].Value),
+                ParseFloat(matches[2].Value),
+                ParseFloat(matches[3].Value));
+        }
+
+        private static string SemanticId(XmlElement element)
+        {
+            string id = element.GetAttribute("id");
+            if (id.StartsWith("Obstacle_", StringComparison.OrdinalIgnoreCase))
+                return id.Substring("Obstacle_".Length);
+            if (id.Equals("Board", StringComparison.OrdinalIgnoreCase) ||
+                id.Equals("Wall", StringComparison.OrdinalIgnoreCase))
+                return string.Empty;
+            return string.Empty;
+        }
+
+        private static bool IsIgnored(XmlElement element)
+        {
+            string id = element.GetAttribute("id");
+            return id.StartsWith("Ignore_", StringComparison.OrdinalIgnoreCase) ||
+                element.GetAttribute("class").IndexOf("st1", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static float SignedArea(List<Vector2> points)
+        {
+            float area = 0f;
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector2 a = points[i];
+                Vector2 b = points[(i + 1) % points.Count];
+                area += a.x * b.y - b.x * a.y;
+            }
+
+            return area * 0.5f;
+        }
+
+        private static void NormalizePoints(List<Vector2> points)
+        {
+            for (int i = points.Count - 1; i > 0; i--)
+            {
+                if (points[i] == points[i - 1])
+                    points.RemoveAt(i);
+            }
+
+            if (points.Count > 1 && points[0] == points[points.Count - 1])
+                points.RemoveAt(points.Count - 1);
+        }
+
+        private static void AddArc(
+            List<Vector2> points,
+            Vector2 center,
+            float rx,
+            float ry,
+            float from,
+            float to,
+            int segments)
+        {
+            for (int i = 0; i < segments; i++)
+            {
+                float angle = Mathf.Lerp(from, to, i / (float)segments) * Mathf.Deg2Rad;
+                points.Add(center + new Vector2(
+                    Mathf.Cos(angle) * rx,
+                    Mathf.Sin(angle) * ry));
+            }
+        }
+
+        private sealed class ImportedContour
+        {
+            public List<Vector2> Points = new List<Vector2>();
+            public string StableId;
+            public bool Ignored;
+            public bool Closed = true;
+        }
     }
 }
 #endif

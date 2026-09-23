@@ -25,6 +25,18 @@ namespace SE001.Data
             if (!TryValidate(level, colorProfile, cellSize, maxCells, errors)) throw new FormatException(string.Join(" | ", errors));
         }
 
+        public static void Validate(
+            SE001LevelJson level,
+            ColorProfile colorProfile,
+            float cellSize,
+            int maxCells,
+            LayoutDefinition layout)
+        {
+            List<string> errors = new List<string>();
+            if (!TryValidate(level, colorProfile, cellSize, maxCells, layout, errors))
+                throw new FormatException(string.Join(" | ", errors));
+        }
+
         public static bool TryValidate(SE001LevelJson level, List<string> errors)
         {
             return TryValidate(level, null, 0.1f, int.MaxValue, errors);
@@ -42,7 +54,18 @@ namespace SE001.Data
             int maxCells,
             List<string> errors)
         {
-            return TryValidateInternal(level, colorProfile, cellSize, maxCells, errors);
+            return TryValidateInternal(level, colorProfile, cellSize, maxCells, null, errors);
+        }
+
+        public static bool TryValidate(
+            SE001LevelJson level,
+            ColorProfile colorProfile,
+            float cellSize,
+            int maxCells,
+            LayoutDefinition layout,
+            List<string> errors)
+        {
+            return TryValidateInternal(level, colorProfile, cellSize, maxCells, layout, errors);
         }
 
         public static bool TryValidate(
@@ -51,7 +74,7 @@ namespace SE001.Data
             float cellSize,
             List<string> errors)
         {
-            return TryValidateInternal(level, colorProfile, cellSize, int.MaxValue, errors);
+            return TryValidateInternal(level, colorProfile, cellSize, int.MaxValue, null, errors);
         }
 
         private static bool TryValidateInternal(
@@ -59,6 +82,7 @@ namespace SE001.Data
             ColorProfile colorProfile,
             float cellSize,
             int maxCells,
+            LayoutDefinition layout,
             List<string> errors)
         {
             if (errors == null) throw new ArgumentNullException(nameof(errors));
@@ -73,15 +97,37 @@ namespace SE001.Data
             }
             level.EnsureCollections();
             if (level.schemaVersion <= 0) errors.Add("schemaVersion must be positive.");
+            if (level.schemaVersion > 3) errors.Add("schemaVersion is newer than the supported runtime schema.");
             if (string.IsNullOrWhiteSpace(level.levelId)) errors.Add("levelId is required.");
             if (!Finite(level.board.size) || level.board.size.x <= 0f || level.board.size.y <= 0f)
                 errors.Add("board.size must be finite and positive.");
             if (level.drawInkBudget < 0f || float.IsNaN(level.drawInkBudget) ||
                 float.IsInfinity(level.drawInkBudget))
                 errors.Add("drawInkBudget must be finite and non-negative.");
-            ValidateContours(level.board.wallContours, "board.wallContours", errors);
+            bool usesBakedLayout = level.schemaVersion >= 3;
+            if (usesBakedLayout)
+            {
+                if (string.IsNullOrWhiteSpace(level.layoutId)) errors.Add("layoutId is required for schema 3.");
+                if (level.board.wallContours.Count > 0 || level.staticObstacles.Count > 0)
+                    errors.Add("schema 3 levels must reference layoutId instead of embedding contours.");
+                if (layout == null)
+                {
+                    errors.Add("schema 3 levels require a loaded LayoutDefinition.");
+                }
+                else
+                {
+                    if (!Approximately(level.board.size, layout.boardSize))
+                        errors.Add("board.size does not match the baked layout board size.");
+                    if (layout.mask == null || layout.layoutPrefab == null)
+                        errors.Add("layout definition is missing its baked mask or prefab.");
+                }
+            }
+            else
+            {
+                ValidateContours(level.board.wallContours, "board.wallContours", errors);
+            }
             HashSet<string> ids = new HashSet<string>(StringComparer.Ordinal);
-            for (int i = 0; i < level.staticObstacles.Count; i++)
+            for (int i = 0; !usesBakedLayout && i < level.staticObstacles.Count; i++)
             {
                 StaticObstacleData item = level.staticObstacles[i];
                 if (item == null)
@@ -125,9 +171,9 @@ namespace SE001.Data
                     errors.Add($"cups[{i}] references unknown colorId {item.acceptedMaterialId}.");
             }
             ValidateSupply(level, errors);
-            ValidateStaticOverlap(level, errors);
+            if (!usesBakedLayout) ValidateStaticOverlap(level, errors);
             if (errors.Count == 0 && !level.requiresDrawing)
-                ValidateReachability(level, cellSize, maxCells, errors);
+                ValidateReachability(level, cellSize, maxCells, layout, errors);
             return errors.Count == 0;
         }
 
@@ -195,19 +241,45 @@ namespace SE001.Data
             else values.Add(key, amount);
         }
 
-        private static void ValidateReachability(SE001LevelJson level, float cellSize, int maxCells, List<string> errors)
+        private static void ValidateReachability(
+            SE001LevelJson level,
+            float cellSize,
+            int maxCells,
+            LayoutDefinition layout,
+            List<string> errors)
         {
             LayoutMaskSet masks;
-            try
+            if (layout != null)
             {
-                masks = LayoutRasterizer.Rasterize(level, cellSize, maxCells);
+                string maskError;
+                if (!layout.mask.TryBuildMaskSet(cellSize, maxCells, out masks, out maskError))
+                {
+                    errors.Add("Baked layout cannot be used for reachability: " + maskError);
+                    return;
+                }
             }
-            catch (Exception exception)
+            else
             {
-                errors.Add("Reachability rasterization failed: " + exception.Message);
-                return;
+                try
+                {
+                    masks = LayoutRasterizer.Rasterize(level, cellSize, maxCells);
+                }
+                catch (Exception exception)
+                {
+                    errors.Add("Reachability rasterization failed: " + exception.Message);
+                    return;
+                }
             }
 
+            ValidateReachability(level, masks, cellSize, errors);
+        }
+
+        private static void ValidateReachability(
+            SE001LevelJson level,
+            LayoutMaskSet masks,
+            float cellSize,
+            List<string> errors)
+        {
             for (int cupIndex = 0; cupIndex < level.cups.Count; cupIndex++)
             {
                 CupData cup = level.cups[cupIndex];
@@ -324,5 +396,7 @@ namespace SE001.Data
         private static bool Finite(Vector2 value) => !float.IsNaN(value.x) && !float.IsInfinity(value.x) && !float.IsNaN(value.y) && !float.IsInfinity(value.y);
         private static bool ValidOptionalSize(Vector2 value) => value == Vector2.zero || Finite(value) && value.x > 0f && value.y > 0f;
         private static bool InsideBoard(Vector2 position, Vector2 size) => position.x >= 0f && position.y >= 0f && position.x <= size.x && position.y <= size.y;
+        private static bool Approximately(Vector2 left, Vector2 right) =>
+            Mathf.Abs(left.x - right.x) <= 0.0001f && Mathf.Abs(left.y - right.y) <= 0.0001f;
     }
 }

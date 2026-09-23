@@ -9,10 +9,18 @@ namespace SE001.Tests
         private GameObject owner;
 
         [SetUp]
-        public void SetUp() { owner = new GameObject("PhaseBIntegrationTests"); owner.AddComponent<LevelManager>(); }
+        public void SetUp()
+        {
+            owner = new GameObject("PhaseBIntegrationTests");
+            owner.AddComponent<LevelManager>();
+        }
 
         [TearDown]
-        public void TearDown() { if (owner != null) Object.DestroyImmediate(owner); }
+        public void TearDown()
+        {
+            if (owner != null)
+                Object.DestroyImmediate(owner);
+        }
 
         [Test]
         public void Fixture_LoadsThroughNormalManagerSpawnerPath()
@@ -24,7 +32,10 @@ namespace SE001.Tests
             Assert.That(manager.IsReady, Is.True);
             Assert.That(manager.CurrentContext.SandSimulation, Is.Not.Null);
             Assert.That(manager.CurrentContext.BoardRoot.childCount, Is.GreaterThan(0));
-            Assert.That(manager.CurrentContext.ObstacleRoot.childCount, Is.GreaterThan(0));
+            Assert.That(manager.CurrentContext.ObstacleRoot.childCount, Is.EqualTo(0));
+            Assert.That(
+                manager.CurrentContext.BoardRoot.GetComponentsInChildren<MeshFilter>(),
+                Has.Length.GreaterThan(0));
             Assert.That(manager.CurrentContext.SandVisualRoot.childCount, Is.EqualTo(1));
             Assert.That(manager.CurrentContext.SandSimulation.State.ValidMask.Length, Is.GreaterThan(0));
         }

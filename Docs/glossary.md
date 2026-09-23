@@ -28,6 +28,12 @@
 
 ## 3. Metrics / modes
 
+| Term | Meaning | Code |
+|---|---|---|
+| LayoutDefinition | Runtime reference to a baked layout prefab and mask asset | `LayoutDefinition` |
+| LayoutMaskAsset | Bit-packed baked valid/static grid consumed by runtime | `LayoutMaskAsset` |
+| layoutId | Stable level reference to a `LayoutDefinition` resource | `SE001LevelJson.layoutId` |
+
 ## Phase B terms
 
 | Term | Meaning | Code |

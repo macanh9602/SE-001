@@ -92,9 +92,13 @@ namespace SE001.System.Creation
                         ? gameplayProfile.sandProfile
                         : sandSimulationProfile;
                     if (profile == null) throw new InvalidOperationException("Phase C requires a SandSimulationProfile asset.");
-                    LayoutMaskSet masks = LayoutRasterizer.Rasterize(levelData, profile.cellSize, profile.maxCells);
+                    LayoutDefinition layout = LevelDataLoader.LoadLayout(levelData.layoutId);
+                    LayoutMaskSet masks;
+                    string maskError = string.Empty;
+                    if (layout.mask == null || !layout.mask.TryBuildMaskSet(profile.cellSize, profile.maxCells, out masks, out maskError))
+                        throw new InvalidOperationException("Layout " + levelData.layoutId + " cannot load: " + maskError);
                     activeContext.AttachSimulation(new SandSimulation(profile, masks, SandSimulation.SeedFrom(levelId)));
-                    SpawnLayoutVisuals(levelData);
+                    SpawnLayoutVisuals(layout);
                     SpawnSandField();
                     BindPhaseCGameplay(levelData, profile);
                 }
@@ -155,21 +159,11 @@ namespace SE001.System.Creation
             // DebugView is intentionally not part of production presentation ownership.
         }
 
-        private void SpawnLayoutVisuals(SE001LevelJson levelData)
+        private void SpawnLayoutVisuals(LayoutDefinition layout)
         {
-            if (prefabProfile == null) prefabProfile = Resources.Load<PrefabProfile>("Profiles/PhaseBPrefabProfile");
-            if (layoutVisualProfile == null) layoutVisualProfile = Resources.Load<LayoutVisualProfile>("Profiles/PhaseBLayoutVisualProfile");
-            if (prefabProfile == null || layoutVisualProfile == null) return;
-            LayoutVisualFactory factory = new LayoutVisualFactory();
-            for (int i = 0; i < levelData.board.wallContours.Count; i++)
-                factory.Create(prefabProfile.boardWallPrefab, activeContext.BoardRoot,
-                    levelData.board.wallContours[i].points, layoutVisualProfile, true);
-            for (int i = 0; i < levelData.staticObstacles.Count; i++)
-            {
-                for (int c = 0; c < levelData.staticObstacles[i].contours.Count; c++)
-                    factory.Create(prefabProfile.staticObstaclePrefab, activeContext.ObstacleRoot,
-                        levelData.staticObstacles[i].contours[c].points, layoutVisualProfile, false);
-            }
+            if (layout == null || layout.layoutPrefab == null)
+                throw new InvalidOperationException("Layout definition requires a baked layout prefab.");
+            Instantiate(layout.layoutPrefab, activeContext.BoardRoot, false);
         }
 
         private void SpawnSandField()

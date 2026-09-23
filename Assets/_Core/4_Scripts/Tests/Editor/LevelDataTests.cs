@@ -39,7 +39,14 @@ namespace SE001.Data.Tests
         [Test]
         public void ConcavePolygon_Triangulates()
         {
-            List<Vector2> polygon = new List<Vector2> { new Vector2(0f, 0f), new Vector2(2f, 0f), new Vector2(2f, 2f), new Vector2(1f, 1f), new Vector2(0f, 2f) };
+            List<Vector2> polygon = new List<Vector2>
+            {
+                new Vector2(0f, 0f),
+                new Vector2(2f, 0f),
+                new Vector2(2f, 2f),
+                new Vector2(1f, 1f),
+                new Vector2(0f, 2f)
+            };
             Assert.That(PolygonTriangulator.Triangulate(polygon).Length, Is.EqualTo(9));
         }
 
@@ -101,7 +108,9 @@ namespace SE001.Data.Tests
             Mesh mesh = ExtrudedBevelMeshBuilder.Build(polygon, 1f, 0.1f, 1, "test_mesh");
             try
             {
-                Vector3[] v = mesh.vertices; int[] t = mesh.triangles; Vector3 center = new Vector3(1f, 1f, -0.5f);
+                Vector3[] v = mesh.vertices;
+                int[] t = mesh.triangles;
+                Vector3 center = new Vector3(1f, 1f, -0.5f);
                 for (int i = 0; i < t.Length; i += 3)
                 {
                     Vector3 a = v[t[i]], b = v[t[i + 1]], c = v[t[i + 2]];
@@ -117,14 +126,16 @@ namespace SE001.Data.Tests
         public void GeneratedFixture_LoadsThroughCanonicalResourceProvider()
         {
             SE001LevelJson level = LevelDataLoader.Load("phase_c_level_02");
-            Assert.That(level.board.wallContours.Count, Is.GreaterThan(0));
-            Assert.That(level.staticObstacles.Count, Is.GreaterThan(0));
+            Assert.That(level.schemaVersion, Is.EqualTo(3));
+            Assert.That(level.layoutId, Is.EqualTo("phase_c_level_02_layout"));
+            Assert.That(LevelDataLoader.LoadLayout(level.layoutId), Is.Not.Null);
         }
 
         private static SE001LevelJson CreateFixture()
         {
             return new SE001LevelJson
             {
+                schemaVersion = 2,
                 levelId = "phase_b_data_test",
                 board = new BoardData { size = new Vector2(4f, 3f), wallContours = new List<PolygonContourData> { Triangle() } },
                 staticObstacles = new List<StaticObstacleData>(),
@@ -140,7 +151,16 @@ namespace SE001.Data.Tests
 
         private static PolygonContourData Square(float x, float y, float width, float height)
         {
-            return new PolygonContourData { points = new List<Vector2> { new Vector2(x, y), new Vector2(x + width, y), new Vector2(x + width, y + height), new Vector2(x, y + height) } };
+            return new PolygonContourData
+            {
+                points = new List<Vector2>
+                {
+                    new Vector2(x, y),
+                    new Vector2(x + width, y),
+                    new Vector2(x + width, y + height),
+                    new Vector2(x, y + height)
+                }
+            };
         }
     }
 }

@@ -19,8 +19,9 @@ source-of-truth.
 |---|---|---|
 | `schemaVersion` | int | Serialized contract version |
 | `levelId` | string | Stable unique level identifier |
+| `layoutId` | string | Stable reference to a baked `LayoutDefinition` |
 | `board` | object | Authored bounds/cell/valid-area contract |
-| `staticObstacles` | array | First-class authored obstacle definitions; có thể rỗng |
+| `staticObstacles` | array | Legacy schema 2 input only; removed from schema 3 JSON |
 | `sources` | array | Stable material source definitions; có thể rỗng |
 | `cups` | array | Stable collection target definitions; có thể rỗng |
 
@@ -56,7 +57,7 @@ Visual anchor có thể hỗ trợ alignment nhưng không quyết định logic
 
 ### Phase C position and material contract
 
-`SourceData.position` is the authored nozzle position. `SourceData.size` is the source body width/height; it drives both presentation bounds and tap hit-area, while `(0,0)` uses `SourceProfile.bodySize`. `CupData.position` is the centre of the cup's outside bottom; `CupData.size` is the outside mouth/height rectangle. `materialId` must resolve in `MaterialPalette` before a level can spawn. Runtime sand, masks and collected counts are generated state and are not serialized back into level JSON.
+`SourceData.position` is the authored nozzle position. `SourceData.size` is the source body width/height; it drives both presentation bounds and tap hit-area, while `(0,0)` uses `SourceProfile.bodySize`. `CupData.position` is the centre of the cup's outside bottom; `CupData.size` is the outside mouth/height rectangle. `materialId` must resolve in `ColorProfile` before a level can spawn. Runtime sand, masks and collected counts are generated state and are not serialized back into level JSON.
 - Required count.
 - Foreign-material tolerance chỉ khi gameplay contract yêu cầu.
 
@@ -90,7 +91,9 @@ Không giữ hai nguồn cho cùng một sự thật. Optional override phải p
 
 - `schemaVersion` tồn tại và được hỗ trợ.
 - `levelId` và mọi entity stable ID unique; không dangling reference.
-- Board-space geometry hữu hạn, nằm trong contract cho phép và rasterize được.
+- Board-space entity geometry hữu hạn, nằm trong contract của `LayoutDefinition`.
+- Schema 3 có `layoutId`, không chứa `board.wallContours` hoặc `staticObstacles`.
+- Runtime load đọc bit-packed `LayoutMaskAsset`; cell size/hash lệch phải block với lỗi rõ ràng.
 - Static mask seed trước dynamic mask và trước Source emission.
 - Runtime và Editor preview dùng cùng board mapper/rasterizer, có parity tests.
 - Accounting bảo toàn:
@@ -101,19 +104,21 @@ Không giữ hai nguồn cho cùng một sự thật. Optional override phải p
 
 ## 8. Phase B canonical geometry clarification
 
-`SE001LevelJson` is the runtime authoring source of truth for Phase B. It contains `schemaVersion`,
-`levelId`, `board`, `staticObstacles`, and empty/default `sources` and `cups` arrays. `BoardData` owns
-`size` and wall polygon contours. `StaticObstacleData` owns a stable ID, one or more filled polygon
-contours, and an optional presentation `styleId`.
+Schema 2 is the historical Phase B contour contract. It contains `schemaVersion`, `levelId`, `board`
+with wall contours, `staticObstacles`, and entity arrays. The editor migration converts it to schema 3.
+Schema 3 contains `schemaVersion`, `levelId`, `layoutId`, `board.size`, and entity arrays; the layout
+geometry is stored in `LayoutDefinition` and its baked `LayoutMaskAsset`/prefab.
 
 Contours are closed simple polygons represented by finite board-space points. Duplicate terminal points,
 fewer than three unique vertices, degenerate contours, missing IDs, and duplicate IDs are validation errors.
 Concave contours and multiple independent contours are supported. Holes/compound boolean contours are not
 silently approximated in Phase B.
 
-Meshes, triangulation, raster masks, bevel geometry, colliders, and SVG commands are generated/runtime data
-and are never serialized as authoring truth.
+Meshes, triangulation, raster masks, bevel geometry, colliders, and SVG commands are generated/baked data
+and are never serialized as level JSON authoring truth. A `LayoutDefinition` is the reviewed generated
+asset that owns the baked prefab and bit-packed mask for one layout identity.
 
 - Field mới có safe default có thể không bump schema khi backward compatibility được test.
 - Đổi nghĩa/xóa/đổi type field bắt buộc bump schema và có migration/validation rõ.
+- Schema 2 → schema 3 chạy bằng `SE001/Phase D/Migrate levels to layoutId`; runtime không đọc schema 2.
 - Story thay serialization contract phải được Product Owner approve trước implementation.
