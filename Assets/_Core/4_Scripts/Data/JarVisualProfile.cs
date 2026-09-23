@@ -20,6 +20,8 @@ namespace SE001.Data
         public float cupBodyOffsetYPixels = 41f;
         public float cupBodyWidthPixels = 156f;
         public float cupBodyHeightPixels = 130f;
+        [Tooltip("Glass edge inset on each side of the cup body, measured in source pixels.")]
+        public float cupBodyInnerInsetPixels = 7f;
         public float cupCapTopHeightPixels = 44f;
         public float cupCapBottomHeightPixels = 49f;
 
@@ -59,6 +61,9 @@ namespace SE001.Data
         {
             return authoredWidth / Mathf.Max(0.001f, cupHeadWidthPixels * 0.01f);
         }
+
+        public float CupBodyInnerWidthPixels =>
+            Mathf.Max(1f, cupBodyWidthPixels - cupBodyInnerInsetPixels * 2f);
     }
 
     public static class JarVisualGeometry

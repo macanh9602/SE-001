@@ -112,10 +112,16 @@ namespace SE001.Gameplay
         private readonly float taper;
         private readonly float fillLine;
         private float wall;
+        private float geometryOuterWidth;
         private int outerMinY, outerMaxY;
         private int[] rowMinX, rowMaxX; // sink span per row, index = y - MinY (min > max = empty row)
 
-        public CupDomain(CupData data, CupProfile profile, int grainsPerUnit, float cellSize)
+        public CupDomain(
+            CupData data,
+            CupProfile profile,
+            int grainsPerUnit,
+            float cellSize,
+            JarVisualProfile visualProfile = null)
         {
             StableId = data.stableId;
             AcceptedMaterialId = (byte)data.acceptedMaterialId;
@@ -124,7 +130,7 @@ namespace SE001.Gameplay
             RequiredLogical = Mathf.Max(1, data.requiredAmount);
             taper = profile.taper;
             fillLine = profile.fillLine;
-            BuildCells(profile.wallThickness, cellSize);
+            BuildCells(profile.wallThickness, cellSize, visualProfile);
         }
 
         public string StableId { get; }
@@ -150,6 +156,8 @@ namespace SE001.Gameplay
         public int CollectedLogical => Mathf.Min(RequiredLogical, Mathf.FloorToInt(FillRatio * RequiredLogical + 0.0001f));
         /// <summary>Wall thickness actually used (board units), shared by mask and visuals.</summary>
         public float EffectiveWall => wall;
+        /// <summary>Playable sand width, aligned to the authored cup body inner area.</summary>
+        public float EffectiveInnerWidth => Mathf.Max(0f, geometryOuterWidth - wall * 2f);
         public float Taper => taper;
         public float FillLineY => fillLineY;
         public int MinY => minY;
@@ -158,12 +166,20 @@ namespace SE001.Gameplay
         private float OuterHalfWidthAt(float y)
         {
             float t = Mathf.Clamp01((y - Position.y) / Size.y);
-            return Mathf.Lerp(Size.x * (1f - taper) * 0.5f, Size.x * 0.5f, t);
+            float outerWidth = geometryOuterWidth > 0f ? geometryOuterWidth : Size.x;
+            return Mathf.Lerp(outerWidth * (1f - taper) * 0.5f, outerWidth * 0.5f, t);
         }
 
-        private void BuildCells(float wallThickness, float cell)
+        private void BuildCells(float wallThickness, float cell, JarVisualProfile visualProfile)
         {
             wall = Mathf.Max(wallThickness, cell * 2.5f); // >= 2 cells everywhere: no diagonal leaks through slanted walls
+            float visualInnerWidth = visualProfile != null
+                ? Size.x * visualProfile.CupBodyInnerWidthPixels /
+                    Mathf.Max(0.001f, visualProfile.cupHeadWidthPixels)
+                : Size.x - wall * 2f;
+            geometryOuterWidth = visualProfile != null
+                ? visualInnerWidth + wall * 2f
+                : Size.x;
             outerMinY = Mathf.FloorToInt(Position.y / cell);
             outerMaxY = Mathf.CeilToInt((Position.y + Size.y) / cell) - 1;
             // First row whose cell center is above the bottom wall (must match RegisterWalls' 'bottom' test exactly).

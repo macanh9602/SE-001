@@ -91,10 +91,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetRenderer: {fileID: 0}
-  emptyColor:
-    serializedVersion: 2
-    rgba: 0
+  targetFilter: {fileID: 0}
   sandColor:
     serializedVersion: 2
     rgba: 4284789980
+  jitter: 0.35
+  highlight: 0.3
   softRender: 0
+  streamStreak: 1
+  streamBridgeCells: 10
+  streamHalfWidth: 1
+  streamGrain: 0.8
+  streamScrollCellsPerFrame: 2
+  maxStreamGrains: 8192

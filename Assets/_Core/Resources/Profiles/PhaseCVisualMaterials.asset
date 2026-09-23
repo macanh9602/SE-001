@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c3a076216debff40a4a888cdd660b7d, type: 3}
   m_Name: PhaseCVisualMaterials
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   sourceMaterial: {fileID: 2100000, guid: 6f88c1949fa3f6f4f9867880f6005001, type: 2}
   cupMaterial: {fileID: 2100000, guid: 3adafba8057296e49beef9037cbb10fb, type: 2}
   cupBackMaterial: {fileID: 2100000, guid: 3adafba8057296e49beef9037cbb10fb, type: 2}

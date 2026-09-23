@@ -82,6 +82,28 @@ namespace SE001.Tests
         }
 
         [Test]
+        public void CupDomain_InnerWidthMatchesCupBodyArt()
+        {
+            GameplayRuntimeProfile runtime = Resources.Load<GameplayRuntimeProfile>("Profiles/PhaseCGameplayRuntimeProfile");
+            CupDomain cup = new CupDomain(
+                new CupData
+                {
+                    stableId = "art_aligned_cup",
+                    acceptedMaterialId = 1,
+                    position = Vector2.zero,
+                    size = new Vector2(2f, 1.5f),
+                    requiredAmount = 1
+                },
+                runtime.cupProfile,
+                1,
+                runtime.sandProfile.cellSize,
+                runtime.jarVisualProfile);
+            float expected = 2f * runtime.jarVisualProfile.CupBodyInnerWidthPixels /
+                runtime.jarVisualProfile.cupHeadWidthPixels;
+            Assert.That(cup.EffectiveInnerWidth, Is.EqualTo(expected).Within(0.0001f));
+        }
+
+        [Test]
         public void Cup_NineSlice_CapThicknessConstantAcrossHeights()
         {
             GameplayRuntimeProfile runtime = Resources.Load<GameplayRuntimeProfile>("Profiles/PhaseCGameplayRuntimeProfile");

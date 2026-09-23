@@ -130,7 +130,8 @@ namespace SE001.System.Creation
             int grainsPerUnit = profile != null ? profile.grainsPerUnit : 12;
             for (int i = 0; i < levelData.sources.Count; i++)
                 sources.Add(new SourceDomain(levelData.sources[i], sourceProfile, grainsPerUnit, gameplayProfile.jarVisualProfile));
-            for (int i = 0; i < levelData.cups.Count; i++) cups.Add(new CupDomain(levelData.cups[i], cupProfile, grainsPerUnit, profile.cellSize));
+            for (int i = 0; i < levelData.cups.Count; i++)
+                cups.Add(new CupDomain(levelData.cups[i], cupProfile, grainsPerUnit, profile.cellSize, gameplayProfile.jarVisualProfile));
             gameplay.Configure(sources, cups, profile.cellSize, cupProfile.wallThickness);
             SourceFactory sourceFactory = new SourceFactory();
             CupFactory cupFactory = new CupFactory();

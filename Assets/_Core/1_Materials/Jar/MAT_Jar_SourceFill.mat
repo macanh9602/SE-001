@@ -34,7 +34,10 @@ Material:
     m_Ints: []
     m_Floats:
     - _FillLevel: 0
+    - _FillThreshold: 1000
     - _Sparkle: 1
+    - _SurfaceBand: 0.05
+    - _SurfaceLift: 0.22
     m_Colors:
     - _FillDirOS: {r: 0, g: -1, b: 0, a: 0}
     - _SandColor: {r: 1, g: 1, b: 1, a: 1}
