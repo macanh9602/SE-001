@@ -130,8 +130,8 @@ namespace SE001.System.Creation
             var sources = new List<SourceDomain>();
             var cups = new List<CupDomain>();
             int baseGrainsPerUnit = profile != null ? profile.grainsPerUnit : SandSimulationProfile.DefaultGrainsPerUnit;
-            int grainsPerUnit = BowlVisualProfile.EffectiveGrainsPerUnit(
-                baseGrainsPerUnit, gameplayProfile.receiverStyle, gameplayProfile.bowlVisualProfile);
+            int grainsPerUnit = CupDomain.GrainsPerUnitFor(
+                baseGrainsPerUnit, gameplayProfile.receiverStyle, gameplayProfile.bowlVisualProfile, profile.cellSize);
             for (int i = 0; i < levelData.sources.Count; i++)
                 sources.Add(new SourceDomain(levelData.sources[i], sourceProfile, grainsPerUnit, gameplayProfile.jarVisualProfile));
             for (int i = 0; i < levelData.cups.Count; i++)

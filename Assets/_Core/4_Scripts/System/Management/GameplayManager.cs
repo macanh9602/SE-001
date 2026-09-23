@@ -18,6 +18,12 @@ namespace SE001.System.Management
         [SerializeField, Min(1)] private int maxStepsPerFrame = 4;
         [SerializeField, Min(1)] private int stableStepsForLose = 30;
         [SerializeField, Min(1)] private int maxStrokes = 16;
+        [Tooltip("Debug-audit (2026-09-24): writes AgentAudit/sand-lose-stability.md — why NotFilled lose does not fire.")]
+        [SerializeField] private bool auditLoseStability = true;
+
+        private const string LoseAuditChannel = "sand-lose-stability";
+        private bool auditAllEmptySeen;
+        private int auditNextSampleStep;
 
         private readonly List<SourceDomain> sources = new List<SourceDomain>();
         private readonly List<CupDomain> cups = new List<CupDomain>();
@@ -62,6 +68,11 @@ namespace SE001.System.Management
             InkBudget = Mathf.Max(0f, context.DrawInkBudget);
             InkRemaining = InkBudget;
             for (int i = 0; i < cups.Count; i++) cups[i].RegisterWalls(context.SandSimulation, cellSize, wallThickness);
+            auditAllEmptySeen = false;
+            auditNextSampleStep = 0;
+            AgentDebugAudit.Begin(LoseAuditChannel, "Level start -> Win/Lose. Expect: all sources Empty + stable "
+                + stableStepsForLose + " steps -> Lose(NotFilled).", auditLoseStability, 300);
+            AgentDebugAudit.Event(LoseAuditChannel, "LevelStart", SourceSummary() + " | " + CupSummary());
         }
 
         public void ConfigureRuntime(GameplayRuntimeProfile profile)
@@ -190,7 +201,12 @@ namespace SE001.System.Management
             {
                 SourceValveState before = sources[i].State;
                 sources[i].Emit(sim, dt);
-                if (sources[i].State != before) SourceStateChanged?.Invoke(sources[i].StableId);
+                if (sources[i].State != before)
+                {
+                    SourceStateChanged?.Invoke(sources[i].StableId);
+                    AgentDebugAudit.Event(LoseAuditChannel, "SourceState", "step " + StepCount + " " + sources[i].StableId
+                        + " " + before + "->" + sources[i].State + " remaining " + sources[i].Remaining);
+                }
             }
 
             int moved = sim.Step();
@@ -218,17 +234,59 @@ namespace SE001.System.Management
 
             bool allEmpty = true;
             for (int i = 0; i < sources.Count; i++) allEmpty &= sources[i].State == SourceValveState.Empty;
+            AuditStability(allEmpty, moved, pushed, collectedTotal);
             if (allEmpty && stableSteps >= stableStepsForLose) Lose(LoseReason.NotFilled);
+        }
+
+        private void AuditStability(bool allEmpty, int moved, int pushed, int collectedTotal)
+        {
+            if (!auditLoseStability || !allEmpty) return;
+            if (!auditAllEmptySeen)
+            {
+                auditAllEmptySeen = true;
+                auditNextSampleStep = StepCount;
+                AgentDebugAudit.Event(LoseAuditChannel, "AllSourcesEmpty", "step " + StepCount + " | " + CupSummary());
+            }
+
+            if (StepCount < auditNextSampleStep) return;
+            auditNextSampleStep = StepCount + 60;
+            SandSimulation.SandStepStats stats = context.SandSimulation.LastStepStats;
+            AgentDebugAudit.Event(LoseAuditChannel, "StabilitySample",
+                "step " + StepCount + " stable " + stableSteps + "/" + stableStepsForLose
+                + " moved " + moved + " pushed " + pushed + " collectedDelta " + collectedTotal
+                + " | fall " + stats.Fall + " roll " + stats.Roll + " slide " + stats.Slide
+                + " disperse " + stats.Disperse + " creep " + stats.Creep
+                + " | last rule " + stats.LastRule + " (" + stats.LastX + "," + stats.LastY + ")->("
+                + stats.LastToX + "," + stats.LastToY + ") | " + CupSummary());
+        }
+
+        private string SourceSummary()
+        {
+            string text = "sources:";
+            for (int i = 0; i < sources.Count; i++)
+                text += " " + sources[i].StableId + " " + sources[i].State + " " + sources[i].Remaining + "/" + sources[i].Initial;
+            return text;
+        }
+
+        private string CupSummary()
+        {
+            string text = "cups:";
+            for (int i = 0; i < cups.Count; i++)
+                text += " " + cups[i].StableId + " " + cups[i].Collected + "/" + cups[i].Required + " cap " + cups[i].Capacity
+                    + (cups[i].Full ? " FULL" : "");
+            return text;
         }
 
         private void Win()
         {
+            AgentDebugAudit.Event(LoseAuditChannel, "Win", "step " + StepCount + " | " + CupSummary());
             State = GameState.Won;
             GameStateChanged?.Invoke(State);
         }
 
         private void Lose(LoseReason reason)
         {
+            AgentDebugAudit.Event(LoseAuditChannel, "Lose", "step " + StepCount + " " + reason + " | " + CupSummary());
             State = GameState.Lost;
             LastLoseReason = reason;
             LevelLost?.Invoke(reason);

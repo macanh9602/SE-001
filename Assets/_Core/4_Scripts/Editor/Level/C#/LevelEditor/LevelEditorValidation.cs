@@ -103,7 +103,7 @@ namespace SE001.Editor.Level
                 else if (cupProfile != null && sandProfile != null && cellSize > 0f)
                 {
                     ReceiverStyle style = runtimeProfile != null ? runtimeProfile.receiverStyle : ReceiverStyle.Cup;
-                    int grainsPerUnit = BowlVisualProfile.EffectiveGrainsPerUnit(sandProfile.grainsPerUnit, style, bowlProfile);
+                    int grainsPerUnit = CupDomain.GrainsPerUnitFor(sandProfile.grainsPerUnit, style, bowlProfile, cellSize);
                     CupDomain capacityProbe = new CupDomain(cup, cupProfile, grainsPerUnit, cellSize, jarProfile, style, bowlProfile);
                     if (capacityProbe.Required > capacityProbe.Capacity)
                     {

@@ -98,6 +98,7 @@ namespace SE001.Simulation.Sand
             float creepChance = profile.creepReach > profile.dispersion ? profile.creepChance : 0f;
             int moved = 0;
 
+            LastStepStats = default(SandStepStats);
             // Bottom-up (board y grows upward): grains fall into rows that were already processed.
             for (int y = 0; y < height; y++)
             {
@@ -115,6 +116,7 @@ namespace SE001.Simulation.Sand
                     float m = mom[i];
                     int cx = x, cy = y;
                     int fell = 0;
+                    int rule = 1;
                     int n = v < 1f ? 1 : (int)v;
 
                     for (int s = 0; s < n; s++)
@@ -133,13 +135,19 @@ namespace SE001.Simulation.Sand
                             m += Math.Sign(m) * (v - 1f) * splash * 0.5f;
                         }
 
+                        // Rim assist: a grain resting on a biased solid (Bowl lip) is steered toward the Bowl interior.
+                        int bias = cy > 0 ? State.SurfaceBias[(cy - 1) * width + cx] : 0;
+                        if (bias != 0 && m * bias < RimAssistMomentum) m = bias * RimAssistMomentum;
+
                         float am = Math.Abs(m);
                         int d = am > 0.15f ? Math.Sign(m) : (NextFloat() < 0.5f ? -1 : 1);
 
                         // Diagonal roll (repose), preferring the momentum side.
                         if (NextFloat() < repose || am > 0.5f)
                         {
-                            for (int q = 0; q < 2 && !movedHere; q++)
+                            // A rim-assisted grain never rolls away from the Bowl.
+                            int tries = bias != 0 ? 1 : 2;
+                            for (int q = 0; q < tries && !movedHere; q++)
                             {
                                 int dd = q == 0 ? d : -d;
                                 if (IsFree(cx + dd, cy - 1) && IsFree(cx + dd, cy))
@@ -148,6 +156,7 @@ namespace SE001.Simulation.Sand
                                     cy--;
                                     m = m * 0.9f + dd * 0.35f;
                                     movedHere = true;
+                                    rule = 2;
                                 }
                             }
                         }
@@ -156,24 +165,32 @@ namespace SE001.Simulation.Sand
                         if (!movedHere && Math.Abs(m) > 0.3f)
                         {
                             int dd = Math.Sign(m);
-                            if (IsFree(cx + dd, cy)) { cx += dd; m *= slide; movedHere = true; }
+                            if (IsFree(cx + dd, cy))
+                            {
+                                cx += dd;
+                                m *= slide;
+                                movedHere = true;
+                                rule = 3;
+                            }
                             else m *= -0.2f;
                         }
 
                         // Avalanche toward the nearest drop (levels the pile, never oscillates on flat ground).
-                        if (!movedHere && profile.dispersion > 1 && TryDisperse(cx, cy, d, out int step))
+                        if (!movedHere && profile.dispersion > 1 && TryDisperse(cx, cy, d, bias != 0, out int step))
                         {
                             cx += step;
                             movedHere = true;
+                            rule = 4;
                         }
 
                         // Creep: rarely walk toward a far drop so piles keep flattening and nothing parks on a
                         // wide flat obstacle / stroke. Always heads to a lower cell, so the grid still reaches a
                         // stable state (grains on open floor with no drop in reach never creep).
-                        if (!movedHere && creepChance > 0f && NextFloat() < creepChance && TryCreep(cx, cy, d, out int creepStep))
+                        if (!movedHere && creepChance > 0f && NextFloat() < creepChance && TryCreep(cx, cy, d, bias != 0, out int creepStep))
                         {
                             cx += creepStep;
                             movedHere = true;
+                            rule = 5;
                         }
 
                         if (!movedHere) m *= slide * 0.5f;
@@ -201,6 +218,7 @@ namespace SE001.Simulation.Sand
                         rowCount[y]--;
                         rowCount[cy]++;
                         moved++;
+                        CountMove(rule, x, y, cx, cy);
                     }
                     else
                     {
@@ -218,12 +236,13 @@ namespace SE001.Simulation.Sand
         /// Resting grain with blocked diagonals: find the nearest drop within 'dispersion' cells along the row
         /// (path must be free) and return a single-cell step toward it.
         /// </summary>
-        private bool TryDisperse(int x, int y, int preferred, out int step)
+        private bool TryDisperse(int x, int y, int preferred, bool oneSided, out int step)
         {
             int reach = profile.dispersion;
+            int sides = oneSided ? 1 : 2;
             for (int distance = 2; distance <= reach; distance++)
             {
-                for (int k = 0; k < 2; k++)
+                for (int k = 0; k < sides; k++)
                 {
                     int dir = k == 0 ? preferred : -preferred;
                     if (!PathFree(x, y, dir, distance)) continue;
@@ -239,12 +258,13 @@ namespace SE001.Simulation.Sand
         /// Walks each direction once along the free row (up to creepReach) and returns a single-cell step toward the
         /// nearest cell with a free drop below. O(reach) per direction.
         /// </summary>
-        private bool TryCreep(int x, int y, int preferred, out int step)
+        private bool TryCreep(int x, int y, int preferred, bool oneSided, out int step)
         {
             int reach = profile.creepReach;
             int best = int.MaxValue;
+            int sides = oneSided ? 1 : 2;
             step = 0;
-            for (int k = 0; k < 2; k++)
+            for (int k = 0; k < sides; k++)
             {
                 int dir = k == 0 ? preferred : -preferred;
                 for (int distance = 1; distance <= reach && distance < best; distance++)
@@ -261,6 +281,29 @@ namespace SE001.Simulation.Sand
             }
 
             return step != 0;
+        }
+
+        /// <summary>Moves per rule in the last Step() and the last mover. Diagnostics only (debug-audit 2026-09-24).</summary>
+        public SandStepStats LastStepStats;
+
+        public struct SandStepStats
+        {
+            public int Fall, Roll, Slide, Disperse, Creep;
+            public int LastRule, LastX, LastY, LastToX, LastToY;
+        }
+
+        private void CountMove(int rule, int x, int y, int toX, int toY)
+        {
+            if (rule == 1) LastStepStats.Fall++;
+            else if (rule == 2) LastStepStats.Roll++;
+            else if (rule == 3) LastStepStats.Slide++;
+            else if (rule == 4) LastStepStats.Disperse++;
+            else LastStepStats.Creep++;
+            LastStepStats.LastRule = rule;
+            LastStepStats.LastX = x;
+            LastStepStats.LastY = y;
+            LastStepStats.LastToX = toX;
+            LastStepStats.LastToY = toY;
         }
 
         private bool PathFree(int x, int y, int dir, int distance)
@@ -281,6 +324,14 @@ namespace SE001.Simulation.Sand
         public void SetCupWall(int x, int y, bool value)
         {
             if (x >= 0 && y >= 0 && x < State.Width && y < State.Height) State.CupWallMask[State.Index(x, y)] = value;
+        }
+
+        /// <summary>Above 0.5 so the diagonal roll always fires toward the bias side when that side is free.</summary>
+        private const float RimAssistMomentum = 0.6f;
+
+        public void SetSurfaceBias(int x, int y, sbyte value)
+        {
+            if (x >= 0 && y >= 0 && x < State.Width && y < State.Height) State.SurfaceBias[State.Index(x, y)] = value;
         }
 
         public void SetDynamic(int x, int y, bool value)

@@ -21,6 +21,7 @@ namespace SE001.Simulation.Sand
             Shade = new byte[count];
             Velocity = new float[count];
             Momentum = new float[count];
+            SurfaceBias = new sbyte[count];
             RowCount = new int[height];
         }
 
@@ -33,6 +34,10 @@ namespace SE001.Simulation.Sand
         public float[] Velocity { get; }
         /// <summary>Per-grain horizontal momentum (signed, cells/step-ish).</summary>
         public float[] Momentum { get; }
+        /// <summary>
+        /// Per solid cell: -1/+1 pushes a grain resting ON this cell left/right (Bowl rim assist), 0 = neutral.
+        /// </summary>
+        public sbyte[] SurfaceBias { get; }
         /// <summary>Occupied cells per row; rows with 0 are skipped by Step.</summary>
         public int[] RowCount { get; }
         public bool[] ValidMask { get; }

@@ -222,8 +222,8 @@ namespace SE001.Editor
             profile.specWidthPixels = spec.width;
             profile.specHeightPixels = spec.height;
             profile.alphaThreshold = alphaThreshold;
-            profile.rimPixelY = DetectBowlRim(main, alphaThreshold);
             profile.wallThicknessPixels = Mathf.Max(1f, main.width * 0.03f);
+            profile.rimPixelY = DetectBowlRim(main, alphaThreshold, profile.wallThicknessPixels);
             // Keep the GD-tuned width on re-bake; only seed it the first time.
             if (profile.defaultWorldWidth <= 0f) profile.defaultWorldWidth = main.width * 0.01f;
             profile.specOffsetPixels = new Vector2(
@@ -317,7 +317,11 @@ namespace SE001.Editor
             return true;
         }
 
-        private static int DetectBowlRim(Texture2D texture, int alphaThreshold)
+        /// <summary>
+        /// Sand opening = just under the lip: the widest row (lip) minus one glass-wall thickness, bottom-up pixels.
+        /// The old "width drops 4 %" rule landed ~10 % below the visual rim, so sand rested inside the drawn glass.
+        /// </summary>
+        public static int DetectBowlRim(Texture2D texture, int alphaThreshold, float wallThicknessPixels)
         {
             Color32[] pixels = texture.GetPixels32();
             int widest = 0;
@@ -330,11 +334,8 @@ namespace SE001.Editor
                 widestTopRow = topY;
             }
 
-            int drop = Mathf.Max(1, Mathf.RoundToInt(widest * 0.04f));
-            for (int topY = widestTopRow + 1; topY < texture.height; topY++)
-                if (RowWidth(pixels, texture.width, texture.height - 1 - topY, alphaThreshold) <= widest - drop)
-                    return texture.height - 1 - topY;
-            return Mathf.Max(0, texture.height - 1 - widestTopRow);
+            int lipBottomUp = texture.height - 1 - widestTopRow;
+            return Mathf.Clamp(lipBottomUp - Mathf.RoundToInt(wallThicknessPixels), 0, texture.height - 1);
         }
 
         private static int RowWidth(Color32[] pixels, int width, int y, int alphaThreshold)
