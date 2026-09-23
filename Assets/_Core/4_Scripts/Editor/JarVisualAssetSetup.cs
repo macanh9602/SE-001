@@ -252,11 +252,11 @@ namespace SE001.Editor
                 }
 
                 outer[y] = new BowlRowSpan(min, max);
-                float inset = profile.wallThicknessPixels;
-                inner[y] = new BowlRowSpan(min + inset, max - inset);
                 for (int x = min; x <= max; x++)
                     maskPixels[y * main.width + x] = new Color32(255, 255, 255, source[y * main.width + x].a);
             }
+
+            ErodeBowlInterior(outer, inner, main.width, profile.wallThicknessPixels);
 
             Texture2D mask = CreateOrUpdateMask(MaskFolder + "/BowlSilhouetteMask.asset", main.width, main.height);
             mask.SetPixels32(maskPixels);
@@ -266,6 +266,54 @@ namespace SE001.Editor
             profile.outerContour = BuildContour(outer, main.width, main.height);
             profile.innerContour = BuildContour(inner, main.width, main.height);
             profile.silhouetteMask = mask;
+        }
+
+        /// <summary>
+        /// Inner (sand-free) spans = the filled outer silhouette eroded by a disk of the glass wall thickness.
+        /// Erosion works in every direction, so the curved bottom gets a real floor (a horizontal-only inset left
+        /// the bottom rows open and sand fell straight through the Bowl). Rows above the image top count as open
+        /// sky so the mouth stays open.
+        /// </summary>
+        public static void ErodeBowlInterior(BowlRowSpan[] outer, BowlRowSpan[] inner, int width, float radius)
+        {
+            int height = outer.Length;
+            int r = Mathf.Max(1, Mathf.CeilToInt(radius));
+            float radiusSquared = radius * radius;
+            for (int y = 0; y < height; y++)
+            {
+                int min = width;
+                int max = -1;
+                BowlRowSpan row = outer[y];
+                if (row.IsValid)
+                {
+                    for (int x = Mathf.CeilToInt(row.minX); x <= Mathf.FloorToInt(row.maxX); x++)
+                    {
+                        if (!DiskInside(outer, x, y, r, radiusSquared)) continue;
+                        min = Mathf.Min(min, x);
+                        max = Mathf.Max(max, x);
+                    }
+                }
+
+                inner[y] = max >= min ? new BowlRowSpan(min, max) : new BowlRowSpan(1f, 0f);
+            }
+        }
+
+        private static bool DiskInside(BowlRowSpan[] outer, int x, int y, int r, float radiusSquared)
+        {
+            for (int dy = -r; dy <= r; dy++)
+            {
+                float remaining = radiusSquared - dy * dy;
+                if (remaining < 0f) continue;
+                int row = y + dy;
+                if (row >= outer.Length) continue;
+                if (row < 0) return false;
+                BowlRowSpan span = outer[row];
+                if (!span.IsValid) return false;
+                float halfWidth = Mathf.Sqrt(remaining);
+                if (x - halfWidth < span.minX || x + halfWidth > span.maxX) return false;
+            }
+
+            return true;
         }
 
         private static int DetectBowlRim(Texture2D texture, int alphaThreshold)
