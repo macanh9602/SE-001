@@ -113,6 +113,7 @@ namespace SE001.Gameplay
         private readonly float fillLine;
         private float wall;
         private float geometryOuterWidth;
+        private float geometryBottom;
         private int outerMinY, outerMaxY;
         private int[] rowMinX, rowMaxX; // sink span per row, index = y - MinY (min > max = empty row)
 
@@ -158,6 +159,8 @@ namespace SE001.Gameplay
         public float EffectiveWall => wall;
         /// <summary>Playable sand width, aligned to the authored cup body inner area.</summary>
         public float EffectiveInnerWidth => Mathf.Max(0f, geometryOuterWidth - wall * 2f);
+        public float EffectiveBottomY => geometryBottom;
+        public float EffectiveSandBottomY => geometryBottom + wall;
         public float Taper => taper;
         public float FillLineY => fillLineY;
         public int MinY => minY;
@@ -165,7 +168,8 @@ namespace SE001.Gameplay
 
         private float OuterHalfWidthAt(float y)
         {
-            float t = Mathf.Clamp01((y - Position.y) / Size.y);
+            float geometryHeight = Mathf.Max(0.001f, Position.y + Size.y - geometryBottom);
+            float t = Mathf.Clamp01((y - geometryBottom) / geometryHeight);
             float outerWidth = geometryOuterWidth > 0f ? geometryOuterWidth : Size.x;
             return Mathf.Lerp(outerWidth * (1f - taper) * 0.5f, outerWidth * 0.5f, t);
         }
@@ -180,16 +184,20 @@ namespace SE001.Gameplay
             geometryOuterWidth = visualProfile != null
                 ? visualInnerWidth + wall * 2f
                 : Size.x;
-            outerMinY = Mathf.FloorToInt(Position.y / cell);
+            geometryBottom = Position.y + (visualProfile != null
+                ? visualProfile.CupBodyBottomOffset(Size.x) +
+                    visualProfile.CupSandBottomOffset(Size.x) - wall
+                : 0f);
+            outerMinY = Mathf.FloorToInt(geometryBottom / cell);
             outerMaxY = Mathf.CeilToInt((Position.y + Size.y) / cell) - 1;
             // First row whose cell center is above the bottom wall (must match RegisterWalls' 'bottom' test exactly).
-            minY = Mathf.CeilToInt((Position.y + wall) / cell - 0.5f);
+            minY = Mathf.CeilToInt((geometryBottom + wall) / cell - 0.5f);
             maxY = outerMaxY;
             int rows = Mathf.Max(0, maxY - minY + 1);
             rowMinX = new int[rows];
             rowMaxX = new int[rows];
             float interiorTop = Position.y + Size.y;
-            fillLineY = Position.y + wall + (interiorTop - Position.y - wall) * fillLine;
+            fillLineY = geometryBottom + wall + (interiorTop - geometryBottom - wall) * fillLine;
             capacity = 0;
             required = 0;
             for (int r = 0; r < rows; r++)
@@ -215,7 +223,7 @@ namespace SE001.Gameplay
                 float outer = OuterHalfWidthAt(yc);
                 int x0 = Mathf.FloorToInt((Position.x - outer) / cell);
                 int x1 = Mathf.CeilToInt((Position.x + outer) / cell) - 1;
-                bool bottom = yc < Position.y + wall;
+                bool bottom = yc < geometryBottom + wall;
                 for (int x = x0; x <= x1; x++)
                 {
                     float dx = Mathf.Abs((x + 0.5f) * cell - Position.x);

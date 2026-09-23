@@ -24,6 +24,7 @@
     <li>Corrected Source orientation: authored mouth-down art is idle at <code>180°</code> (mouth up) and transitions to <code>0°</code> while pouring; <code>BodyOffset</code> and Editor preview now match this pose.</li>
     <li>Source fill uses one reusable MPB, area-correct LUT, world-down object-space direction, and no per-frame material/mesh allocation. Source shadow offset is kept in world space while the pivot rotates.</li>
     <li>Cup uses fixed-thickness 9-slice caps and body height stretch. Foreign feedback is applied to cap renderers through one reusable MPB.</li>
+    <li>Aligned CupDomain sink geometry to the authored Cup Body: <code>JarVisualProfile.cupBodyInnerInsetPixels = 7</code> defines the glass edge, while <code>cupBodyOffsetYPixels = 41</code> and Inspector-tunable <code>cupSandBottomOffsetPixels = 0</code> define the sand bottom. Positive offset raises sand; negative offset lowers it. LevelSpawner passes the same profile into CupDomain, so sand stays inside the Body width and does not render below its visual bottom.</li>
     <li>Added deterministic Editor generator, mask baker, prefab rebuild, cached preview utility, and preview grid generation.</li>
   </ul>
 
@@ -40,8 +41,9 @@
   <table>
     <thead><tr><th>Gate</th><th>Result</th><th>Evidence</th></tr></thead>
     <tbody>
-      <tr><td>V1 targeted EditMode</td><td>PASS</td><td><code>JarVisualTests</code>: 11/11 passed, including closed Source mouth-up pose.</td></tr>
+      <tr><td>V1 targeted EditMode</td><td>PASS</td><td><code>JarVisualTests</code>: 12/12 passed, including CupDomain inner-width alignment and closed Source mouth-up pose.</td></tr>
       <tr><td>C1 visual/lifecycle targeted tests</td><td>PASS</td><td>6/6 passed after hierarchy/material refresh.</td></tr>
+      <tr><td>Cup geometry regression</td><td>PASS</td><td><code>CupFactory_VisualMatchesDomainGeometry</code>, <code>PhaseC_Level02_ProductionVisualHierarchyExists</code>, and inner-width test: 3/3 passed.</td></tr>
       <tr><td>Play Mode smoke</td><td>PASS</td><td>GameScene entered Play Mode with no new console errors/warnings; screenshot saved.</td></tr>
       <tr><td>Full EditMode suite</td><td>BASELINE FAILURES</td><td>76 tests completed; 66 passed and 10 failed: 3 Phase D layout fixture expectations, 2 HUD tests cascading from gameplay result, and 5 existing playthrough assertions. The playthrough failure signature reproduced with a temporary <code>taper=0.2</code> probe, so it is not introduced by the V1 visual hierarchy.</td></tr>
       <tr><td>Draw-call / GC numeric gate</td><td>NOT MEASURED</td><td>MCP rendering stats returned zero counters; no numeric PASS claimed.</td></tr>

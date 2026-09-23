@@ -24,6 +24,7 @@ MonoBehaviour:
   cupBodyWidthPixels: 156
   cupBodyHeightPixels: 130
   cupBodyInnerInsetPixels: 7
+  cupSandBottomOffsetPixels: 0
   cupCapTopHeightPixels: 44
   cupCapBottomHeightPixels: 49
   shadowOffsetPixels: {x: -6, y: -24}

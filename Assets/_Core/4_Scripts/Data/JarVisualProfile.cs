@@ -22,6 +22,8 @@ namespace SE001.Data
         public float cupBodyHeightPixels = 130f;
         [Tooltip("Glass edge inset on each side of the cup body, measured in source pixels.")]
         public float cupBodyInnerInsetPixels = 7f;
+        [Tooltip("Vertical offset of the playable sand bottom from the Body bottom, in source pixels. Positive raises sand; negative lowers it.")]
+        public float cupSandBottomOffsetPixels = 0f;
         public float cupCapTopHeightPixels = 44f;
         public float cupCapBottomHeightPixels = 49f;
 
@@ -60,6 +62,16 @@ namespace SE001.Data
         public float CupWidthScale(float authoredWidth)
         {
             return authoredWidth / Mathf.Max(0.001f, cupHeadWidthPixels * 0.01f);
+        }
+
+        public float CupBodyBottomOffset(float authoredWidth)
+        {
+            return cupBodyOffsetYPixels * 0.01f * CupWidthScale(authoredWidth);
+        }
+
+        public float CupSandBottomOffset(float authoredWidth)
+        {
+            return cupSandBottomOffsetPixels * 0.01f * CupWidthScale(authoredWidth);
         }
 
         public float CupBodyInnerWidthPixels =>

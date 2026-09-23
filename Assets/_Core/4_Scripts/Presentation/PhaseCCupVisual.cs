@@ -78,10 +78,13 @@ namespace SE001.Presentation
                 : cup.Size.x / 1.82f;
             float topCapHeight = (visualProfile != null ? visualProfile.cupCapTopHeightPixels : 44f) * 0.01f * widthScale;
             float bottomCapHeight = (visualProfile != null ? visualProfile.cupCapBottomHeightPixels : 49f) * 0.01f * widthScale;
-            float bodyHeight = Mathf.Max(0.001f, cup.Size.y - topCapHeight - bottomCapHeight);
+            float bodyBottomOffset = visualProfile != null
+                ? visualProfile.CupBodyBottomOffset(cup.Size.x)
+                : bottomCapHeight;
+            float bodyHeight = Mathf.Max(0.001f, cup.Size.y - topCapHeight - bodyBottomOffset);
             float bodyNativeHeight = (visualProfile != null ? visualProfile.cupBodyHeightPixels : 130f) * 0.01f;
 
-            bodyRenderer.transform.localPosition = new Vector3(0f, bottomCapHeight + bodyHeight * 0.5f, 0f);
+            bodyRenderer.transform.localPosition = new Vector3(0f, bodyBottomOffset + bodyHeight * 0.5f, 0f);
             bodyRenderer.transform.localScale = new Vector3(widthScale, bodyHeight / bodyNativeHeight, 1f);
             capBottomRenderer.transform.localPosition = new Vector3(0f, bottomCapHeight * 0.5f, 0f);
             capBottomRenderer.transform.localScale = Vector3.one * widthScale;

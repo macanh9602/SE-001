@@ -101,6 +101,9 @@ namespace SE001.Tests
             float expected = 2f * runtime.jarVisualProfile.CupBodyInnerWidthPixels /
                 runtime.jarVisualProfile.cupHeadWidthPixels;
             Assert.That(cup.EffectiveInnerWidth, Is.EqualTo(expected).Within(0.0001f));
+            float expectedBottom = runtime.jarVisualProfile.CupBodyBottomOffset(2f) +
+                runtime.jarVisualProfile.CupSandBottomOffset(2f);
+            Assert.That(cup.EffectiveSandBottomY, Is.EqualTo(expectedBottom).Within(0.0001f));
         }
 
         [Test]

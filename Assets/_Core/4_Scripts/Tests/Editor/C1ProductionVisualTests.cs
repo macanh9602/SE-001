@@ -77,7 +77,8 @@ namespace SE001.Tests
                 },
                 profile,
                 runtime.sandProfile.grainsPerUnit,
-                runtime.sandProfile.cellSize);
+                runtime.sandProfile.cellSize,
+                runtime.jarVisualProfile);
             GameObject parent = new GameObject("CupFactoryParent");
 
             PhaseCCupVisual visual = new CupFactory().Create(
@@ -90,6 +91,10 @@ namespace SE001.Tests
             Assert.That(visual.transform.Find("View/Body").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
             Assert.That(visual.transform.Find("View/CapTop").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
             Assert.That(visual.transform.Find("View/CapBottom").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
+            float bodyHeight = runtime.jarVisualProfile.cupBodyHeightPixels * 0.01f;
+            float bodyBottom = visual.BodyRenderer.transform.localPosition.y -
+                visual.BodyRenderer.transform.localScale.y * bodyHeight * 0.5f;
+            Assert.That(bodyBottom, Is.EqualTo(domain.EffectiveSandBottomY - domain.Position.y).Within(0.0001f));
 
             Object.DestroyImmediate(parent);
         }
