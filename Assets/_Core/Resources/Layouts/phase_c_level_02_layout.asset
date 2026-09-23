@@ -512,6 +512,7 @@ MonoBehaviour:
   mask: {fileID: 11400000, guid: f969860541fedd344974c27ba816a2aa, type: 2}
   boardSize: {x: 10.8, y: 19.2}
   thumbnail: {fileID: 0}
+  contourHash: 4a64f00b7e73a2224b7e36c715d6d7b7309f03d3
   sourceSvgPath: 
 --- !u!43 &745960817271314721
 Mesh:

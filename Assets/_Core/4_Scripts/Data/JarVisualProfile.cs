@@ -9,7 +9,8 @@ namespace SE001.Data
         public float sourceBodyWidthPixels = 156f;
         public float sourceBodyHeightPixels = 192f;
         public float sourceMouthCenterXPixels = 78f;
-        public float sourceMouthCenterYPixels = 184f;
+        // Mouth quad center measured from the body top in authored (mouth-down) art: top 184 + half of 28 px.
+        public float sourceMouthCenterYPixels = 198f;
         public float sourceCompositeHeightPixels = 212f;
 
         [Header("Measured cup art")]
@@ -37,6 +38,18 @@ namespace SE001.Data
         public float[] sourceFillAreaLut = new float[0];
         public Vector2[] sourceFillRowSpans = new Vector2[0];
 
+        [Header("Source sand motion (tilt / slide / settle while the jar rotates)")]
+        [Tooltip("How much of the jar rotation the sand follows instantly before sliding (0 = always level, 1 = glued).")]
+        [Range(0f, 1f)] public float sandCarry = 0.85f;
+        [Tooltip("Settle spring angular frequency (rad/s). Higher = sand levels out faster.")]
+        [Range(1f, 40f)] public float sandSettleFrequency = 14f;
+        [Tooltip("Settle spring damping ratio. <1 gives a small slosh after the jar stops.")]
+        [Range(0.1f, 1.5f)] public float sandSettleDamping = 0.55f;
+        [Tooltip("Max tilt of the sand surface away from level, like a pile's angle of repose (degrees).")]
+        [Range(0f, 60f)] public float sandReposeAngle = 32f;
+        [Tooltip("Sampling stride (pixels) for the area-correct fill solver. Lower = more precise, more CPU while rotating.")]
+        [Range(1, 8)] public int sandSolverStridePixels = 3;
+
         public float SourceUniformScale(float authoredHeight)
         {
             return authoredHeight / Mathf.Max(0.001f, sourceBodyHeightPixels * 0.01f);
@@ -56,9 +69,10 @@ namespace SE001.Data
                 return authoredHeight * (sourceProfile != null ? sourceProfile.fallbackMouthAnchorFactor : 0.5f);
 
             float bodyHeight = Mathf.Max(0.001f, visualProfile.sourceBodyHeightPixels);
-            // The authored Source art is mouth-down. Idle presentation rotates it 180 degrees,
-            // so the visual body center sits below the gameplay Position/EmitPoint.
-            return authoredHeight * (0.5f - visualProfile.sourceMouthCenterYPixels / bodyHeight);
+            // Position is the emit point. Sand only pours in the pour pose (authored mouth-down art, pivot 0 deg),
+            // so the mouth tip (bottom of the composite) must sit on Position: the body center is above it.
+            // Idle rotates 180 deg around the body center, which puts the mouth on top.
+            return authoredHeight * (visualProfile.sourceCompositeHeightPixels / bodyHeight - 0.5f);
         }
 
         public static float SourceMouthLocalY(float authoredHeight, JarVisualProfile visualProfile)

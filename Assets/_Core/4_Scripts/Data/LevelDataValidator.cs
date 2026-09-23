@@ -262,7 +262,7 @@ namespace SE001.Data
             if (layout != null)
             {
                 string maskError;
-                if (!layout.mask.TryBuildMaskSet(cellSize, maxCells, out masks, out maskError))
+                if (!layout.TryBuildMaskSet(cellSize, maxCells, out masks, out maskError))
                 {
                     errors.Add("Baked layout cannot be used for reachability: " + maskError);
                     return;

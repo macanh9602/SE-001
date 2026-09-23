@@ -2,7 +2,7 @@
 
 Status: **EXECUTED (code) — verification PENDING in Unity.** Nothing below is marked PASS until it is run.
 
-Code is staged in `handoff/phase-D/da-staging/` and is applied with one command **after Codex V1 is finished and Unity is idle**:
+**2026-09-23 14:10 — applied to Assets by Claude** (same steps as the script: copied 11, patched 7, hashed 4). The script stays for reference / re-apply:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File handoff\phase-D\da-staging\apply-da.ps1
@@ -27,7 +27,7 @@ Known limitation (by data, not by tool): `phase_c_level_01..03_layout` were migr
 ## 2. Run order (you)
 
 1. Wait for Codex V1 = DONE; Unity idle.
-2. Run `apply-da.ps1`. Expect "copied" ×11, "patched" ×7, "hashed" ×4.
+2. ~~Run `apply-da.ps1`~~ — already applied.
 3. Focus Unity → compile. **Console must be clean.** If there is a compile error, send me the Console text; do not let Codex "fix" D-A files.
 4. Test Runner → EditMode → run `LayoutBakeProductionTests`, `LayoutBakeTests`, then the full EditMode suite.
 5. Do the UX review walkthrough in `ux-review.md` (pass 1 → 2 → 3) and save screenshots into `screenshots/`.

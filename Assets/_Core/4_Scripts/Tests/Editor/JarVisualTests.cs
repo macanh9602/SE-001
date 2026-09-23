@@ -130,13 +130,13 @@ namespace SE001.Tests
                 sourceProfile,
                 1,
                 visuals);
-            Assert.That(source.BodyOffset.y, Is.EqualTo(2f * (0.5f - 184f / 192f)).Within(0.0001f));
+            Assert.That(source.BodyOffset.y, Is.EqualTo(2f * (212f / 192f - 0.5f)).Within(0.0001f));
             Assert.That(source.HitTest(source.Position + source.BodyOffset + new Vector2(0.99f, 0.99f), 0f), Is.True);
             Assert.That(source.HitTest(source.Position + source.BodyOffset + new Vector2(1.1f, 0f), 0f), Is.False);
         }
 
         [Test]
-        public void Source_ClosedPose_IsMouthUpAroundEmitPoint()
+        public void Source_ClosedPose_IsMouthUp_AboveBody()
         {
             GameplayRuntimeProfile runtime = Resources.Load<GameplayRuntimeProfile>("Profiles/PhaseCGameplayRuntimeProfile");
             SourceDomain source = new SourceDomain(
@@ -158,7 +158,8 @@ namespace SE001.Tests
                     source, parent.transform, runtime.prefabProfile, runtime));
                 Assert.That(Mathf.Abs(Mathf.DeltaAngle(visual.Pivot.localEulerAngles.z, 180f)), Is.LessThan(0.01f));
                 Assert.That(visual.MouthRenderer.transform.position.y, Is.GreaterThan(visual.BodyRenderer.transform.position.y));
-                Assert.That(visual.MouthRenderer.transform.position.y, Is.EqualTo(source.Position.y).Within(0.0001f));
+                // Emit point is the mouth tip in the POUR pose (see SourcePourPoseTests); idle only needs mouth-up.
+                Assert.That(visual.MouthRenderer.transform.position.y, Is.GreaterThan(source.Position.y));
             }
             finally
             {

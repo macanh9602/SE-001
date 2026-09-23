@@ -95,7 +95,7 @@ namespace SE001.System.Creation
                     LayoutDefinition layout = LevelDataLoader.LoadLayout(levelData.layoutId);
                     LayoutMaskSet masks;
                     string maskError = string.Empty;
-                    if (layout.mask == null || !layout.mask.TryBuildMaskSet(profile.cellSize, profile.maxCells, out masks, out maskError))
+                    if (!layout.TryBuildMaskSet(profile.cellSize, profile.maxCells, out masks, out maskError))
                         throw new InvalidOperationException("Layout " + levelData.layoutId + " cannot load: " + maskError);
                     activeContext.AttachSimulation(new SandSimulation(profile, masks, SandSimulation.SeedFrom(levelId)));
                     SpawnLayoutVisuals(layout);

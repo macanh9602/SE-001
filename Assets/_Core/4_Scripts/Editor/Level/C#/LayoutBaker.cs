@@ -24,11 +24,11 @@ namespace SE001.Editor.Level
         public byte[] ValidBits;
     }
 
-    public static class LayoutBaker
+    public static partial class LayoutBaker
     {
         public const int ImporterVersion = 1;
-        private const string LayoutResourceFolder = "Assets/_Core/Resources/Layouts";
-        private const string LayoutPrefabFolder = "Assets/_Core/3_Prefabs/Gameplay/Layout/Baked";
+        public const string LayoutResourceFolder = "Assets/_Core/Resources/Layouts";
+        public const string LayoutPrefabFolder = "Assets/_Core/3_Prefabs/Gameplay/Layout/Baked";
         private const string SimulationProfilePath =
             "Assets/_Core/Resources/Profiles/PhaseBSandSimulationProfile.asset";
         private const string VisualProfilePath =
@@ -91,6 +91,7 @@ namespace SE001.Editor.Level
                 definition.layoutId = layoutId;
                 definition.layoutPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
                 definition.mask = mask;
+                definition.contourHash = snapshot.ContourHash;
                 definition.boardSize = level.board.size;
                 definition.sourceSvgPath = NormalizeProjectPath(sourceSvgPath);
                 EditorUtility.SetDirty(definition);
@@ -293,7 +294,7 @@ namespace SE001.Editor.Level
             }
         }
 
-        private static string NormalizeProjectPath(string path)
+        public static string NormalizeProjectPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return string.Empty;
             string projectRoot = Directory.GetParent(Application.dataPath).FullName.Replace('\\', '/');
