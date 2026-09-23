@@ -102,14 +102,13 @@ namespace SE001.Editor.Level
                         "This Cup does not require sand.", "Cup", "Set Required Amount above zero for a collection goal.");
                 else if (cupProfile != null && sandProfile != null && cellSize > 0f)
                 {
-                    CupDomain capacityProbe = new CupDomain(
-                        cup, cupProfile, sandProfile.grainsPerUnit, cellSize, jarProfile,
-                        runtimeProfile != null ? runtimeProfile.receiverStyle : ReceiverStyle.Cup,
-                        bowlProfile);
+                    ReceiverStyle style = runtimeProfile != null ? runtimeProfile.receiverStyle : ReceiverStyle.Cup;
+                    int grainsPerUnit = BowlVisualProfile.EffectiveGrainsPerUnit(sandProfile.grainsPerUnit, style, bowlProfile);
+                    CupDomain capacityProbe = new CupDomain(cup, cupProfile, grainsPerUnit, cellSize, jarProfile, style, bowlProfile);
                     if (capacityProbe.Required > capacityProbe.Capacity)
                     {
                         float logicalCapacity =
-                            capacityProbe.Capacity / (float)Mathf.Max(1, sandProfile.grainsPerUnit);
+                            capacityProbe.Capacity / (float)grainsPerUnit;
                         Add(issues, LevelEditorIssueSeverity.Blocking, cup.stableId, "requiredAmount",
                             "Required Amount " + cup.requiredAmount + " is larger than this receiver can hold.",
                             "Receiver capacity is about " + logicalCapacity.ToString("0.0") + " units.",

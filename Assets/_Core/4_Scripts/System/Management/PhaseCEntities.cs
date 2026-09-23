@@ -329,6 +329,40 @@ namespace SE001.Gameplay
                 for (int x = x0; x <= x1; x++)
                     if (x < innerMin || x > innerMax) sim.SetCupWall(x, y, true);
             }
+
+            SealBowlInterior(sim);
+        }
+
+        /// <summary>
+        /// Leak guard (Movie_011): at small Bowl widths the glass is ~1 cell thick, so the sampled staircase can leave
+        /// diagonal or missing wall cells. Every 8-neighbour of a sink cell that is not itself a sink cell becomes wall,
+        /// except above the rim (the mouth stays open). A grain inside can then only leave over the rim.
+        /// </summary>
+        private void SealBowlInterior(SandSimulation sim)
+        {
+            for (int r = 0; r < rowMinX.Length; r++)
+            {
+                int y = minY + r;
+                for (int x = rowMinX[r]; x <= rowMaxX[r]; x++)
+                {
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        int ny = y + dy;
+                        if (ny > maxY) continue;
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            if ((dx != 0 || dy != 0) && !IsSinkCell(x + dx, ny)) sim.SetCupWall(x + dx, ny, true);
+                        }
+                    }
+                }
+            }
+        }
+
+        private bool IsSinkCell(int x, int y)
+        {
+            int r = y - minY;
+            if (r < 0 || r >= rowMinX.Length) return false;
+            return x >= rowMinX[r] && x <= rowMaxX[r];
         }
 
         /// <summary>

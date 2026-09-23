@@ -32,6 +32,9 @@ namespace SE001.Data
         public int rimPixelY = 24;
         public float wallThicknessPixels = 10.56f;
         public float defaultWorldWidth = 3.52f;
+        [Tooltip("Bowl width the levels were authored at. Grains per logical unit scale with (defaultWorldWidth / this)^2, "
+            + "so resizing the Bowl keeps every level's fill ratio without editing level data.")]
+        [Min(0.01f)] public float referenceWorldWidth = 3.52f;
         public Vector2 shadowOffsetPixels = new Vector2(-6f, -24f);
         public Vector2 specOffsetPixels = Vector2.zero;
 
@@ -53,6 +56,27 @@ namespace SE001.Data
         }
 
         public Vector2 WorldSize => new Vector2(defaultWorldWidth, WorldHeightForWidth(defaultWorldWidth));
+
+        /// <summary>Area ratio of the current Bowl vs the authoring reference.</summary>
+        public float UnitAreaScale
+        {
+            get
+            {
+                float ratio = Mathf.Max(0.001f, defaultWorldWidth) / Mathf.Max(0.01f, referenceWorldWidth);
+                return ratio * ratio;
+            }
+        }
+
+        /// <summary>
+        /// Grains per logical unit for the active receiver style. Bowl: scaled by UnitAreaScale so Source amounts and
+        /// Bowl targets shrink/grow together (decision 2026-09-24). Cup: unchanged.
+        /// </summary>
+        public static int EffectiveGrainsPerUnit(int baseGrainsPerUnit, ReceiverStyle style, BowlVisualProfile bowl)
+        {
+            int value = Mathf.Max(1, baseGrainsPerUnit);
+            if (style != ReceiverStyle.Bowl || bowl == null) return value;
+            return Mathf.Max(1, Mathf.RoundToInt(value * bowl.UnitAreaScale));
+        }
 
         public float WorldPixelsPerPixel(float width)
         {

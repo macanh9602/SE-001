@@ -5,9 +5,10 @@ using UnityEngine;
 namespace SE001.Elements.Sand
 {
     /// <summary>
-    /// Renders the sand grid as one quad + one texture (port of sand-feel-lab renderSand, powder preset):
-    /// palette color per material, per-grain tone jitter, surface highlight (top lighter, overhang darker),
-    /// bilinear filtering for the soft powder look. Writes straight into the texture's pixel buffer: no per-frame alloc.
+    /// Renders the sand grid as one quad + one data texture. Each texel encodes a cell (R material id, G grain tone,
+    /// B flags: 1 surface, 2 overhang, 4 airborne, 8 cosmetic stream, 16 stream edge; A coverage) and SE001/SandField
+    /// draws round grains in 3 tones with sparkle (Sand Level Lab look, 2026-09-24). Writes straight into the texture's
+    /// pixel buffer: no per-frame alloc.
     /// Falling stream (Docs/visualizers/sand-stream-lab.html, panel B+): airborne grains get a streak above them, gaps to the
     /// next same-material grain in the column are bridged, and the result is widened ±streamHalfWidth cells with a grain
     /// texture that scrolls down with the flow — so a sparse falling trickle reads as one continuous sandy stream.
@@ -19,10 +20,13 @@ namespace SE001.Elements.Sand
         [SerializeField] private Renderer targetRenderer;
         [SerializeField] private MeshFilter targetFilter;
         [SerializeField] private Color32 sandColor = new Color32(220, 180, 100, 255);
-        [Header("Powder look (lab 'Bột mịn')")]
-        [SerializeField, Range(0f, 1f)] private float jitter = 0.35f;
-        [SerializeField, Range(0f, 1f)] private float highlight = 0.3f;
-        [SerializeField] private bool softRender = true;
+        [Header("Grain look")]
+        [Tooltip("Round-grain position jitter (0..1 → 0..0.6 cell).")]
+        [SerializeField, Range(0f, 1f)] private float jitter = 0.42f;
+        [Tooltip("How much lighter the top surface grains are.")]
+        [SerializeField, Range(0f, 1f)] private float highlight = 0.37f;
+        [Tooltip("Round grains (shader). Off = one square per cell (debug).")]
+        [SerializeField] private bool roundGrains = true;
         [Header("Falling stream")]
         [Tooltip("Streak length above an airborne grain = ceil(fall speed * streak) cells.")]
         [SerializeField, Range(0f, 2f)] private float streamStreak = 1f;
@@ -36,8 +40,23 @@ namespace SE001.Elements.Sand
         [SerializeField, Range(0, 8)] private int streamScrollCellsPerFrame = 2;
         [Tooltip("Max airborne grains decorated per frame; beyond this the rest render as plain grains.")]
         [SerializeField, Min(0)] private int maxStreamGrains = 8192;
+        [Tooltip("Stream trail kept per rendered frame (lab 'trail keep'). Bridges sparse falls so the stream never breaks. 0 = off.")]
+        [SerializeField, Range(0f, 0.95f)] private float streamTrailKeep = 0.8f;
+
+        private const int PaletteSize = 256;
+        private const byte FlagSurface = 1;
+        private const byte FlagOverhang = 2;
+        private const byte FlagAirborne = 4;
+        private const byte FlagStream = 8;
+        private const byte FlagStreamEdge = 16;
+
+        // Sliding grains keep v = 1 (SandSimulation slide rule); only real falls shimmer (lab: vel > 1).
+        private const float AirborneVelocity = 1.5f;
+        private const byte FlagTrail = 32;
+        private const byte TrailMin = 10;
 
         private Texture2D texture;
+        private Texture2D paletteTexture;
         private SandSimulation simulation;
         private MaterialPropertyBlock propertyBlock;
         private Mesh generatedSurface;
@@ -46,10 +65,16 @@ namespace SE001.Elements.Sand
         private int[] streamGrains;
         private ushort[] streamStamp;
         private ushort streamFrameId;
+        private byte[] trailAlpha;
+        private byte[] trailMaterial;
         private int renderFrame;
 
         /// <summary>Index = materialId. Null → single sandColor.</summary>
-        public void SetPalette(Color32[] value) { palette = value; }
+        public void SetPalette(Color32[] value)
+        {
+            palette = value;
+            if (paletteTexture != null) FillPaletteTexture();
+        }
 
         public void Bind(SandSimulation value)
         {
@@ -58,18 +83,21 @@ namespace SE001.Elements.Sand
             if (targetRenderer == null) targetRenderer = GetComponent<Renderer>();
             if (targetFilter == null) targetFilter = GetComponent<MeshFilter>();
             if (texture != null) DestroyOwnedTexture();
-            texture = new Texture2D(simulation.State.Width, simulation.State.Height, TextureFormat.RGBA32, false, false)
+            // Data texture: linear (no sRGB decode) + point sampling, the shader reads exact cell codes.
+            texture = new Texture2D(simulation.State.Width, simulation.State.Height, TextureFormat.RGBA32, false, true)
             {
                 name = "SandFieldTexture",
-                filterMode = softRender ? FilterMode.Bilinear : FilterMode.Point,
+                filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp
             };
-            // Empty texels keep a sand-like RGB with alpha 0 so bilinear edges fade instead of darkening.
-            emptyColor = new Color32(sandColor.r, sandColor.g, sandColor.b, 0);
+            emptyColor = new Color32(0, 0, 0, 0);
+            EnsurePaletteTexture();
             int cellCount = simulation.State.Width * simulation.State.Height;
             streamGrains = new int[maxStreamGrains];
             streamStamp = new ushort[cellCount];
             streamFrameId = 0;
+            trailAlpha = new byte[cellCount];
+            trailMaterial = new byte[cellCount];
             renderFrame = 0;
             EnsureSurface();
             if (targetRenderer != null)
@@ -78,6 +106,11 @@ namespace SE001.Elements.Sand
                 propertyBlock.Clear();
                 propertyBlock.SetTexture("_BaseMap", texture);
                 propertyBlock.SetTexture("_MainTex", texture);
+                propertyBlock.SetTexture("_Palette", paletteTexture);
+                propertyBlock.SetVector("_GridSize", new Vector4(simulation.State.Width, simulation.State.Height, 0f, 0f));
+                propertyBlock.SetFloat("_RoundGrains", roundGrains ? 1f : 0f);
+                propertyBlock.SetFloat("_GrainJitter", jitter * 0.6f);
+                propertyBlock.SetFloat("_SurfaceLift", highlight);
                 targetRenderer.SetPropertyBlock(propertyBlock);
             }
 
@@ -96,10 +129,6 @@ namespace SE001.Elements.Sand
             int width = state.Width;
             int height = state.Height;
             NativeArray<Color32> pixels = texture.GetPixelData<Color32>(0);
-            float jitterAmount = jitter * 26f;
-            float highlightUp = highlight * 20f;
-            float highlightDown = highlight * 24f;
-
             for (int y = 0; y < height; y++)
             {
                 int row = y * width;
@@ -107,16 +136,28 @@ namespace SE001.Elements.Sand
                 {
                     int i = row + x;
                     byte m = cells[i];
-                    if (m == 0) { pixels[i] = emptyColor; continue; }
+                    if (m == 0)
+                    {
+                        pixels[i] = TrailPixel(state, i, x, y);
+                        continue;
+                    }
 
-                    Color32 baseColor = palette != null && m < palette.Length ? palette[m] : sandColor;
-                    float l = (shade[i] - 128) / 128f * jitterAmount;
+                    byte flags = 0;
                     bool emptyAbove = y == height - 1 || cells[i + width] == 0;
                     bool emptyBelow = y > 0 && cells[i - width] == 0;
-                    if (emptyAbove) l += highlightUp;
-                    else if (emptyBelow) l -= highlightDown;
+                    if (emptyAbove) flags |= FlagSurface;
+                    else if (emptyBelow) flags |= FlagOverhang;
+                    if (velocity[i] >= AirborneVelocity)
+                    {
+                        flags |= FlagAirborne;
+                        SetTrail(i, m, 255);
+                    }
+                    else
+                    {
+                        trailAlpha[i] = 0;
+                    }
 
-                    pixels[i] = new Color32(Clamp(baseColor.r + l), Clamp(baseColor.g + l), Clamp(baseColor.b + l * 0.95f), 255);
+                    pixels[i] = new Color32(m, shade[i], flags, 255);
 
                     if (drawStream && streamCount < streamGrains.Length && y > 0 && velocity[i] >= 1f)
                     {
@@ -132,6 +173,30 @@ namespace SE001.Elements.Sand
         }
 
         private static byte Clamp(float v) => (byte)(v < 0f ? 0f : v > 255f ? 255f : v);
+
+        private void EnsurePaletteTexture()
+        {
+            if (paletteTexture == null)
+            {
+                // sRGB colour lookup (material id → sand colour), sampled with Load in the shader.
+                paletteTexture = new Texture2D(PaletteSize, 1, TextureFormat.RGBA32, false, false)
+                {
+                    name = "SandFieldPalette",
+                    filterMode = FilterMode.Point,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+            }
+
+            FillPaletteTexture();
+        }
+
+        private void FillPaletteTexture()
+        {
+            NativeArray<Color32> colors = paletteTexture.GetPixelData<Color32>(0);
+            for (int i = 0; i < PaletteSize; i++)
+                colors[i] = palette != null && i < palette.Length && palette[i].a > 0 ? palette[i] : sandColor;
+            paletteTexture.Apply(false, false);
+        }
 
         private static bool IsGeometry(SandSimulationState state, int i) =>
             !state.ValidMask[i] || state.StaticMask[i] || state.CupWallMask[i] || state.DynamicMask[i] || state.RotatingMask[i];
@@ -188,6 +253,7 @@ namespace SE001.Elements.Sand
             {
                 streamStamp[j] = streamFrameId;
                 pixels[j] = StreamPixel(m, x, y, scroll, 0.95f, false, 1f);
+                SetTrail(j, m, 255);
             }
 
             WidenStream(state, pixels, j, x, y, m, scroll);
@@ -209,21 +275,41 @@ namespace SE001.Elements.Sand
                 if (cells[t] != 0 || streamStamp[t] == streamFrameId || IsGeometry(state, t)) continue;
                 int adx = dx < 0 ? -dx : dx;
                 pixels[t] = StreamPixel(m, xx, y, scroll, 0.92f - 0.25f * (adx - 1), adx == half, 0.97f);
+                SetTrail(t, m, adx == half ? (byte)120 : (byte)200);
             }
+        }
+
+        /// <summary>Fading trail left by the stream on an empty cell (lab trail layer). Presentation only.</summary>
+        private Color32 TrailPixel(SandSimulationState state, int i, int x, int y)
+        {
+            byte alpha = trailAlpha[i];
+            if (alpha == 0) return emptyColor;
+            int next = (int)(alpha * streamTrailKeep);
+            if (next < TrailMin || IsGeometry(state, i))
+            {
+                trailAlpha[i] = 0;
+                return emptyColor;
+            }
+
+            trailAlpha[i] = (byte)next;
+            byte tone = (byte)(Hash01(x, y) * 255f);
+            return new Color32(trailMaterial[i], tone, FlagStream | FlagTrail, (byte)next);
+        }
+
+        private void SetTrail(int i, byte m, byte alpha)
+        {
+            if (streamTrailKeep <= 0f || alpha <= trailAlpha[i]) return;
+            trailAlpha[i] = alpha;
+            trailMaterial[i] = m;
         }
 
         private Color32 StreamPixel(byte m, int x, int y, int scroll, float alpha, bool edge, float dim)
         {
-            Color32 c = palette != null && m < palette.Length ? palette[m] : sandColor;
-            float l = 0f;
-            if (streamGrain > 0f)
-            {
-                float r = Hash01(x, y + scroll);
-                l = (r - 0.5f) * 2f * 26f * streamGrain;
-                if (r < (edge ? 0.45f : 0.22f) * streamGrain) alpha *= edge ? 0.15f : 0.45f;
-            }
-
-            return new Color32(Clamp((c.r + l) * dim), Clamp((c.g + l) * dim), Clamp((c.b + l * 0.95f) * dim), Clamp(alpha * 255f));
+            // dim is kept for call-site compatibility; stream tone/darkening is resolved in the shader.
+            float r = Hash01(x, y + scroll);
+            if (streamGrain > 0f && r < (edge ? 0.45f : 0.22f) * streamGrain) alpha *= edge ? 0.15f : 0.45f;
+            byte flags = (byte)(FlagStream | (edge ? FlagStreamEdge : 0));
+            return new Color32(m, (byte)(r * 255f), flags, Clamp(alpha * 255f * dim));
         }
 
         /// <summary>Stable integer hash → [0,1). Deterministic, no UnityEngine.Random.</summary>
@@ -243,6 +329,13 @@ namespace SE001.Elements.Sand
         private void OnDestroy()
         {
             DestroyOwnedTexture();
+            if (paletteTexture != null)
+            {
+                if (Application.isPlaying) Destroy(paletteTexture);
+                else DestroyImmediate(paletteTexture);
+                paletteTexture = null;
+            }
+
             DestroyOwnedSurface();
         }
 

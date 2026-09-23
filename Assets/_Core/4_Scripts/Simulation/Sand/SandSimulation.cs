@@ -95,6 +95,7 @@ namespace SE001.Simulation.Sand
             float slide = profile.slide;
             float splash = profile.splash;
             float airDrag = profile.airDrag;
+            float creepChance = profile.creepReach > profile.dispersion ? profile.creepChance : 0f;
             int moved = 0;
 
             // Bottom-up (board y grows upward): grains fall into rows that were already processed.
@@ -166,6 +167,15 @@ namespace SE001.Simulation.Sand
                             movedHere = true;
                         }
 
+                        // Creep: rarely walk toward a far drop so piles keep flattening and nothing parks on a
+                        // wide flat obstacle / stroke. Always heads to a lower cell, so the grid still reaches a
+                        // stable state (grains on open floor with no drop in reach never creep).
+                        if (!movedHere && creepChance > 0f && NextFloat() < creepChance && TryCreep(cx, cy, d, out int creepStep))
+                        {
+                            cx += creepStep;
+                            movedHere = true;
+                        }
+
                         if (!movedHere) m *= slide * 0.5f;
                         v = movedHere ? Math.Max(1f, v * 0.7f) : 0f;
                     }
@@ -223,6 +233,34 @@ namespace SE001.Simulation.Sand
 
             step = 0;
             return false;
+        }
+
+        /// <summary>
+        /// Walks each direction once along the free row (up to creepReach) and returns a single-cell step toward the
+        /// nearest cell with a free drop below. O(reach) per direction.
+        /// </summary>
+        private bool TryCreep(int x, int y, int preferred, out int step)
+        {
+            int reach = profile.creepReach;
+            int best = int.MaxValue;
+            step = 0;
+            for (int k = 0; k < 2; k++)
+            {
+                int dir = k == 0 ? preferred : -preferred;
+                for (int distance = 1; distance <= reach && distance < best; distance++)
+                {
+                    int nx = x + dir * distance;
+                    if (!IsFree(nx, y)) break;
+                    if (distance >= 2 && IsFree(nx, y - 1))
+                    {
+                        best = distance;
+                        step = dir;
+                        break;
+                    }
+                }
+            }
+
+            return step != 0;
         }
 
         private bool PathFree(int x, int y, int dir, int distance)

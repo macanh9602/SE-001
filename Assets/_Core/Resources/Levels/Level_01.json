@@ -13,8 +13,8 @@
             "stableId": "source_99309e8f141d",
             "materialId": 1,
             "position": {
-                "x": 2.732323408126831,
-                "y": 15.144203186035157
+                "x": 2.702895402908325,
+                "y": 15.320770263671875
             },
             "logicalAmount": 6,
             "startsOpen": false
@@ -23,10 +23,10 @@
             "stableId": "source_1d58e419567c",
             "materialId": 2,
             "position": {
-                "x": 6.89617919921875,
-                "y": 12.36829948425293
+                "x": 8.07329273223877,
+                "y": 12.338871002197266
             },
-            "logicalAmount": 6,
+            "logicalAmount": 10,
             "startsOpen": false
         }
     ],
@@ -35,8 +35,8 @@
             "stableId": "cup_638cfc7f4c59",
             "acceptedMaterialId": 1,
             "position": {
-                "x": 2.908461809158325,
-                "y": 2.067450523376465
+                "x": 2.8790342807769777,
+                "y": 3.3328452110290529
             },
             "requiredAmount": 5
         },
@@ -44,8 +44,8 @@
             "stableId": "cup_c69006beebce",
             "acceptedMaterialId": 2,
             "position": {
-                "x": 7.730933666229248,
-                "y": 4.8265910148620609
+                "x": 7.907501220703125,
+                "y": 4.885445594787598
             },
             "requiredAmount": 5
         }

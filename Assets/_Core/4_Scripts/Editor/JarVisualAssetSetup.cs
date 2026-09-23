@@ -224,7 +224,8 @@ namespace SE001.Editor
             profile.alphaThreshold = alphaThreshold;
             profile.rimPixelY = DetectBowlRim(main, alphaThreshold);
             profile.wallThicknessPixels = Mathf.Max(1f, main.width * 0.03f);
-            profile.defaultWorldWidth = main.width * 0.01f;
+            // Keep the GD-tuned width on re-bake; only seed it the first time.
+            if (profile.defaultWorldWidth <= 0f) profile.defaultWorldWidth = main.width * 0.01f;
             profile.specOffsetPixels = new Vector2(
                 (main.width - spec.width) * 0.5f,
                 (main.height - spec.height) * 0.5f);

@@ -31,6 +31,13 @@ namespace SE001.Simulation.Sand
         [Tooltip("Avalanche reach in cells (replaces lab random 'flow' so piles level without endless jitter). 1 = 45° piles.")]
         [Range(1, 8)] public int dispersion = 5;
 
+        [Header("Creep (Sand Level Lab 2026-09-24)")]
+        [Tooltip("Per-step chance that a resting grain with a free path walks one cell toward a drop farther away than " +
+            "'dispersion'. Piles start steep, then flatten; sand drains off flat obstacles and drawn strokes. 0 = off.")]
+        [Range(0f, 1f)] public float creepChance = 0.14f;
+        [Tooltip("How far (cells, along a free row) a resting grain looks for a drop when creeping.")]
+        [Range(1, 64)] public int creepReach = 24;
+
         [Header("Stream")]
         [Tooltip("Momentum kept per step while airborne. Airborne grains never move sideways; 0 = drop dead-straight off edges.")]
         [Range(0f, 1f)] public float airDrag = 0.5f;

@@ -21,7 +21,7 @@ MonoBehaviour:
   alphaThreshold: 64
   rimPixelY: 130
   wallThicknessPixels: 10.559999
-  defaultWorldWidth: 3.52
+  defaultWorldWidth: 2
   shadowOffsetPixels: {x: -6, y: -24}
   specOffsetPixels: {x: 20, y: 10}
   outerContour:

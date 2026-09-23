@@ -64,7 +64,9 @@ namespace SE001.Presentation
         private void ConfigureTransform()
         {
             transform.localPosition = new Vector3(bowl.Position.x, bowl.Position.y, 0f);
-            float widthScale = bowl.Size.x / Mathf.Max(0.001f, profile.defaultWorldWidth);
+            // Scale from the width the quad meshes were baked at, not the (GD-tunable) profile width: otherwise changing
+            // defaultWorldWidth resized physics and editor but left the in-game Bowl at the old size (Movie_011).
+            float widthScale = bowl.Size.x / BakedMeshWidth(mainRenderer, profile.defaultWorldWidth);
             float height = profile.WorldHeightForWidth(bowl.Size.x);
             mainRenderer.transform.localPosition = new Vector3(0f, height * 0.5f, 0f);
             mainRenderer.transform.localScale = Vector3.one * widthScale;
@@ -73,8 +75,9 @@ namespace SE001.Presentation
                 height * 0.5f + profile.shadowOffsetPixels.y * profile.WorldPixelsPerPixel(bowl.Size.x),
                 0f);
             shadowRenderer.transform.localScale = Vector3.one * widthScale;
-            float specWidthScale = widthScale * profile.specWidthPixels / Mathf.Max(1f, profile.mainWidthPixels);
-            float specHeightScale = widthScale * profile.specHeightPixels / Mathf.Max(1f, profile.mainHeightPixels);
+            // BowlSpec mesh is already baked at spec size; it scales with the same factor as Main.
+            float specWidthScale = widthScale;
+            float specHeightScale = widthScale;
             specRenderer.transform.localPosition = new Vector3(
                 (profile.specOffsetPixels.x + profile.specWidthPixels * 0.5f - profile.mainWidthPixels * 0.5f) *
                 profile.WorldPixelsPerPixel(bowl.Size.x),
@@ -82,6 +85,13 @@ namespace SE001.Presentation
                     profile.mainHeightPixels * 0.5f) * profile.WorldPixelsPerPixel(bowl.Size.x),
                 0f);
             specRenderer.transform.localScale = new Vector3(specWidthScale, specHeightScale, 1f);
+        }
+
+        private static float BakedMeshWidth(Renderer renderer, float fallback)
+        {
+            MeshFilter filter = renderer.GetComponent<MeshFilter>();
+            float width = filter != null && filter.sharedMesh != null ? filter.sharedMesh.bounds.size.x : 0f;
+            return width > 0.0001f ? width : Mathf.Max(0.001f, fallback);
         }
 
         private void ConfigureMaterials()

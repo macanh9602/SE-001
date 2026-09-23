@@ -95,9 +95,9 @@ MonoBehaviour:
   sandColor:
     serializedVersion: 2
     rgba: 4284789980
-  jitter: 0.35
-  highlight: 0.3
-  softRender: 0
+  jitter: 0.42
+  highlight: 0.37
+  roundGrains: 1
   streamStreak: 1
   streamBridgeCells: 10
   streamHalfWidth: 1
