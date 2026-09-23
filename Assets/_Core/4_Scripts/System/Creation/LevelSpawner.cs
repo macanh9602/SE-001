@@ -188,6 +188,8 @@ namespace SE001.System.Creation
             }
             activeContext.RegisterParticipant(
                 activeContext.LevelRoot.gameObject.AddComponent<SE001.HUD.PhaseCResultHudController>());
+            activeContext.RegisterParticipant(
+                activeContext.LevelRoot.gameObject.AddComponent<SE001.HUD.PhaseCInkProgressHudController>());
             // DebugView is intentionally not part of production presentation ownership.
         }
 

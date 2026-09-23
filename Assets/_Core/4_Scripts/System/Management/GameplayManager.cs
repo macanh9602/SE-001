@@ -18,6 +18,8 @@ namespace SE001.System.Management
         [SerializeField, Min(1)] private int maxStepsPerFrame = 4;
         [SerializeField, Min(1)] private int stableStepsForLose = 30;
         [SerializeField, Min(1)] private int maxStrokes = 16;
+        [SerializeField, Min(1)] private int loseQuietSteps = 240;
+        [SerializeField, Min(0)] private int loseQuietMaxMoves = 3;
         [Tooltip("Debug-audit (2026-09-24): writes AgentAudit/sand-lose-stability.md — why NotFilled lose does not fire.")]
         [SerializeField] private bool auditLoseStability = true;
 
@@ -31,6 +33,7 @@ namespace SE001.System.Management
         private LevelContext context;
         private float stepAccumulator;
         private int stableSteps;
+        private int quietSteps;
         private bool bound;
         private int strokeCount;
         private bool settled;
@@ -40,6 +43,7 @@ namespace SE001.System.Management
         public event Action<string> CupChanged;
         public event Action<LoseReason> LevelLost;
         public event Action<IList<Vector2>, float> StrokeCommitted;
+        public event Action<float, float> InkChanged;
 
         public GameState State { get; private set; } = GameState.Playing;
         public LoseReason LastLoseReason { get; private set; }
@@ -80,6 +84,8 @@ namespace SE001.System.Management
             if (profile == null) return;
             fixedStepHz = Mathf.Max(1f, profile.fixedStepHz);
             stableStepsForLose = Mathf.Max(1, profile.stableStepsForLose);
+            loseQuietSteps = Mathf.Max(1, profile.loseQuietSteps);
+            loseQuietMaxMoves = Mathf.Max(0, profile.loseQuietMaxMoves);
             if (profile.drawPathProfile != null) maxStrokes = Mathf.Max(1, profile.drawPathProfile.maxStrokes);
         }
 
@@ -131,6 +137,7 @@ namespace SE001.System.Management
 
             strokeCount++;
             StrokeCommitted?.Invoke(accepted, radius * 2f);
+            InkChanged?.Invoke(InkRemaining, InkBudget);
             return true;
         }
 
@@ -227,6 +234,9 @@ namespace SE001.System.Management
             }
 
             stableSteps = moved == 0 && pushed == 0 && collectedTotal == 0 ? stableSteps + 1 : 0;
+            // Quiet = no cup progress and only a trickle of motion. A rotating obstacle pushing one grain per turn plus
+            // creep never gave 30 fully still steps, so NotFilled never fired (AgentAudit/sand-lose-stability.md).
+            quietSteps = collectedTotal == 0 && moved <= loseQuietMaxMoves ? quietSteps + 1 : 0;
 
             bool allFull = cups.Count > 0;
             for (int i = 0; i < cups.Count; i++) allFull &= cups[i].Full;
@@ -235,7 +245,7 @@ namespace SE001.System.Management
             bool allEmpty = true;
             for (int i = 0; i < sources.Count; i++) allEmpty &= sources[i].State == SourceValveState.Empty;
             AuditStability(allEmpty, moved, pushed, collectedTotal);
-            if (allEmpty && stableSteps >= stableStepsForLose) Lose(LoseReason.NotFilled);
+            if (allEmpty && (stableSteps >= stableStepsForLose || quietSteps >= loseQuietSteps)) Lose(LoseReason.NotFilled);
         }
 
         private void AuditStability(bool allEmpty, int moved, int pushed, int collectedTotal)
@@ -252,7 +262,7 @@ namespace SE001.System.Management
             auditNextSampleStep = StepCount + 60;
             SandSimulation.SandStepStats stats = context.SandSimulation.LastStepStats;
             AgentDebugAudit.Event(LoseAuditChannel, "StabilitySample",
-                "step " + StepCount + " stable " + stableSteps + "/" + stableStepsForLose
+                "step " + StepCount + " stable " + stableSteps + "/" + stableStepsForLose + " quiet " + quietSteps + "/" + loseQuietSteps
                 + " moved " + moved + " pushed " + pushed + " collectedDelta " + collectedTotal
                 + " | fall " + stats.Fall + " roll " + stats.Roll + " slide " + stats.Slide
                 + " disperse " + stats.Disperse + " creep " + stats.Creep
@@ -303,6 +313,7 @@ namespace SE001.System.Management
             State = GameState.Playing;
             LastLoseReason = LoseReason.None;
             stableSteps = 0;
+            quietSteps = 0;
             stepAccumulator = 0f;
             StepCount = 0;
             InkBudget = 0f;
