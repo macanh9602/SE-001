@@ -37,13 +37,11 @@ namespace SE001.Editor
             public float lightness;
         }
 
-        [MenuItem("SE001/Visual/Rebuild Jar Materials")]
         public static void RebuildJarMaterials()
         {
             RebuildAll();
         }
 
-        [MenuItem("SE001/Visual/Bake Jar Masks")]
         public static void BakeJarMasks()
         {
             JarVisualProfile profile = GetOrCreate<JarVisualProfile>(ProfileFolder + "/JarVisualProfile.asset");
@@ -53,13 +51,12 @@ namespace SE001.Editor
             AssetDatabase.Refresh();
         }
 
-        [MenuItem("SE001/Visual/Rebuild Jar Prefabs")]
         public static void RebuildJarPrefabs()
         {
             JarVisualProfile profile = AssetDatabase.LoadAssetAtPath<JarVisualProfile>(ProfileFolder + "/JarVisualProfile.asset");
             PhaseCVisualMaterials materials = AssetDatabase.LoadAssetAtPath<PhaseCVisualMaterials>(ProfileFolder + "/PhaseCVisualMaterials.asset");
             if (profile == null || materials == null)
-                throw new InvalidOperationException("Run SE001/Visual/Rebuild Jar Materials first.");
+                throw new InvalidOperationException("Run the Jar Materials setup from the development tooling.");
             RebuildMeshes(profile);
             RebuildPrefabs(profile, materials);
             AssetDatabase.SaveAssets();

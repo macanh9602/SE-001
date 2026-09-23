@@ -9,7 +9,6 @@ namespace SE001.Editor
     {
         private const string ScenePath = "Assets/_Core/Scenes/PhaseC_SpriteSurface_Evidence.unity";
 
-        [MenuItem("SE001/Phase C/Create SpriteSurface evidence scene")]
         private static void CreateScene()
         {
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);

@@ -52,8 +52,11 @@ namespace SE001.Editor.Level
             svgField.RegisterValueChangedCallback(OnSvgFieldChanged);
             Button browse = new Button(BrowseSvg) { text = "Browse…", tooltip = "Choose a different SVG file." };
             browse.AddToClassList("btn-secondary");
+            Button clear = new Button(ClearSvg) { text = "Clear SVG", tooltip = "Clear the current SVG selection and return to the empty state." };
+            clear.AddToClassList("btn-secondary");
             svgRow.Add(svgField);
             svgRow.Add(browse);
+            svgRow.Add(clear);
             sourceBody.Add(svgRow);
             svgPathLabel = new Label();
             svgPathLabel.AddToClassList("lb-path");
@@ -107,6 +110,22 @@ namespace SE001.Editor.Level
             SetSvgPath(picked, true);
         }
 
+        private void ClearSvg()
+        {
+            svgPath = string.Empty;
+            layoutId = string.Empty;
+            selectedLayoutId = string.Empty;
+            layoutIdEditedByUser = false;
+            currentParse = null;
+            parseErrorShown = false;
+            if (svgField != null) svgField.SetValueWithoutNotify(string.Empty);
+            if (layoutIdField != null) layoutIdField.SetValueWithoutNotify(string.Empty);
+            ClearMessage(bakeMessage);
+            RefreshSourceView();
+            RefreshAdvancedView();
+            SetStatus("info", "Choose an SVG layout to preview and bake it for use by levels.");
+        }
+
         private void OnSvgFieldChanged(ChangeEvent<string> change)
         {
             string typed = change.newValue != null ? change.newValue.Trim().Trim('"') : string.Empty;
@@ -150,7 +169,17 @@ namespace SE001.Editor.Level
             bool hasSvg = !string.IsNullOrWhiteSpace(svgPath);
             sourceEmpty.style.display = hasSvg ? DisplayStyle.None : DisplayStyle.Flex;
             sourceBody.style.display = hasSvg ? DisplayStyle.Flex : DisplayStyle.None;
-            if (!hasSvg) return;
+            if (!hasSvg)
+            {
+                preview.SetLayout(null);
+                boardValue.text = "—";
+                contoursValue.text = "—";
+                pointsValue.text = "—";
+                gridValue.text = "—";
+                parseValue.text = "—";
+                layoutIdMessage.text = string.Empty;
+                return;
+            }
 
             svgPathLabel.text = svgPath;
             string idMessage;

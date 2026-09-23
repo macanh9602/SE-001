@@ -20,11 +20,13 @@ namespace SE001.Editor.Level
         public float zoom = 1f;
         public Vector2 pan;
         public string levelSearch = string.Empty;
+        public bool savedLevelsExpanded = true;
         public bool layoutsExpanded = true;
         public bool sourcesExpanded = true;
         public bool cupsExpanded = true;
         public bool rotatingObstaclesExpanded = true;
         public int visibleLayouts = 25;
+        public int visibleSavedLevels = 25;
         public int visibleSources = 25;
         public int visibleCups = 25;
         public int visibleRotatingObstacles = 25;

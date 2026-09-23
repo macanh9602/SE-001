@@ -26,7 +26,7 @@ namespace SE001.Editor.Level
         private readonly LayoutBakeLibrary library = new LayoutBakeLibrary();
         private SvgParseResult currentParse;
 
-        [MenuItem("SE001/Phase D/Layout Bake")]
+        [MenuItem("SE001/Layout Bake")]
         public static void Open()
         {
             LayoutBakeWindow window = GetWindow<LayoutBakeWindow>();

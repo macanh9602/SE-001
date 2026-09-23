@@ -9,7 +9,6 @@ namespace SE001.Editor.Level
 {
     public static class LayoutMigration
     {
-        [MenuItem("SE001/Phase D/Migrate levels to layoutId")]
         public static void MigrateAllLevels()
         {
             string[] guids = AssetDatabase.FindAssets("t:TextAsset", new[] { "Assets/_Core/Resources/Levels" });

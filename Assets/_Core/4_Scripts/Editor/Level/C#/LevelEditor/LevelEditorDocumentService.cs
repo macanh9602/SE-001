@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Globalization;
 using SE001.Data;
@@ -11,6 +12,15 @@ namespace SE001.Editor.Level
     internal static class LevelEditorDocumentService
     {
         public const string LevelsFolder = "Assets/_Core/Resources/Levels";
+
+        internal sealed class SavedLevelDescriptor
+        {
+            public string ProjectPath;
+            public string LevelId;
+            public string DisplayName;
+            public string Error;
+            public bool IsValid;
+        }
 
         public static string DisplayName(PhaseCLevelSequence sequence, string levelId)
         {
@@ -49,6 +59,116 @@ namespace SE001.Editor.Level
             if (sequence.levels == null) sequence.levels = new global::System.Collections.Generic.List<LevelSequenceEntry>();
             sequence.levels.Add(new LevelSequenceEntry { levelId = levelId });
             return true;
+        }
+
+        public static List<SavedLevelDescriptor> EnumerateSavedLevels(PhaseCLevelSequence sequence)
+        {
+            List<SavedLevelDescriptor> result = new List<SavedLevelDescriptor>();
+            string absoluteFolder = ToAbsolutePath(LevelsFolder);
+            if (!Directory.Exists(absoluteFolder)) return result;
+
+            string[] files = Directory.GetFiles(absoluteFolder, "*.json", SearchOption.TopDirectoryOnly);
+            Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < files.Length; i++)
+            {
+                string projectPath = ToProjectRelativePath(files[i]);
+                SE001LevelJson level;
+                string openedPath;
+                string error;
+                if (TryOpen(files[i], out level, out openedPath, out error))
+                {
+                    result.Add(new SavedLevelDescriptor
+                    {
+                        ProjectPath = projectPath,
+                        LevelId = level.levelId,
+                        DisplayName = DisplayName(sequence, level.levelId),
+                        Error = string.Empty,
+                        IsValid = true
+                    });
+                }
+                else
+                {
+                    result.Add(new SavedLevelDescriptor
+                    {
+                        ProjectPath = projectPath,
+                        LevelId = Path.GetFileNameWithoutExtension(files[i]),
+                        DisplayName = Path.GetFileNameWithoutExtension(files[i]),
+                        Error = error,
+                        IsValid = false
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        public static bool TryDeleteSavedLevel(
+            string projectPath,
+            string fallbackLevelId,
+            PhaseCLevelSequence sequence,
+            out string deletedLevelId,
+            out string error)
+        {
+            deletedLevelId = fallbackLevelId ?? string.Empty;
+            error = string.Empty;
+            string normalized = (projectPath ?? string.Empty).Replace('\\', '/');
+            if (!normalized.StartsWith(LevelsFolder + "/", StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(Path.GetExtension(normalized), ".json", StringComparison.OrdinalIgnoreCase))
+            {
+                error = "Only saved level JSON files can be deleted from the Levels folder.";
+                return false;
+            }
+
+            string absolutePath = ToAbsolutePath(normalized);
+            if (!File.Exists(absolutePath) && string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(normalized)))
+            {
+                error = "The saved level was already deleted or could not be found.";
+                return false;
+            }
+
+            try
+            {
+                if (File.Exists(absolutePath))
+                {
+                    string json = File.ReadAllText(absolutePath);
+                    SE001LevelJson level = SE001LevelJson.FromJson(json);
+                    if (level != null && !string.IsNullOrWhiteSpace(level.levelId)) deletedLevelId = level.levelId;
+                }
+            }
+            catch
+            {
+                // The asset can still be removed safely; a malformed file has no trustworthy ID to remove from the sequence.
+            }
+
+            if (!AssetDatabase.DeleteAsset(normalized))
+            {
+                error = "Unity could not delete the saved level asset. Refresh the Project window and try again.";
+                return false;
+            }
+
+            bool sequenceChanged = RemoveFromSequence(sequence, deletedLevelId);
+            if (sequenceChanged)
+            {
+                EditorUtility.SetDirty(sequence);
+                AssetDatabase.SaveAssets();
+            }
+
+            AssetDatabase.Refresh();
+            return true;
+        }
+
+        private static bool RemoveFromSequence(PhaseCLevelSequence sequence, string levelId)
+        {
+            if (sequence == null || sequence.levels == null || string.IsNullOrWhiteSpace(levelId)) return false;
+            bool removed = false;
+            for (int i = sequence.levels.Count - 1; i >= 0; i--)
+            {
+                if (sequence.levels[i].levelId != levelId) continue;
+                sequence.levels.RemoveAt(i);
+                removed = true;
+            }
+
+            return removed;
         }
 
         private static string FormatLevelName(int number)
@@ -96,6 +216,12 @@ namespace SE001.Editor.Level
                 error = exception.Message;
                 return false;
             }
+        }
+
+        public static bool TryOpenProjectPath(string projectPath, out SE001LevelJson level, out string error)
+        {
+            string openedProjectPath;
+            return TryOpen(ToAbsolutePath(projectPath), out level, out openedProjectPath, out error);
         }
 
         public static bool TrySave(SE001LevelJson level, string projectPath, out string error)

@@ -1,0 +1,37 @@
+{
+    "schemaVersion": 4,
+    "levelId": "Level_02",
+    "layoutId": "test_tool",
+    "board": {
+        "size": {
+            "x": 10.800000190734864,
+            "y": 19.19999885559082
+        }
+    },
+    "sources": [
+        {
+            "stableId": "source_595a26d4b262",
+            "materialId": 1,
+            "position": {
+                "x": 5.26646614074707,
+                "y": 12.633251190185547
+            },
+            "logicalAmount": 10,
+            "startsOpen": false
+        }
+    ],
+    "cups": [
+        {
+            "stableId": "cup_bb702f1b2c68",
+            "acceptedMaterialId": 1,
+            "position": {
+                "x": 2.7774438858032228,
+                "y": 3.908270835876465
+            },
+            "requiredAmount": 5
+        }
+    ],
+    "rotatingObstacles": [],
+    "drawInkBudget": 0.0,
+    "requiresDrawing": false
+}

@@ -46,6 +46,13 @@ namespace SE001.Editor.Level
             currentPath = path ?? string.Empty;
             dirty = false;
         }
+
+        public void ClearDocument()
+        {
+            level = null;
+            currentPath = string.Empty;
+            dirty = false;
+        }
     }
 }
 #endif

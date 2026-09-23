@@ -36,7 +36,7 @@ namespace SE001.Editor.Level
         private Vector2 dragStartPosition;
         private bool dragPreviewValid;
 
-        [MenuItem("SE001/Phase D/Level Editor")]
+        [MenuItem("SE001/Level Editor")]
         public static void Open()
         {
             LevelEditorWindow window = GetWindow<LevelEditorWindow>();
@@ -50,11 +50,14 @@ namespace SE001.Editor.Level
             layoutLibrary = new LayoutBakeLibrary();
             Undo.undoRedoPerformed -= OnUndoRedo;
             Undo.undoRedoPerformed += OnUndoRedo;
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
 
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedo;
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             if (boardCanvas != null) boardCanvas.DisposeDerivedTextures();
         }
 
@@ -84,6 +87,19 @@ namespace SE001.Editor.Level
         {
             if (documentHost == null) return;
             derivedState.Clear();
+            RefreshAll();
+        }
+
+        private void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state != PlayModeStateChange.EnteredEditMode) return;
+            LevelPlayTestOverride.Clear();
+            EditorApplication.delayCall += RefreshAfterPlayTest;
+        }
+
+        private void RefreshAfterPlayTest()
+        {
+            if (this == null || rootVisualElement == null) return;
             RefreshAll();
         }
 

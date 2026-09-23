@@ -88,7 +88,6 @@ namespace SE001.Editor
             Cache.Clear();
         }
 
-        [MenuItem("SE001/Visual/Generate Jar Preview Grid")]
         public static void GeneratePreviewGrid()
         {
             const int cellWidth = 180;

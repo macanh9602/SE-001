@@ -11,7 +11,6 @@ namespace SE001.Editor
 {
     public static class PhaseCAssetSetup
     {
-        [MenuItem("SE001/Phase C/Create default profiles")]
         private static void CreateDefaults()
         {
             string folder = "Assets/_Core/Resources/Profiles";
@@ -75,7 +74,6 @@ namespace SE001.Editor
             JarVisualAssetSetup.RebuildAll();
         }
 
-        [MenuItem("SE001/Phase C/Rebuild Gameplay Visual Prefabs")]
         public static void RebuildGameplayVisualPrefabs()
         {
             JarVisualAssetSetup.RebuildAll();
@@ -91,7 +89,6 @@ namespace SE001.Editor
             AssetDatabase.Refresh();
         }
 
-        [MenuItem("SE001/Phase C/Create visual materials")]
         private static void CreateVisualMaterials()
         {
             EnsureFolder("Assets/_Core/0_Texture2D/Dev");

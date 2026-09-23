@@ -82,9 +82,12 @@ namespace SE001.System.Management
 
         private void Start()
         {
-            if (autoLoadFirstLevel && !string.IsNullOrWhiteSpace(firstLevelId) && currentContext == null)
+            string playTestLevelId;
+            bool hasPlayTestOverride = LevelPlayTestOverride.TryPeekLevelId(out playTestLevelId);
+            if (autoLoadFirstLevel && currentContext == null &&
+                (hasPlayTestOverride || !string.IsNullOrWhiteSpace(firstLevelId)))
             {
-                BeginLevel(firstLevelId);
+                BeginLevel(hasPlayTestOverride ? playTestLevelId : firstLevelId);
             }
         }
 
@@ -100,6 +103,11 @@ namespace SE001.System.Management
             {
                 throw new InvalidOperationException("A level lifecycle operation is already in progress.");
             }
+
+            string pendingPlayTestLevelId;
+            if (LevelPlayTestOverride.TryPeekLevelId(out pendingPlayTestLevelId) &&
+                !string.Equals(pendingPlayTestLevelId, levelId, StringComparison.Ordinal))
+                LevelPlayTestOverride.Clear();
 
             IsLoading = true;
             Readiness.Close();

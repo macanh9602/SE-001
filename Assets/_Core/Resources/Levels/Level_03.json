@@ -1,0 +1,16 @@
+{
+    "schemaVersion": 4,
+    "levelId": "Level_03",
+    "layoutId": "test_tool",
+    "board": {
+        "size": {
+            "x": 10.800000190734864,
+            "y": 19.19999885559082
+        }
+    },
+    "sources": [],
+    "cups": [],
+    "rotatingObstacles": [],
+    "drawInkBudget": 0.0,
+    "requiresDrawing": false
+}

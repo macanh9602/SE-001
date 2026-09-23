@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using SE001.Data;
 using UnityEditor;
 using UnityEngine;
@@ -40,9 +41,7 @@ namespace SE001.Editor.Level
             VisualElement spacer = new VisualElement();
             spacer.style.flexGrow = 1f;
             toolbar.Add(spacer);
-            playTestButton = MakeButton("Play Test", null, "le-button-primary");
-            playTestButton.SetEnabled(false);
-            playTestButton.tooltip = "Play Test is part of Phase D-C and is not available in this packet.";
+            playTestButton = MakeButton("Play Test", StartPlayTest, "le-button-primary");
             toolbar.Add(playTestButton);
             root.Add(toolbar);
 
@@ -159,6 +158,7 @@ namespace SE001.Editor.Level
             searchField.RegisterValueChangedCallback(evt =>
             {
                 viewState.levelSearch = evt.newValue ?? string.Empty;
+                viewState.visibleSavedLevels = ListPageSize;
                 viewState.visibleLayouts = ListPageSize;
                 viewState.visibleSources = ListPageSize;
                 viewState.visibleCups = ListPageSize;
@@ -166,9 +166,10 @@ namespace SE001.Editor.Level
                 RefreshLayoutList();
             });
             levelsPane.Add(searchField);
+            string filter = viewState.levelSearch.Trim();
+            AddSavedLevelRows(filter);
             Button openBake = MakeButton("Open Layout Bake", OpenLayoutBake, "le-button-secondary");
             levelsPane.Add(openBake);
-            string filter = viewState.levelSearch.Trim();
             int visibleLayouts = 0;
             for (int i = 0; i < layoutLibrary.Entries.Count; i++)
                 if (MatchesFilter(layoutLibrary.Entries[i].LayoutId, filter)) visibleLayouts++;
@@ -186,6 +187,69 @@ namespace SE001.Editor.Level
             if (shownLayouts > viewState.visibleLayouts)
                 AddShowMore(layoutsGroup, () => viewState.visibleLayouts += ListPageSize);
             AddEntityRows(filter);
+        }
+
+        private void AddSavedLevelRows(string filter)
+        {
+            List<LevelEditorDocumentService.SavedLevelDescriptor> savedLevels =
+                LevelEditorDocumentService.EnumerateSavedLevels(LevelSequence);
+            int matching = 0;
+            for (int i = 0; i < savedLevels.Count; i++)
+            {
+                LevelEditorDocumentService.SavedLevelDescriptor descriptor = savedLevels[i];
+                if (MatchesFilter(descriptor.DisplayName, filter) || MatchesFilter(descriptor.LevelId, filter)) matching++;
+            }
+
+            Foldout group = MakeGroup("Saved Levels", matching, viewState.savedLevelsExpanded,
+                value => viewState.savedLevelsExpanded = value);
+            group.Add(MakeButton("New Level", NewDocument, "le-button-primary"));
+
+            if (matching == 0)
+            {
+                Label empty = new Label("No saved levels yet. Use New Level to create one.");
+                empty.AddToClassList("le-empty-state");
+                group.Add(empty);
+                levelsPane.Add(group);
+                return;
+            }
+
+            int shown = 0;
+            for (int i = 0; i < savedLevels.Count; i++)
+            {
+                LevelEditorDocumentService.SavedLevelDescriptor descriptor = savedLevels[i];
+                if (!MatchesFilter(descriptor.DisplayName, filter) && !MatchesFilter(descriptor.LevelId, filter)) continue;
+                if (shown++ >= viewState.visibleSavedLevels) continue;
+                AddSavedLevelRow(group, descriptor);
+            }
+
+            if (shown > viewState.visibleSavedLevels)
+                AddShowMore(group, () => viewState.visibleSavedLevels += ListPageSize);
+            levelsPane.Add(group);
+        }
+
+        private void AddSavedLevelRow(VisualElement parent, LevelEditorDocumentService.SavedLevelDescriptor descriptor)
+        {
+            VisualElement row = new VisualElement();
+            row.AddToClassList("le-list-row");
+            bool isCurrent = documentHost != null &&
+                string.Equals(documentHost.CurrentPath, descriptor.ProjectPath, StringComparison.OrdinalIgnoreCase);
+            if (isCurrent) row.AddToClassList("le-row-selected");
+
+            Button open = MakeButton(descriptor.DisplayName, () => OpenSavedLevel(descriptor.ProjectPath), "le-list-button");
+            open.SetEnabled(descriptor.IsValid);
+            open.tooltip = descriptor.IsValid ? "Open this saved level." : "This level cannot be opened: " + descriptor.Error;
+            row.Add(open);
+
+            Label state = new Label(descriptor.IsValid ? (isCurrent ? "Open" : "Saved") : "Unreadable");
+            state.AddToClassList("le-badge");
+            state.AddToClassList(descriptor.IsValid ? "le-badge-success" : "le-badge-danger");
+            state.tooltip = descriptor.IsValid ? descriptor.ProjectPath : descriptor.Error;
+            row.Add(state);
+
+            Button delete = MakeButton("Delete...", () => DeleteSavedLevel(descriptor), "le-button-danger");
+            delete.tooltip = "Delete only this saved level JSON. Referenced layouts and assets stay unchanged.";
+            row.Add(delete);
+            parent.Add(row);
         }
 
         private static Foldout MakeGroup(string label, int count, bool expanded, Action<bool> onChanged)

@@ -26,7 +26,6 @@ namespace SE001.Editor.Level
     {
         private static readonly Regex NumberPattern = new Regex(@"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?", RegexOptions.Compiled);
 
-        [MenuItem("SE001/Phase B/Import test_tool.svg")]
         private static void ImportTestFixture()
         {
             string source = Path.Combine(Application.dataPath, "../TrashStuff/test_tool.svg");

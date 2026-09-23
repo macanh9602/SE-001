@@ -59,9 +59,10 @@ namespace SE001.System.Creation
             {
                 SE001LevelJson levelData = null;
                 bool hasAuthoredData = Resources.Load<TextAsset>("Levels/" + levelId) != null;
-                if (!hasAuthoredData)
+                bool hasPlayTestOverride = LevelPlayTestOverride.HasPendingFor(levelId);
+                if (!hasAuthoredData && !hasPlayTestOverride)
                     Debug.LogWarning("[LevelSpawner] No level data at Resources/Levels/" + levelId + ".json; spawning empty roots only.", this);
-                if (hasAuthoredData) levelData = LevelDataLoader.Load(levelId);
+                if (hasAuthoredData || hasPlayTestOverride) levelData = LevelDataLoader.Load(levelId);
                 runtimeState = new LevelRuntimeState();
                 levelRoot = CreateRoot("LevelRoot", transform);
                 Transform boardRoot = CreateRoot("BoardRoot", levelRoot);

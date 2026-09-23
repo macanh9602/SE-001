@@ -14,3 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levels:
   - levelId: Level_01
+  - levelId: Level_02
+  - levelId: Level_03
+  - levelId: Level_05
+  - levelId: Level_06
+  - levelId: Level_07
+  - levelId: Level_08
+  - levelId: Level_09
+  - levelId: Level_10
+  - levelId: Level_11
+  - levelId: Level_12
+  - levelId: Level_13
+  - levelId: Level_14
+  - levelId: Level_15

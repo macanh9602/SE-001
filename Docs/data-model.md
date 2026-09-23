@@ -131,5 +131,5 @@ asset that owns the baked prefab and bit-packed mask for one layout identity.
 
 - Field mới có safe default có thể không bump schema khi backward compatibility được test.
 - Đổi nghĩa/xóa/đổi type field bắt buộc bump schema và có migration/validation rõ.
-- Schema 2 → schema 3 chạy bằng `SE001/Phase D/Migrate levels to layoutId`; runtime không đọc schema 2.
+- Schema 2 → schema 3 được xử lý bằng workflow migration/editor; runtime không đọc schema 2.
 - Story thay serialization contract phải được Product Owner approve trước implementation.

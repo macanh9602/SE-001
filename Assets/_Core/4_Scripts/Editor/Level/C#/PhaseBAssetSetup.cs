@@ -9,7 +9,6 @@ namespace SE001.Editor.Level
 {
     public static class PhaseBAssetSetup
     {
-        [MenuItem("SE001/Phase B/Create default profiles")]
         private static void CreateDefaultProfiles()
         {
             EnsureFolder("Assets/_Core/Resources/Profiles");

@@ -16,7 +16,6 @@ namespace SE001.Editor
         private const int ChunkSize = 60;
         private const int MaxSteps = 100000;
 
-        [MenuItem("SE001/Phase C/Perf capture")]
         private static void Capture()
         {
             GameObject owner = new GameObject("PhaseCPerfCapture");

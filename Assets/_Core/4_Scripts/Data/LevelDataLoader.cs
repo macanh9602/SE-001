@@ -9,11 +9,20 @@ namespace SE001.Data
         public static SE001LevelJson Load(string levelId)
         {
             if (string.IsNullOrWhiteSpace(levelId)) throw new ArgumentException("A level id is required.", nameof(levelId));
-            TextAsset asset = Resources.Load<TextAsset>("Levels/" + levelId);
-            if (asset == null) throw new InvalidOperationException("Canonical level JSON was not found: " + levelId);
-            SE001LevelJson level = SE001LevelJson.FromJson(asset.text);
+            string overrideJson;
+            SE001LevelJson level;
+            if (LevelPlayTestOverride.TryConsume(levelId, out overrideJson))
+            {
+                level = SE001LevelJson.FromJson(overrideJson);
+            }
+            else
+            {
+                TextAsset asset = Resources.Load<TextAsset>("Levels/" + levelId);
+                if (asset == null) throw new InvalidOperationException("Canonical level JSON was not found: " + levelId);
+                level = SE001LevelJson.FromJson(asset.text);
+            }
             if (level.schemaVersion != 3 && level.schemaVersion != 4)
-                throw new FormatException("Level " + levelId + " uses schema " + level.schemaVersion + ". Run SE001/Phase D/Migrate levels to layoutId.");
+                throw new FormatException("Level " + levelId + " uses unsupported schema " + level.schemaVersion + ". Open it in the Level Editor and select a baked layout.");
             ColorProfile colorProfile = Resources.Load<ColorProfile>("Profiles/PhaseCColorProfile");
             if (colorProfile == null) throw new InvalidOperationException("Phase C ColorProfile asset is missing.");
             SandSimulationProfile sandProfile = Resources.Load<SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile");

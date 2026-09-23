@@ -300,3 +300,11 @@ Source body size, emission rate and stream width live only in `SourceProfile`; C
 GD revised the global Cup outside size to **2 × 2 board units** on 2026-09-23. `CupProfile` is the authoritative setting; Editor preview and runtime both read it.
 
 Mobile cost: one moving bool mask and a scratch mask per level, bounded Cross footprint scans at the fixed sand step, and two SpriteRenderer draws per Cross. No per-step grain allocation or runtime material creation. Device profiling remains required before production closure.
+
+## D-012 - Unsaved Play Test uses the normal runtime load path
+
+Status: Accepted - 2026-09-24
+
+The Level Editor passes the current document as a one-shot editor session override. `LevelManager`, `LevelSpawner` and `LevelDataLoader` continue to own normal runtime loading and validation; no temporary JSON is written to `Resources`. The override is consumed once, cleared on return to Edit Mode, and the editor document remains dirty/context-preserving.
+
+Trade-off: this adds a small editor-only bridge and session state, but avoids a second preview runtime, keeps gameplay behavior aligned with production, and adds no runtime CPU, GPU, GC, draw-call or memory cost when the override is absent.

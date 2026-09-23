@@ -1,6 +1,8 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using System.IO;
 using SE001.Data;
+using SE001.Simulation.Sand;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -35,6 +37,28 @@ namespace SE001.Editor.Level
                 return;
             }
 
+            ReplaceOpenDocument(level, projectPath);
+        }
+
+        private void OpenSavedLevel(string projectPath)
+        {
+            if (!ConfirmDiscardIfDirty("Open another level?")) return;
+            SE001LevelJson level;
+            string error;
+            if (!LevelEditorDocumentService.TryOpenProjectPath(projectPath, out level, out error))
+            {
+                ShowNotification(new GUIContent("Open failed: " + error));
+                RefreshLayoutList();
+                return;
+            }
+
+            ReplaceOpenDocument(level, projectPath);
+        }
+
+        private void ReplaceOpenDocument(SE001LevelJson level, string projectPath)
+        {
+            if (level == null) return;
+
             int repaired = LevelEditorStableIds.NormalizeInMemory(level);
             Undo.RecordObject(documentHost, "Open Level");
             documentHost.ReplaceDocument(level, projectPath, repaired > 0);
@@ -42,6 +66,44 @@ namespace SE001.Editor.Level
             viewState.selectionKind = LevelEditorSelectionKind.None;
             derivedState.Clear();
             RefreshAll();
+        }
+
+        private void DeleteSavedLevel(LevelEditorDocumentService.SavedLevelDescriptor descriptor)
+        {
+            if (descriptor == null) return;
+            if (!ConfirmDiscardIfDirty("Delete saved level?")) return;
+
+            string displayName = string.IsNullOrWhiteSpace(descriptor.DisplayName)
+                ? descriptor.ProjectPath : descriptor.DisplayName;
+            bool confirmed = EditorUtility.DisplayDialog(
+                "Delete Level",
+                "Delete saved level '" + displayName + "'? This removes only its JSON asset. Referenced layouts and other assets stay unchanged.",
+                "Delete",
+                "Cancel");
+            if (!confirmed) return;
+
+            string deletedLevelId;
+            string error;
+            if (!LevelEditorDocumentService.TryDeleteSavedLevel(
+                    descriptor.ProjectPath, descriptor.LevelId, LevelSequence, out deletedLevelId, out error))
+            {
+                ShowNotification(new GUIContent("Delete failed: " + error));
+                RefreshLayoutList();
+                return;
+            }
+
+            bool deletedCurrent = documentHost != null &&
+                string.Equals(documentHost.CurrentPath, descriptor.ProjectPath, global::System.StringComparison.OrdinalIgnoreCase);
+            if (deletedCurrent)
+            {
+                documentHost.ClearDocument();
+                viewState.selectedStableId = string.Empty;
+                viewState.selectionKind = LevelEditorSelectionKind.None;
+                derivedState.Clear();
+            }
+
+            RefreshAll();
+            ShowNotification(new GUIContent("Deleted saved level '" + displayName + "'."));
         }
 
         private void SaveDocument()
@@ -100,6 +162,64 @@ namespace SE001.Editor.Level
             if (addedToSequence) RefreshInspector();
             RefreshDocumentStatus();
             RefreshValidation();
+        }
+
+        private void StartPlayTest()
+        {
+            string blocker = GetPlayTestBlocker();
+            if (blocker != null)
+            {
+                ShowNotification(new GUIContent(blocker));
+                return;
+            }
+
+            try
+            {
+                LevelPlayTestOverride.Set(Document.levelId, Document.ToJson(false));
+                EditorApplication.isPlaying = true;
+            }
+            catch (global::System.Exception exception)
+            {
+                LevelPlayTestOverride.Clear();
+                ShowNotification(new GUIContent("Play Test could not start: " + exception.Message));
+            }
+        }
+
+        private string GetPlayTestBlocker()
+        {
+            if (Document == null) return "Create or open a level before Play Test.";
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return "Exit Play Mode before starting Play Test.";
+            if (EditorApplication.isCompiling) return "Wait until Unity finishes compiling before Play Test.";
+
+            for (int i = 0; i < derivedState.Issues.Count; i++)
+            {
+                LevelEditorIssue issue = derivedState.Issues[i];
+                if (issue.Severity == LevelEditorIssueSeverity.Blocking)
+                    return "Play Test blocked: " + issue.What + " " + issue.Where + " " + issue.How;
+            }
+
+            ColorProfile colors = Resources.Load<ColorProfile>("Profiles/PhaseCColorProfile");
+            SandSimulationProfile sand = Resources.Load<SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile");
+            if (colors == null || sand == null)
+                return "Play Test blocked: required gameplay profiles are missing.";
+
+            List<string> runtimeErrors = new List<string>();
+            if (!LevelDataValidator.TryValidate(Document, colors, sand.cellSize, sand.maxCells,
+                    derivedState.Layout, runtimeErrors))
+            {
+                string first = runtimeErrors.Count > 0 ? runtimeErrors[0] : "the level is not valid for runtime.";
+                return "Play Test blocked: " + first;
+            }
+
+            return null;
+        }
+
+        private void RefreshPlayTestState()
+        {
+            if (playTestButton == null) return;
+            string blocker = GetPlayTestBlocker();
+            playTestButton.SetEnabled(blocker == null);
+            playTestButton.tooltip = blocker ?? "Play the current level, including unsaved changes.";
         }
 
         private bool ConfirmDiscardIfDirty(string title)
@@ -252,7 +372,7 @@ namespace SE001.Editor.Level
 
         private void OpenLayoutBake()
         {
-            EditorApplication.ExecuteMenuItem("SE001/Phase D/Layout Bake");
+            EditorApplication.ExecuteMenuItem("SE001/Layout Bake");
         }
 
         private void SelectIssue(LevelEditorIssue issue)
@@ -292,6 +412,7 @@ namespace SE001.Editor.Level
                 }
                 if (saveAsButton != null) saveAsButton.SetEnabled(false);
                 if (generalToggle != null) generalToggle.SetEnabled(false);
+                RefreshPlayTestState();
                 return;
             }
 
@@ -307,6 +428,7 @@ namespace SE001.Editor.Level
                 saveButton.tooltip = canSave ? "Save the level." : "Save is disabled until blocking issues are fixed.";
             }
             if (saveAsButton != null) saveAsButton.SetEnabled(canSave);
+            RefreshPlayTestState();
         }
     }
 }

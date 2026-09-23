@@ -309,9 +309,9 @@ The current `LayoutBakeWindow` is functional but structurally resembles a develo
 
 Preserve its pipeline; replace/refactor the UX.
 
-Menu may remain:
+Production menu:
 
-`SE001/Phase D/Layout Bake`
+`SE001/Layout Bake`
 
 Window minimum remains usable around 640 px.
 
@@ -538,9 +538,9 @@ UI logic should be factored so status computation can be tested without requirin
 
 # 4. Production Level Editor
 
-Menu:
+Production menu:
 
-`SE001/Phase D/Level Editor`
+`SE001/Level Editor`
 
 UI Toolkit only unless there is a proven technical reason otherwise.
 
