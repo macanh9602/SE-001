@@ -26,4 +26,5 @@ MonoBehaviour:
   sandProfile: {fileID: 11400000, guid: bffe3b555195f2948b2ca0b382d1b105, type: 2}
   prefabProfile: {fileID: 11400000, guid: 21989156fdc2fb344aadeeb526716169, type: 2}
   stableStepsForLose: 30
+  noProgressStepsForLose: 480
   fixedStepHz: 60

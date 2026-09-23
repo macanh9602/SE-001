@@ -20,11 +20,9 @@ namespace SE001.Data
         public SandSimulationProfile sandProfile;
         public PrefabProfile prefabProfile;
         public int stableStepsForLose = 30;
-        [Tooltip("Lose also fires after this many 'quiet' steps (no cup change, at most Lose Quiet Max Moves grains moving). "
-            + "Covers a rotating obstacle or creep that keeps nudging a few grains forever (audit 2026-09-24).")]
-        public int loseQuietSteps = 240;
-        [Tooltip("Grains allowed to move in a step that still counts as quiet.")]
-        public int loseQuietMaxMoves = 3;
+        [Tooltip("After every Source is Empty, lose if no receiver gains accepted sand for this many simulation steps. "
+            + "This intentionally ignores microscopic creep/dispersion/rotating motion elsewhere on the board.")]
+        public int noProgressStepsForLose = 480;
         public float fixedStepHz = 60f;
     }
 }

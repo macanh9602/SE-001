@@ -16,7 +16,7 @@
                 "x": 2.702895402908325,
                 "y": 15.347240447998047
             },
-            "logicalAmount": 5,
+            "logicalAmount": 20,
             "startsOpen": false
         },
         {
@@ -26,7 +26,7 @@
                 "x": 8.07329273223877,
                 "y": 12.338871002197266
             },
-            "logicalAmount": 5,
+            "logicalAmount": 20,
             "startsOpen": false
         }
     ],
