@@ -75,7 +75,6 @@ namespace SE001.Editor.Level
             if (documentHost != null) return;
             documentHost = CreateInstance<LevelEditorDocumentHost>();
             documentHost.hideFlags = HideFlags.HideAndDontSave;
-            documentHost.InitializeNew(LevelEditorDocumentService.NextLevelId(LevelSequence));
         }
 
         private SE001LevelJson Document => documentHost != null ? documentHost.Level : null;
@@ -91,6 +90,18 @@ namespace SE001.Editor.Level
         private void RefreshAll()
         {
             if (documentHost == null) return;
+            if (!documentHost.HasDocument)
+            {
+                derivedState.Clear();
+                cachedMaskLayoutId = string.Empty;
+                RefreshLayoutList();
+                RefreshCanvas();
+                RefreshInspector();
+                RefreshValidation();
+                RefreshDocumentStatus();
+                return;
+            }
+
             documentHost.Level.EnsureCollections();
             RebuildDerivedState();
             RefreshLayoutList();
@@ -102,6 +113,13 @@ namespace SE001.Editor.Level
 
         private void RebuildDerivedState()
         {
+            if (Document == null)
+            {
+                derivedState.Clear();
+                cachedMaskLayoutId = string.Empty;
+                return;
+            }
+
             LayoutDefinition cachedLayout = derivedState.Layout;
             LayoutMaskSet cachedMasks = derivedState.Masks;
             float cachedCellSize = derivedState.CellSize;
@@ -152,6 +170,7 @@ namespace SE001.Editor.Level
 
         private bool HasBlockingIssues()
         {
+            if (Document == null) return true;
             for (int i = 0; i < derivedState.Issues.Count; i++)
                 if (derivedState.Issues[i].Severity == LevelEditorIssueSeverity.Blocking) return true;
             return false;
@@ -201,6 +220,7 @@ namespace SE001.Editor.Level
 
         private void SetEntityPosition(string stableId, LevelEditorSelectionKind kind, Vector2 position)
         {
+            if (Document == null) return;
             if (kind == LevelEditorSelectionKind.Source)
                 for (int i = 0; i < Document.sources.Count; i++)
                     if (Document.sources[i] != null && Document.sources[i].stableId == stableId) Document.sources[i].position = position;

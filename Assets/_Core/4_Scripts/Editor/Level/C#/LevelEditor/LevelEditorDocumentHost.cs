@@ -6,11 +6,12 @@ namespace SE001.Editor.Level
 {
     internal sealed class LevelEditorDocumentHost : ScriptableObject
     {
-        [SerializeField] private SE001LevelJson level = new SE001LevelJson();
+        [SerializeField] private SE001LevelJson level;
         [SerializeField] private string currentPath = string.Empty;
         [SerializeField] private bool dirty;
 
         public SE001LevelJson Level => level;
+        public bool HasDocument => level != null;
         public string CurrentPath => currentPath;
         public bool IsDirty => dirty;
 

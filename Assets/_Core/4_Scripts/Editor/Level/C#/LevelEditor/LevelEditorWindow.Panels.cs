@@ -26,6 +26,16 @@ namespace SE001.Editor.Level
             inspectorFields.Clear();
             inspectorPane.Clear();
             inspectorPane.Add(new Label("Inspector") { name = "inspector-title" });
+            if (Document == null)
+            {
+                Label empty = new Label("No level is open. Create a new level or open an existing level.");
+                empty.AddToClassList("le-empty-state");
+                inspectorPane.Add(empty);
+                inspectorPane.Add(MakeButton("New Level", NewDocument, "le-button-primary"));
+                inspectorPane.Add(MakeButton("Open Level", OpenDocument, "le-button-secondary"));
+                return;
+            }
+
             if (viewState.selectionKind == LevelEditorSelectionKind.Source)
             {
                 SourceData source = FindSource(viewState.selectedStableId);
@@ -51,19 +61,23 @@ namespace SE001.Editor.Level
         private void BuildLevelInspector()
         {
             inspectorPane.Add(new Label("General · Level settings") { name = "level-settings-header" });
+            bool canRename = string.IsNullOrWhiteSpace(documentHost.CurrentPath);
             TextField levelId = new TextField("Level name")
             {
-                value = LevelEditorDocumentService.DisplayName(LevelSequence, Document.levelId),
-                isReadOnly = true
+                value = Document.levelId,
+                isReadOnly = !canRename,
+                isDelayed = true
             };
             inspectorPane.Add(levelId);
             inspectorFields["levelId"] = levelId;
-            levelId.tooltip = "Level name follows its order in the Level Sequence.";
+            levelId.tooltip = canRename
+                ? "Name this unsaved level. Save As will use the same name for the JSON file."
+                : "Saved level names are read-only here. Rename is a separate operation.";
+            if (canRename)
+                levelId.RegisterValueChangedCallback(evt =>
+                    ApplyEdit(level => level.levelId = evt.newValue != null ? evt.newValue.Trim() : string.Empty,
+                        "Rename Level"));
 
-            AddFloatPair("Board size", Document.board.size, "board", (x, y) => ApplyEdit(level => level.board.size = new Vector2(x, y), "Edit Board Size"));
-            Toggle requiresDrawing = new Toggle("Requires drawing") { value = Document.requiresDrawing };
-            inspectorPane.Add(requiresDrawing);
-            requiresDrawing.RegisterValueChangedCallback(evt => ApplyEdit(level => level.requiresDrawing = evt.newValue, "Edit Drawing Rule"));
             AddFloatField("Ink budget", Document.drawInkBudget, "drawInkBudget", value => ApplyEdit(level => level.drawInkBudget = value, "Edit Ink Budget"));
 
             inspectorPane.Add(new Label("Layout") { name = "layout-header" });
@@ -225,6 +239,14 @@ namespace SE001.Editor.Level
         private void RefreshValidation()
         {
             if (validationStatus == null) return;
+            if (Document == null)
+            {
+                validationStatus.text = "No level open";
+                validationStatus.EnableInClassList("le-status-blocking", false);
+                validationStatus.EnableInClassList("le-status-warning", false);
+                return;
+            }
+
             int blocking = 0;
             int warnings = 0;
             for (int i = 0; i < derivedState.Issues.Count; i++)

@@ -46,6 +46,7 @@ namespace SE001.Editor.Level
 
         private void SaveDocument()
         {
+            if (Document == null) return;
             if (HasBlockingIssues())
             {
                 ShowNotification(new GUIContent("Save blocked. Fix the first blocking issue shown in Validation."));
@@ -57,6 +58,7 @@ namespace SE001.Editor.Level
 
         private void SaveDocumentAs()
         {
+            if (Document == null) return;
             if (HasBlockingIssues())
             {
                 ShowNotification(new GUIContent("Save blocked. Fix the first blocking issue shown in Validation."));
@@ -244,8 +246,7 @@ namespace SE001.Editor.Level
             ApplyEdit(level =>
             {
                 level.layoutId = layoutId;
-                if (level.board.size.x <= 0f || level.board.size.y <= 0f || level.board.size == Vector2.one)
-                    level.board.size = entry.Definition.boardSize;
+                level.board.size = entry.Definition.boardSize;
             }, "Choose Layout");
         }
 
@@ -266,7 +267,8 @@ namespace SE001.Editor.Level
 
         private LevelEditorSelectionKind FindSelectionKind(string stableId)
         {
-            if (string.IsNullOrWhiteSpace(stableId)) return LevelEditorSelectionKind.None;
+            if (Document == null || string.IsNullOrWhiteSpace(stableId))
+                return LevelEditorSelectionKind.None;
             for (int i = 0; i < Document.sources.Count; i++)
                 if (Document.sources[i] != null && Document.sources[i].stableId == stableId) return LevelEditorSelectionKind.Source;
             for (int i = 0; i < Document.cups.Count; i++)
@@ -280,6 +282,20 @@ namespace SE001.Editor.Level
         private void RefreshDocumentStatus()
         {
             if (documentStatus == null || documentHost == null) return;
+            if (!documentHost.HasDocument)
+            {
+                documentStatus.text = "No level open";
+                if (saveButton != null)
+                {
+                    saveButton.SetEnabled(false);
+                    saveButton.tooltip = "Create or open a level first.";
+                }
+                if (saveAsButton != null) saveAsButton.SetEnabled(false);
+                if (generalToggle != null) generalToggle.SetEnabled(false);
+                return;
+            }
+
+            if (generalToggle != null) generalToggle.SetEnabled(true);
             string path = string.IsNullOrWhiteSpace(documentHost.CurrentPath)
                 ? "Unsaved level"
                 : Path.GetFileName(documentHost.CurrentPath);

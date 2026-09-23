@@ -13,7 +13,4 @@ MonoBehaviour:
   m_Name: PhaseCLevelSequence
   m_EditorClassIdentifier: 
   levels:
-  - levelId: phase_c_level_01
-  - levelId: phase_c_level_02
-  - levelId: phase_c_level_03
-  - levelId: Level_04
+  - levelId: Level_01

@@ -63,6 +63,9 @@ namespace SE001.Editor.Level
             selectedId = currentSelectedId ?? string.Empty;
             selectedKind = currentSelectedKind;
             boardSize = level != null && level.board != null ? level.board.size : Vector2.zero;
+            emptyState.text = level == null
+                ? "No level is open. Use New or Open to begin."
+                : "Choose a Ready layout, then add an entity.";
             emptyState.style.display = boardSize.x > 0f && boardSize.y > 0f ? DisplayStyle.None : DisplayStyle.Flex;
             RebuildMaskTexture();
             RebuildEntities(level);

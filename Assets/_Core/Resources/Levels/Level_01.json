@@ -1,0 +1,68 @@
+{
+    "schemaVersion": 4,
+    "levelId": "Level_01",
+    "layoutId": "test_tool",
+    "board": {
+        "size": {
+            "x": 10.800000190734864,
+            "y": 19.19999885559082
+        }
+    },
+    "sources": [
+        {
+            "stableId": "source_99309e8f141d",
+            "materialId": 1,
+            "position": {
+                "x": 2.732323408126831,
+                "y": 15.144203186035157
+            },
+            "logicalAmount": 10,
+            "startsOpen": false
+        },
+        {
+            "stableId": "source_1d58e419567c",
+            "materialId": 2,
+            "position": {
+                "x": 6.89617919921875,
+                "y": 12.36829948425293
+            },
+            "logicalAmount": 10,
+            "startsOpen": false
+        }
+    ],
+    "cups": [
+        {
+            "stableId": "cup_638cfc7f4c59",
+            "acceptedMaterialId": 1,
+            "position": {
+                "x": 2.7562825679779054,
+                "y": 3.4117040634155275
+            },
+            "requiredAmount": 5
+        },
+        {
+            "stableId": "cup_c69006beebce",
+            "acceptedMaterialId": 2,
+            "position": {
+                "x": 7.680206775665283,
+                "y": 4.370051860809326
+            },
+            "requiredAmount": 5
+        }
+    ],
+    "rotatingObstacles": [
+        {
+            "stableId": "rotating_obstacle_74bd9e135fad",
+            "position": {
+                "x": 2.844888210296631,
+                "y": 8.763923645019532
+            },
+            "scale": 1.0,
+            "barLength": 4.0,
+            "initialAngle": 0.0,
+            "degreesPerSecond": 60.0
+        }
+    ],
+    "drawInkBudget": 20.0,
+    "requiresDrawing": false
+}

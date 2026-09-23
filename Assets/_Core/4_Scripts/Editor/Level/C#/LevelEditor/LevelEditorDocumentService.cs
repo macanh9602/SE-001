@@ -24,13 +24,13 @@ namespace SE001.Editor.Level
 
         public static string NextLevelId(PhaseCLevelSequence sequence)
         {
-            int number = sequence != null && sequence.levels != null ? sequence.levels.Count + 1 : 1;
+            int number = 1;
             string candidate;
             do
             {
                 candidate = FormatLevelName(number++);
             }
-            while (IsInSequence(sequence, candidate) || File.Exists(ToAbsolutePath(LevelsFolder + "/" + candidate + ".json")));
+            while (File.Exists(ToAbsolutePath(LevelsFolder + "/" + candidate + ".json")));
             return candidate;
         }
 

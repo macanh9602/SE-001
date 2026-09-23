@@ -216,17 +216,32 @@ namespace SE001.Editor.Level
             VisualElement row = new VisualElement();
             row.AddToClassList("le-list-row");
             Button select = MakeButton(entry.LayoutId, () => SelectLayout(entry.LayoutId), "le-list-button");
+            if (Document == null)
+            {
+                select.SetEnabled(false);
+                select.tooltip = "Create or open a level before choosing its layout.";
+            }
             row.Add(select);
             Label badge = new Label(entry.Status.Headline);
             badge.AddToClassList("le-badge");
             badge.AddToClassList(StatusClass(entry.Status.State));
             row.Add(badge);
-            if (entry.LayoutId == Document.layoutId) row.AddToClassList("le-row-selected");
+            if (Document != null && entry.LayoutId == Document.layoutId) row.AddToClassList("le-row-selected");
             parent.Add(row);
         }
 
         private void AddEntityRows(string filter)
         {
+            if (Document == null)
+            {
+                Label empty = new Label("No level open. Use New or Open to begin authoring.");
+                empty.AddToClassList("le-empty-state");
+                levelsPane.Add(empty);
+                levelsPane.Add(MakeButton("New Level", NewDocument, "le-button-primary"));
+                levelsPane.Add(MakeButton("Open Level", OpenDocument, "le-button-secondary"));
+                return;
+            }
+
             Foldout sourcesGroup = MakeGroup("Sources", Document.sources.Count, viewState.sourcesExpanded,
                 value => viewState.sourcesExpanded = value);
             sourcesGroup.Add(MakeButton("Add Source", AddSource, "le-button-secondary"));
