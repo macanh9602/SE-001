@@ -9,6 +9,8 @@ namespace SE001.Simulation.Sand
     /// - gravity + max fall speed, multi-cell fall per step;
     /// - landing splash converts impact speed into sideways momentum;
     /// - momentum carries grains along shallow ramps / drawn lines (pure CA would stick below 45°);
+    /// - airborne grains never drift sideways and lose momentum by 'airDrag' each step, so sand leaving an
+    ///   obstacle edge drops straight down as a readable stream (sideways spray caused accidental wrong-cup loses);
     /// - diagonal roll (repose) + avalanche 'dispersion' toward the nearest drop levels piles like powder.
     /// The lab's random 'flow' is intentionally replaced by dispersion: grains only move toward lower cells or
     /// while they still have momentum, so a pile always reaches a stable state (no endless shimmer).
@@ -91,6 +93,7 @@ namespace SE001.Simulation.Sand
             float repose = profile.repose;
             float slide = profile.slide;
             float splash = profile.splash;
+            float airDrag = profile.airDrag;
             int moved = 0;
 
             // Bottom-up (board y grows upward): grains fall into rows that were already processed.
@@ -168,14 +171,8 @@ namespace SE001.Simulation.Sand
                     else
                     {
                         if (fell < n) v = 1f + (v - 1f) * 0.3f;
-                        float am = Math.Abs(m);
-                        if (am > 0.4f && NextFloat() < am * 0.35f)
-                        {
-                            int dd = Math.Sign(m);
-                            if (IsFree(cx + dd, cy)) cx += dd;
-                        }
-
-                        m *= 0.985f;
+                        // Airborne: straight vertical fall; momentum only decays (kept for the next landing/slide).
+                        m *= airDrag;
                     }
 
                     if (m > 2f) m = 2f;

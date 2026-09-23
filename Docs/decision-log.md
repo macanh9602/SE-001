@@ -213,3 +213,24 @@ Phase D bắt đầu từ D0 và D0.5 (pipeline SVG → prefab mesh + mask). Cá
 ### Xem lại khi
 
 GD yêu cầu feel khác cho sand, hoặc khi thêm juice trở lại sau Phase D.
+
+## 2026-09-23 — Mở lại sand: stream rơi thẳng + render dòng (B+)
+
+### Bối cảnh
+
+Sand rời obstacle bị bắn xéo và tản thành bụi (video repro: 65% hạt đi lệch khỏi dòng chính). Với rule wrong-cup = thua ngay, spray gây thua oan. Visualizer: `Docs/visualizers/sand-stream-lab.html`. Spec: `handoff/sand-stream-fix/SAND-STREAM-FIX.md`.
+
+### Quyết định
+
+1. Supersede điểm 1 của entry "Đóng Phase C: freeze sand": mở lại sand cho fix này.
+2. Sim: bỏ lateral drift khi airborne, `airDrag` 0.5. Không thêm rule bám theo hạt đang rơi (đã đo: gây kẹt source, chỉ đổ được 44–77%).
+3. Visual: `SandFieldVisual` vẽ vệt + nối khe + nong ±1 cell cho hạt airborne, phủ texture hạt trôi theo dòng (không để thanh màu phẳng). Chỉ là hình, không vào collision/cup count.
+4. Không đổi `maxFallCellsPerStep` (giữ pacing).
+
+### Đánh đổi đã chấp nhận
+
+Hình dòng rộng hơn collision ±1 cell (0.06 unit). Tốc độ đổ của source giảm ~3–15% vì không còn splash ngang ở miệng jar. 3 level Phase C phải re-check; level nào đổi kết quả do GD/Dev chốt rebalance.
+
+### Xem lại khi
+
+GD thấy dòng quá dày/mảnh trên device, hoặc level mới cần sand bắn ngang có chủ đích.

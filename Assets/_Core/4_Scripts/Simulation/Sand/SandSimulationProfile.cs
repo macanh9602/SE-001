@@ -29,6 +29,10 @@ namespace SE001.Simulation.Sand
         [Tooltip("Avalanche reach in cells (replaces lab random 'flow' so piles level without endless jitter). 1 = 45° piles.")]
         [Range(1, 8)] public int dispersion = 5;
 
+        [Header("Stream")]
+        [Tooltip("Momentum kept per step while airborne. Airborne grains never move sideways; 0 = drop dead-straight off edges.")]
+        [Range(0f, 1f)] public float airDrag = 0.5f;
+
         [Header("Gameplay scale")]
         [Tooltip("Simulation grains per GD logical unit.")]
         [Min(1)] public int grainsPerUnit = 30;

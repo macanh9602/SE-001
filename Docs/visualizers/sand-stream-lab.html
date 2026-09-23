@@ -1,0 +1,348 @@
+<title>SE-001 Sand Stream Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#eef0f5; --panel:#ffffff; --ink:#1d2130; --muted:#5d6377; --line:#d6d9e3;
+  --accent:#2f5fe6; --good:#1f8a4c; --warn:#b86e00; --bad:#c62a41;
+  --chip:#e6e9f2;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#141722; --panel:#1d2130; --ink:#e6e8f0; --muted:#9aa0b5; --line:#2e3346;
+    --accent:#7d9bff; --good:#4fc284; --warn:#e3a13a; --bad:#ff6b7f; --chip:#272c3e;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#141722; --panel:#1d2130; --ink:#e6e8f0; --muted:#9aa0b5; --line:#2e3346;
+  --accent:#7d9bff; --good:#4fc284; --warn:#e3a13a; --bad:#ff6b7f; --chip:#272c3e;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:22px;font-weight:600;margin:0;text-wrap:balance}
+h2{font-size:15px;font-weight:600;margin:0 0 8px}
+.sub{color:var(--muted);margin:4px 0 0;max-width:78ch}
+code,.mono{font-family:var(--mono);font-size:12.5px}
+.bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink);padding:6px 11px;font:inherit;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.btn{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer}
+.btn:focus-visible,.seg button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+label.sl{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+label.sl output{font-family:var(--mono);color:var(--ink);min-width:3.2em}
+input[type=range]{width:110px;accent-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.card header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h3{margin:0;font-size:14px;font-weight:600}
+.tag{font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.tag.cur{color:var(--bad)} .tag.sim{color:var(--accent)} .tag.vis{color:var(--good)} .tag.pace{color:var(--warn)}
+.desc{color:var(--muted);font-size:12.5px;min-height:3.2em}
+canvas.sim{width:100%;height:auto;image-rendering:pixelated;border-radius:6px;display:block;background:#c8ccda}
+canvas.hist{width:100%;height:34px;display:block}
+.metrics{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:6px;background:var(--chip)}
+.pill b{font-weight:500}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.box ol,.box ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500}
+.note{color:var(--muted);font-size:12.5px}
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Sand stream: vì sao hạt không rơi thẳng khỏi obstacle</h1>
+    <p class="sub">3 simulation chạy song song, cùng seed, cùng scene. Panel 1 là port 1:1 <code>SandSimulation.Step()</code> hiện tại (profile default: g 0.3, vmax 4, splash 0.5, slide 0.95, dispersion 5; source 16 grains/step, width 6). Histogram dưới mỗi panel = vị trí X của hạt đang rơi khi cắt qua đường probe (đường chấm). Dòng tốt = vài cột nhọn; spray = thảm rải đều. <b>Sai cup</b> = số hạt lọt vào cup khác màu ở scene Repro — với rule hiện tại, chỉ cần 1 hạt là thua ngay. <b>Độ dày</b> / <b>độ liền</b> đo trên hình render (cái người chơi thấy) ở cột dòng chảy mạnh nhất: độ dày = số pixel ngang tại probe, độ liền = % pixel có màu trong 40 cell phía trên probe.</p>
+  </div>
+
+  <div class="bar" role="group" aria-label="Controls">
+    <div class="seg" id="scenes" role="group" aria-label="Scene">
+      <button type="button" data-s="bowl" aria-pressed="true">Mép chảo (ảnh mới)</button>
+      <button type="button" data-s="repro" aria-pressed="false">Repro video</button>
+      <button type="button" data-s="chute" aria-pressed="false">Chute (ảnh 1)</button>
+      <button type="button" data-s="box" aria-pressed="false">Mép hộp</button>
+    </div>
+    <button class="btn" id="play" type="button">Pause</button>
+    <button class="btn" id="reset" type="button">Reset</button>
+    <label class="sl">Speed <input id="spd" type="range" min="1" max="4" step="1" value="1"><output id="spdO">1×</output></label>
+    <label class="sl">Air drag <input id="drag" type="range" min="0" max="0.95" step="0.05" value="0.5"><output id="dragO">0.50</output></label>
+    <label class="sl">Streak <input id="streak" type="range" min="0" max="2" step="0.25" value="1"><output id="streakO">1.00</output></label>
+    <label class="sl">Độ dày ±cell (B+) <input id="thick" type="range" min="0" max="3" step="1" value="1"><output id="thickO">1</output></label>
+    <label class="sl">Texture hạt (B+) <input id="grain" type="range" min="0" max="1" step="0.1" value="0.8"><output id="grainO">0.8</output></label>
+    <label class="sl">Nối khe (B+) <input id="bridge" type="range" min="0" max="16" step="1" value="10"><output id="bridgeO">6</output></label>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="two">
+    <div class="box">
+      <h2>Root cause trong code hiện tại</h2>
+      <ol>
+        <li><b>Hạt đang rơi vẫn trôi ngang.</b> <code>SandSimulation.cs:171-178</code>: khi airborne, hạt có <code>|m|&gt;0.4</code> dịch ngang 1 cell với xác suất <code>|m|·0.35</code> mỗi step, mà <code>m</code> chỉ giảm <code>×0.985</code>/step → gần như giữ nguyên suốt quãng rơi. Với m=2 là ~0.7 cell ngang/step ≈ quỹ đạo chéo 10–20°.</li>
+        <li><b>Momentum bị bơm khi chạm obstacle.</b> Splash (<code>:125-129</code>) cộng tới +0.75, mỗi lần roll chéo (<code>:144</code>) cộng thêm 0.35 và giữ 90% → lăn qua mặt tròn là m chạm trần 2.0 rồi rời mép với vận tốc ngang tối đa.</li>
+        <li><b>Hạt va hạt giữa không trung cũng splash.</b> Hạt nhanh đè lên hạt chậm hơn trong cùng dòng → <code>fell==0</code> → splash + roll chéo ngay trong không khí → dòng tự nổ tung thành bụi.</li>
+        <li><b>Dòng thưa theo chiều dọc.</b> vmax 4 cells/step kéo giãn dòng: mật độ ≈ flow ÷ v. Ở mép ramp nông, flow ra thấp → nhìn thành chuỗi chấm thay vì một đường.</li>
+      </ol>
+    </div>
+    <div class="box">
+      <h2>Các hướng fix trong visualizer</h2>
+      <ul>
+        <li><b>Sim A (chung cho B, B+)</b>: bỏ lateral drift khi airborne, <code>m *= airDrag</code> mỗi step rơi. Hạt rời mép → rơi thẳng. (Đã thử thêm rule "hạt bị chặn bởi hạt đang rơi thì bám theo, không splash" → làm kẹt cột, source chỉ đổ được 44–77% so với hiện tại → <b>bỏ</b>. Chỉ air drag đã đủ spray ≈0%.)</li>
+        <li><b>B · Streak</b>: <code>SandFieldVisual.UpdateTexture</code> vẽ vệt mờ dần dài <code>ceil(v·streak)</code> phía trên hạt đang rơi. Thẳng nhưng vẫn mảnh 1 px và lấm chấm khi flow thấp.</li>
+        <li><b>B+ · Dòng dày, liền</b>: B + (1) streak đặc thay vì mờ dần, (2) nối khe giữa 2 hạt cùng màu cùng cột nếu khe ≤ streak + N cell, (3) nong ngang ±N cell quanh hạt đang rơi. (4) phủ <b>texture hạt</b>: tone ±26 theo hash(x, y − scroll), ~22% ô tối hơn bên trong, mép ngoài vỡ ~45% → đọc là cát chứ không phải thanh màu; pattern trôi xuống theo dòng. Chỉ vẽ vào ô trống — không đè geometry, không đè hạt thật, không vào collision hay cup count.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="box tbl">
+    <h2>Trade-off</h2>
+    <table>
+      <thead><tr><th>Hướng</th><th>Dòng thẳng</th><th>Dày + liền</th><th>Ảnh hưởng gameplay / level</th><th>Chi phí mobile</th><th>Effort</th></tr></thead>
+      <tbody>
+        <tr><td>B</td><td>Có</td><td>Một phần — 1 px, đứt khi flow thấp</td><td>Sand không còn bắn xa → level đang "dựa" vào spray phải check lại</td><td>+1 vòng CPU trên hạt airborne; 0 draw call</td><td>Sim A ~15 dòng + ~20 dòng renderer</td></tr>
+        <tr><td>B+</td><td>Có</td><td>Có — dày 3 px (±1), khe ≤ streak + 10 cell được nối</td><td>Như B. Hình rộng hơn collision ±1 cell (0.06 unit) → ở sát miệng cup có thể <i>trông như</i> chạm vành mà không vào. Giữ ±1 để lệch không nhận ra được.</td><td>Như B + 1 vòng dilate trên overlay (chỉ vùng airborne); 1 buffer byte[W·H] cấp 1 lần/level, 0 GC</td><td>B + ~30 dòng renderer, 2 field profile visual</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Tốc độ đổ (hạt emit được sau 1400 step, so với Current): Mép chảo 89%, Repro 85%, Chute 92%, Mép hộp 97%. Phần chênh là do ở bản hiện tại, hạt bị chặn ngay dưới miệng jar splash ngang thành hình nón → giải phóng chỗ cho hạt mới nhanh hơn. Đó cũng là lý do Current trông "đầy" hơn: nó thật sự đổ nhiều hạt hơn, chứ không phải do render.</p>
+    <p class="note">Lưu ý: decision-log 2026-09-23 đang <b>freeze</b> sand trong Phase C (đã tune/revert 2 lần). Bất kỳ hướng nào cũng cần mở lại decision đó và gắn với rebalance.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+const W=160,H=240;
+const MAT_RED=1,MAT_BLUE=2;
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- scene geometry (y down) ----------
+function buildScene(name){
+  const st=new Uint8Array(W*H); // 1=static,2=cup wall
+  const set=(x,y,v)=>{if(x>=0&&y>=0&&x<W&&y<H)st[y*W+x]=v};
+  // outer walls
+  for(let y=0;y<H;y++){for(let t=0;t<3;t++){set(t,y,1);set(W-1-t,y,1)}}
+  for(let x=0;x<W;x++){for(let t=0;t<3;t++)set(x,H-1-t,1)}
+  const circle=(cx,cy,r)=>{for(let y=cy-r;y<=cy+r;y++)for(let x=cx-r;x<=cx+r;x++)if((x-cx)**2+(y-cy)**2<=r*r)set(x,y,1)};
+  const rect=(x0,y0,x1,y1,v=1)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)set(x,y,v)};
+  const seg=(x0,y0,x1,y1,th)=>{const dx=x1-x0,dy=y1-y0,L2=dx*dx+dy*dy;
+    for(let y=Math.min(y0,y1)-th;y<=Math.max(y0,y1)+th;y++)for(let x=Math.min(x0,x1)-th;x<=Math.max(x0,x1)+th;x++){
+      let t=((x-x0)*dx+(y-y0)*dy)/L2;t=Math.max(0,Math.min(1,t));const px=x0+t*dx-x,py=y0+t*dy-y;if(px*px+py*py<=th*th)set(x,y,1)}};
+  const cup=(cx,top,w,h)=>{rect(cx-w/2,top,cx-w/2+1,top+h,2);rect(cx+w/2-1,top,cx+w/2,top+h,2);rect(cx-w/2,top+h,cx+w/2,top+h+1,2)};
+  let sources=[],probe=170,cups=[],pour=420;
+  if(name==='repro'){
+    circle(34,52,15);circle(55,70,7);
+    rect(92,86,120,92);seg(80,110,138,128,3);
+    cup(40,190,26,20);cup(116,190,26,20);
+    cups=[{x0:28,x1:52,y0:186,y1:209,m:MAT_RED},{x0:104,x1:128,y0:186,y1:209,m:MAT_BLUE}];
+    sources=[{x:34,y:14,m:MAT_RED,start:0},{x:100,y:44,m:MAT_BLUE,start:90}];probe=165;
+  }else if(name==='chute'){
+    seg(18,62,112,96,2); seg(18,40,18,62,2);
+    circle(128,170,10);
+    sources=[{x:40,y:14,m:MAT_RED,start:0}];probe=140;
+  }else if(name==='bowl'){
+    const pts=[[10,58],[16,78],[30,94],[52,104],[80,108],[104,106],[118,104],[126,106],[130,112],[131,122]];
+    for(let k=0;k<pts.length-1;k++)seg(pts[k][0],pts[k][1],pts[k+1][0],pts[k+1][1],2);
+    sources=[{x:78,y:14,m:MAT_RED,start:0}];probe=175;pour=1400;
+  }else{
+    rect(62,80,108,96);
+    sources=[{x:85,y:14,m:MAT_RED,start:0}];probe=160;
+  }
+  return {st,sources,probe,cups,pour};
+}
+
+// ---------- deterministic rng ----------
+function makeRng(seed){let s=seed>>>0||0x9E3779B9;return{u(){s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s},f(){return (this.u()>>>8)/16777216}}}
+
+// ---------- simulation ----------
+function Sim(cfg){this.cfg=cfg}
+Sim.prototype.reset=function(scene){
+  const n=W*H;this.scene=scene;this.st=scene.st;
+  this.cells=new Uint8Array(n);this.shade=new Uint8Array(n);this.vel=new Float32Array(n);this.mom=new Float32Array(n);
+  this.stamp=new Uint8Array(n);this.mv=new Uint8Array(n);this.row=new Int32Array(H);this.frame=1;this.rng=makeRng(0x9E3779B9);this.t=0;
+  this.hist=new Float32Array(W);this.hits=0;this.wrong=0;
+};
+Sim.prototype.free=function(x,y){return x>=0&&y>=0&&x<W&&y<H&&this.st[y*W+x]===0&&this.cells[y*W+x]===0};
+Sim.prototype.emit=function(x,y,m){const i=y*W+x;if(!this.free(x,y))return;const r=this.rng;
+  this.cells[i]=m;this.shade[i]=r.u()&255;this.vel[i]=r.f()*0.6;this.mom[i]=(r.f()-0.5)*0.3;this.row[y]++};
+Sim.prototype.emitSources=function(){
+  // 16 grains/step, streamWidth 6 → rows of 6 until 16 inserted
+  for(const s of this.scene.sources){ if(this.t<s.start||this.t>s.start+(this.scene.pour||420))continue;
+    let ins=0;for(let row=0;row<4&&ins<16;row++)for(let dx=-3;dx<3&&ins<16;dx++){const x=s.x+dx,y=s.y+row;if(this.free(x,y)){this.emit(x,y,s.m);ins++}}}
+};
+Sim.prototype.step=function(){
+  const c=this.cfg,cells=this.cells,vel=this.vel,mom=this.mom,st=this.st,stamp=this.stamp,mv=this.mv,row=this.row,r=this.rng;
+  this.frame=this.frame===1?2:1;const fr=this.frame;
+  const g=0.3,vmax=c.vmax(),repose=1,slide=0.95,splash=0.5,disp=5;
+  const free=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&st[y*W+x]===0&&cells[y*W+x]===0;
+  for(let y=H-1;y>=0;y--){
+    if(row[y]===0)continue;const ltr=(r.u()&1)===0;
+    for(let k=0;k<W;k++){
+      const x=ltr?k:W-1-k,i=y*W+x,mat=cells[i];
+      if(!mat||stamp[i]===fr)continue;
+      let v=vel[i]+g;if(v>vmax)v=vmax;let m=mom[i];let cx=x,cy=y,fell=0;const n=v<1?1:Math.floor(v);
+      for(let s=0;s<n;s++){if(!free(cx,cy+1))break;cy++;fell++}
+      if(fell===0){
+        // Fix A: blocked by a grain that is itself falling → follow it, no splash/roll.
+        const bi=(cy+1)*W+cx;
+        if(c.noMidAirSplash&&cy+1<H&&cells[bi]!==0&&vel[bi]>=1&&mv[bi]===fr){ // only follow a grain that actually moved this step (else a stalled column jams the source)
+          v=Math.min(v,vel[bi]);m*=c.airDrag();
+        }else{
+          let movedHere=false;
+          if(v>1.5&&splash>0){if(Math.abs(m)<0.2)m=r.f()<0.5?-0.2:0.2;m+=Math.sign(m)*(v-1)*splash*0.5}
+          const am=Math.abs(m);const d=am>0.15?Math.sign(m):(r.f()<0.5?-1:1);
+          if(r.f()<repose||am>0.5){for(let q=0;q<2&&!movedHere;q++){const dd=q===0?d:-d;if(free(cx+dd,cy+1)&&free(cx+dd,cy)){cx+=dd;cy++;m=m*0.9+dd*0.35;movedHere=true}}}
+          if(!movedHere&&Math.abs(m)>0.3){const dd=Math.sign(m);if(free(cx+dd,cy)){cx+=dd;m*=slide;movedHere=true}else m*=-0.2}
+          if(!movedHere&&disp>1){
+            outer:for(let dist=2;dist<=disp;dist++)for(let kk=0;kk<2;kk++){const dir=kk===0?d:-d;let ok=true;
+              for(let j=1;j<=dist;j++)if(!free(cx+dir*j,cy)){ok=false;break}
+              if(!ok)continue;if(free(cx+dir*dist,cy+1)){cx+=dir;movedHere=true;break outer}}
+          }
+          if(!movedHere)m*=slide*0.5;
+          v=movedHere?Math.max(1,v*0.7):0;
+        }
+      }else{
+        if(fell<n)v=1+(v-1)*0.3;
+        if(c.airDrift){const am=Math.abs(m);if(am>0.4&&r.f()<am*0.35){const dd=Math.sign(m);if(free(cx+dd,cy))cx+=dd}m*=0.985}
+        else m*=c.airDrag();
+      }
+      if(m>2)m=2;else if(m<-2)m=-2;
+      const t=cy*W+cx;
+      if(t!==i){mv[t]=fr;cells[t]=mat;this.shade[t]=this.shade[i];vel[t]=v;mom[t]=m;stamp[t]=fr;cells[i]=0;row[y]--;row[cy]++;
+        // probe: grain crossed the probe row while falling
+        if(y<this.scene.probe&&cy>=this.scene.probe){this.hist[cx]+=1;this.hits++}
+        for(const cp of this.scene.cups){const inNow=cx>=cp.x0&&cx<=cp.x1&&cy>=cp.y0&&cy<=cp.y1,inBefore=x>=cp.x0&&x<=cp.x1&&y>=cp.y0&&y<=cp.y1;
+          if(inNow&&!inBefore&&mat!==cp.m)this.wrong++}
+      }else{vel[i]=v;mom[i]=m;stamp[i]=fr}
+    }
+  }
+  this.t++;
+};
+
+// ---------- rendering ----------
+const PAL={bg:[200,204,218],st:[115,120,137],cup:[93,98,115],1:[214,42,69],2:[47,95,230]};
+Sim.prototype.draw=function(ctx,img){
+  const d=img.data,cells=this.cells,st=this.st,shade=this.shade,vel=this.vel,n=W*H;
+  for(let i=0,p=0;i<n;i++,p+=4){
+    let col;const m=cells[i];
+    if(m){const b=PAL[m];let l=(shade[i]-128)/128*13;const y=(i/W)|0;
+      if(y>0&&cells[i-W]===0&&st[i-W]===0)l+=10;
+      col=[b[0]+l,b[1]+l,b[2]+l*0.95]}
+    else col=st[i]===1?PAL.st:st[i]===2?PAL.cup:PAL.bg;
+    d[p]=col[0];d[p+1]=col[1];d[p+2]=col[2];d[p+3]=255;
+  }
+  const c=this.cfg,sk=c.streak?c.streak():0,half=c.thick?c.thick():0,gap=c.bridge?c.bridge():0;
+  if(sk>0||half>0||gap>0){
+    if(!this.ov||this.ov.length!==n){this.ov=new Uint8Array(n);this.oa=new Float32Array(n)}
+    const ov=this.ov,oa=this.oa;ov.fill(0);oa.fill(0);
+    const mark=(j,m,a)=>{if(cells[j]||st[j])return;if(a>oa[j]){ov[j]=m;oa[j]=a}};
+    for(let i=W;i<n-W;i++){const m=cells[i];if(!m||vel[i]<1)continue;
+      // airborne = falling grain not resting on geometry or on a settled pile
+      const b=i+W;if(st[b])continue;if(cells[b]&&vel[b]<1)continue;
+      const len=Math.ceil(vel[i]*sk);
+      for(let k=1;k<=len;k++){const j=i-k*W;if(j<0||cells[j]||st[j])break;mark(j,m,gap>0?0.95:0.85-0.5*k/(len+1))}
+      if(gap>0){ // bridge up to 'gap' empty cells to the next grain above in the same column
+        const reach=len+gap;let k=1;while(k<=reach&&i-k*W>=0&&!cells[i-k*W]&&!st[i-k*W])k++;
+        if(k<=reach&&i-k*W>=0&&cells[i-k*W]===m)for(let q=1;q<k;q++)mark(i-q*W,m,0.95);
+      }
+      if(half>0){ov[i]=ov[i]||m;oa[i]=Math.max(oa[i],1)} // grain itself seeds the dilation
+    }
+    // Grain texture: stable hash of (x, y - scroll) → pattern slides down with the flow, reads as grains, not a bar.
+    const gr=c.grain?c.grain():0,scroll=Math.floor(this.t*2);
+    const hash=(x,y)=>{let h=(x*374761393+(y-scroll)*668265263)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967296};
+    const paint=(j,m,a,edge)=>{const b=PAL[m],p=j*4,x=j%W,y=(j/W)|0;let l=0,aa=a;
+      if(gr>0){const r=hash(x,y);l=(r-0.5)*2*26*gr;                       // per-grain tone ±26
+        const gapP=(edge?0.45:0.22)*gr;if(r<gapP)aa*=edge?0.15:0.45;}      // darker gaps inside, ragged edge
+      d[p]=d[p]*(1-aa)+(b[0]+l)*aa;d[p+1]=d[p+1]*(1-aa)+(b[1]+l)*aa;d[p+2]=d[p+2]*(1-aa)+(b[2]+l*0.95)*aa};
+    // paint streak/bridge
+    for(let j=0;j<n;j++){if(!ov[j]||cells[j])continue;paint(j,ov[j],oa[j],false)}
+    // horizontal dilation (visual thickness), never paints over geometry or real grains
+    if(half>0)for(let j=0;j<n;j++){if(!ov[j])continue;const x=j%W;
+      for(let dx=-half;dx<=half;dx++){if(!dx)continue;const xx=x+dx;if(xx<0||xx>=W)continue;const t=j+dx;
+        if(cells[t]||st[t]||ov[t])continue;paint(t,ov[j],0.92-0.25*(Math.abs(dx)-1),Math.abs(dx)===half)}}
+  }
+  // probe line
+  const py=this.scene.probe;for(let x=3;x<W-3;x+=3){const p=(py*W+x)*4;d[p]=d[p+1]=d[p+2]=90}
+  ctx.putImageData(img,0,0);
+};
+// Readability metrics measured on the rendered image (what the player sees), at the busiest stream column.
+Sim.prototype.readMetrics=function(img){
+  const d=img.data,h=this.hist;let px=-1,max=0;for(let x=0;x<W;x++)if(h[x]>max){max=h[x];px=x}
+  if(px<0)return null;
+  const isBg=(x,y)=>{const p=(y*W+x)*4;return d[p]===PAL.bg[0]&&d[p+1]===PAL.bg[1]&&d[p+2]===PAL.bg[2]};
+  const y0=this.scene.probe-3;let w=0;if(!isBg(px,y0)){w=1;let x=px-1;while(x>=0&&!isBg(x,y0)){w++;x--}x=px+1;while(x<W&&!isBg(x,y0)){w++;x++}}
+  let best=0;for(let x=Math.max(0,px-1);x<=Math.min(W-1,px+1);x++){let f=0;for(let y=this.scene.probe-40;y<this.scene.probe;y++)if(!isBg(x,y))f++;best=Math.max(best,f)}
+  return {w,cont:Math.round(best/40*100)};
+};
+
+// ---------- UI ----------
+const $=id=>document.getElementById(id);
+const ctl={drag:()=>+$('drag').value,streak:()=>+$('streak').value,thick:()=>+$('thick').value,bridge:()=>+$('bridge').value,grain:()=>+$('grain').value};
+const VARIANTS=[
+  {key:'cur',title:'Current',tag:'hiện tại',cls:'cur',desc:'Port 1:1 SandSimulation.Step() — airborne drift + splash giữa không trung.',
+   cfg:{airDrift:true,noMidAirSplash:false,airDrag:()=>0.985,vmax:()=>4}},
+  {key:'B',title:'B · A + Streak',tag:'sim + visual',cls:'vis',desc:'Sim A (air drag, rơi thẳng). Renderer vẽ vệt mờ dần phía trên hạt đang rơi.',
+   cfg:{airDrift:false,noMidAirSplash:false,airDrag:ctl.drag,vmax:()=>4,streak:ctl.streak}},
+  {key:'B+',title:'B+ · Dòng dày, liền',tag:'đề xuất',cls:'sim',desc:'Sim A. Renderer: vệt + nối khe + nong ±N cell, phủ texture hạt trôi theo dòng. Không đụng collision.',
+   cfg:{airDrift:false,noMidAirSplash:false,airDrag:ctl.drag,vmax:()=>4,streak:ctl.streak,thick:ctl.thick,bridge:ctl.bridge,grain:ctl.grain}},
+];
+const grid=$('grid');const sims=[];
+for(const v of VARIANTS){
+  const card=document.createElement('section');card.className='card';
+  card.innerHTML=`<header><h3>${v.title}</h3><span class="tag ${v.cls}">${v.tag}</span></header>
+  <div class="desc">${v.desc}</div>
+  <canvas class="sim" width="${W}" height="${H}" aria-label="${v.title} simulation"></canvas>
+  <canvas class="hist" width="${W}" height="34" aria-hidden="true"></canvas>
+  <div class="metrics"><span class="pill">spray <b data-k="spray">–</b></span><span class="pill">cột có dòng <b data-k="cols">–</b></span><span class="pill">sai cup <b data-k="wrong">–</b></span><span class="pill">độ dày <b data-k="w">–</b></span><span class="pill">độ liền <b data-k="cont">–</b></span></div>`;
+  grid.appendChild(card);
+  const cv=card.querySelector('canvas.sim'),ctx=cv.getContext('2d');
+  const hc=card.querySelector('canvas.hist'),hctx=hc.getContext('2d');
+  const s=new Sim(v.cfg);
+  sims.push({s,ctx,img:ctx.createImageData(W,H),hctx,spray:card.querySelector('[data-k=spray]'),cols:card.querySelector('[data-k=cols]'),wrong:card.querySelector('[data-k=wrong]'),w:card.querySelector('[data-k=w]'),cont:card.querySelector('[data-k=cont]')});
+}
+let sceneName='bowl',playing=!reduce;
+function reset(){for(const o of sims){o.s.reset(buildScene(sceneName))}drawAll()}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function drawHist(o){
+  const h=o.s.hist,ctx=o.hctx;ctx.clearRect(0,0,W,34);let max=0,sum=0;for(let x=0;x<W;x++){max=Math.max(max,h[x]);sum+=h[x]}
+  ctx.fillStyle=css('--muted');ctx.fillRect(0,33,W,1);
+  if(!sum){o.spray.textContent='–';o.cols.textContent='–';return}
+  ctx.fillStyle=css('--accent');for(let x=0;x<W;x++){const hh=Math.round(h[x]/max*32);if(hh)ctx.fillRect(x,33-hh,1,hh)}
+  // spray = share of hits in columns holding <2% of total; cols = columns holding >=2%
+  let stray=0,cols=0;for(let x=0;x<W;x++){if(h[x]/sum<0.02)stray+=h[x];else cols++}
+  o.spray.textContent=Math.round(stray/sum*100)+'%';o.cols.textContent=cols;
+}
+function drawAll(){for(const o of sims){o.s.draw(o.ctx,o.img);drawHist(o);
+  o.wrong.textContent=o.s.scene.cups.length?o.s.wrong:'n/a';
+  const r=o.s.readMetrics(o.img);o.w.textContent=r?r.w+' px':'–';o.cont.textContent=r?r.cont+'%':'–';o.wrong.parentElement.style.color=o.s.wrong>0?css('--bad'):''}}
+function loop(){
+  if(playing){const n=+$('spd').value;for(let k=0;k<n;k++)for(const o of sims){o.s.emitSources();o.s.step()}
+    drawAll();
+    if(sims[0].s.t>(sims[0].s.scene.pour+900))reset();}
+  requestAnimationFrame(loop);
+}
+// controls
+document.querySelectorAll('#scenes button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#scenes button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');sceneName=b.dataset.s;reset()}));
+$('play').addEventListener('click',()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play'});
+$('reset').addEventListener('click',reset);
+const bind=(id,fmt)=>{const el=$(id),o=$(id+'O');const f=()=>o.textContent=fmt(+el.value);el.addEventListener('input',f);f()};
+bind('spd',v=>v+'×');bind('drag',v=>v.toFixed(2));bind('streak',v=>v.toFixed(2));bind('thick',v=>'±'+v);bind('bridge',v=>v+' cell');bind('grain',v=>v.toFixed(1));
+$('play').textContent=playing?'Pause':'Play';
+reset();
+// warm up so the first frame already shows streams
+for(let k=0;k<160;k++)for(const o of sims){o.s.emitSources();o.s.step()}
+drawAll();
+requestAnimationFrame(loop);
+})();
+</script>
