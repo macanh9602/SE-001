@@ -6,7 +6,7 @@
 </head>
 <body>
   <h1>Phase V1 — Jar Visual</h1>
-  <p><strong>Status:</strong> EXECUTED locally; V1-specific checks pass. Story closure remains conditional on the existing full-suite baseline and missing numeric profiler capture.</p>
+  <p><strong>Status:</strong> <strong>DONE</strong> — Product Owner manual acceptance recorded on 2026-09-23. V1-specific checks pass; the existing full-suite baseline and missing numeric profiler capture are accepted deviations for this visual-only packet.</p>
 
   <h2>Approach and decisions</h2>
   <ul>
@@ -45,8 +45,8 @@
       <tr><td>C1 visual/lifecycle targeted tests</td><td>PASS</td><td>6/6 passed after hierarchy/material refresh.</td></tr>
       <tr><td>Cup geometry regression</td><td>PASS</td><td><code>CupFactory_VisualMatchesDomainGeometry</code>, <code>PhaseC_Level02_ProductionVisualHierarchyExists</code>, and inner-width test: 3/3 passed.</td></tr>
       <tr><td>Play Mode smoke</td><td>PASS</td><td>GameScene entered Play Mode with no new console errors/warnings; screenshot saved.</td></tr>
-      <tr><td>Full EditMode suite</td><td>BASELINE FAILURES</td><td>76 tests completed; 66 passed and 10 failed: 3 Phase D layout fixture expectations, 2 HUD tests cascading from gameplay result, and 5 existing playthrough assertions. The playthrough failure signature reproduced with a temporary <code>taper=0.2</code> probe, so it is not introduced by the V1 visual hierarchy.</td></tr>
-      <tr><td>Draw-call / GC numeric gate</td><td>NOT MEASURED</td><td>MCP rendering stats returned zero counters; no numeric PASS claimed.</td></tr>
+      <tr><td>Full EditMode suite</td><td>BASELINE FAILURES — ACCEPTED</td><td>76 tests completed; 66 passed and 10 failed: 3 Phase D layout fixture expectations, 2 HUD tests cascading from gameplay result, and 5 existing playthrough assertions. The playthrough failure signature reproduced with a temporary <code>taper=0.2</code> probe, so it is not introduced by the V1 visual hierarchy. Product Owner accepted this as non-blocking for V1.</td></tr>
+      <tr><td>Draw-call / GC numeric gate</td><td>NOT MEASURED — ACCEPTED</td><td>MCP rendering stats returned zero counters; no numeric PASS claimed. Product Owner accepted deferral to the later device/performance gate.</td></tr>
       <tr><td>git diff --check / style gate</td><td>PASS</td><td>Scoped style gate PASS; <code>git diff --check</code> clean after whitespace cleanup.</td></tr>
     </tbody>
   </table>
@@ -57,8 +57,8 @@
   <h2>Open risks / closure</h2>
   <ul>
     <li>The existing level simulation/playthrough baseline needs a separate gameplay calibration story; changing it here would expand V1 scope and violate the locked visual-only boundary.</li>
-    <li>A device/Profiler capture is still required for authoritative mobile draw-call and GC numbers.</li>
-    <li>Story is not marked DONE until the existing baseline failures and performance evidence are resolved or explicitly accepted by the Product Owner.</li>
+    <li>A device/Profiler capture remains desirable for authoritative mobile draw-call and GC numbers; it is deferred to the later device/performance gate.</li>
+    <li>Closure decision: Product Owner explicitly accepted the baseline exceptions and missing numeric profiler capture, so V1 is marked DONE.</li>
   </ul>
 </body>
 </html>

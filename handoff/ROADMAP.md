@@ -32,6 +32,13 @@ Phase B worker packets are implementation packets, not architecture gates.
 Không có story implementation nào executable tại thời điểm này. Phase B đã mở gate để materialize
 story kế tiếp, nhưng chưa phải execution spec và chưa được triển khai.
 
+## Completed packet closures
+
+| Packet | Capability | Status | Acceptance source |
+|---|---|---|---|
+| V1 | Jar Visual | **DONE — MANUAL ACCEPTANCE** | `phase-V1/PHASE-V1-JAR-VISUAL.md` |
+| D-A | Layout Bake production UX | **DONE — MANUAL ACCEPTANCE** | `phase-D/PHASE-D-A-LAYOUT-BAKE.md` |
+
 ## Gated implementation sequence
 
 | Phase | Capability giữ lại | Gate để materialize story |

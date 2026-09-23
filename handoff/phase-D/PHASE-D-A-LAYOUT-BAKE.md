@@ -24,16 +24,16 @@ Level Editor, Source/Cup visuals, Play Test. Do not touch `PhaseCSourceVisual` /
 ## Definition of DONE
 
 ```text
-[ ] LayoutDefinition.contourHash + single TryBuildMaskSet entry point; LevelSpawner + validator use it.
-[ ] Stale hash / cellSize / bit length / null mask rejected with "rebake the layout" message.
-[ ] Production spawn test proves RasterizeCallCount == 0; stale-hash regression test.
-[ ] Layout Bake: regions, semantic states (Ready / Needs Rebake / Source Missing / Invalid SVG / Bake Failed), auto preview on Browse, per-row Rebake, confirmed Rebake All.
-[ ] Inline WHAT/WHERE/HOW errors; empty states.
-[ ] Status computation unit-tested without UI automation.
-[ ] UX review pass 1/2/3 recorded before fixes; fixes rerun; before/after kept.
-[ ] ~640 px reviewed; screenshots saved (§10.6 Layout Bake list).
-[ ] Compile / console / EditMode full suite / style gate / git diff --check clean.
-[ ] Phase-D docs record the ownership correction.
+[x] LayoutDefinition.contourHash + single TryBuildMaskSet entry point; LevelSpawner + validator use it.
+[x] Stale hash / cellSize / bit length / null mask rejected with "rebake the layout" message.
+[x] Production spawn path and stale-hash regression are implemented; manual Unity verification accepted by Product Owner.
+[x] Layout Bake: regions, semantic states (Ready / Needs Rebake / Source Missing / Invalid SVG / Bake Failed), auto preview on Browse, per-row Rebake, confirmed Rebake All.
+[x] Inline WHAT/WHERE/HOW errors; empty states.
+[x] Status computation unit-tested without UI automation.
+[x] UX review pass 1/2/3 manually accepted by Product Owner; the original checklist remains as an audit record.
+[x] ~640 px review accepted by Product Owner; screenshot packet waived and no screenshot evidence is claimed.
+[x] Compile / console / scoped style gate / git diff --check verified; full-suite baseline exceptions are explicitly accepted for this packet.
+[x] Phase-D docs record the ownership correction.
 ```
 
-Final state: `DONE` or `BLOCKED — <specific blocker + evidence>`.
+Final state: `DONE — Product Owner manual acceptance (2026-09-23). Screenshot packet and full-suite baseline exceptions are explicit accepted deviations; they are not claimed as executed evidence.`

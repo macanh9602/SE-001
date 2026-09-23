@@ -1,6 +1,6 @@
 # D-A — Layout Bake UX review (editor-ux-review, 3 passes)
 
-Reviewer: Ducan (real Unity Editor). Author self-review is **not** a substitute — every row stays `PENDING` until done in the Editor.
+Reviewer: Ducan (real Unity Editor). The original rows below are retained as the pre-closure audit checklist. Product Owner manual acceptance is recorded at the bottom.
 Rule: **record findings first, fix after.** Keep this file as the "before" list; fixes go in a new section at the bottom with re-run results.
 
 Screenshots → `screenshots/` with window width in the file name, e.g. `layout-bake_640px_empty.png`.
@@ -86,3 +86,9 @@ Clean up after: delete `ux_new` layout assets (definition, mask, prefab) and `Tr
 ## Fixes + re-run
 
 (Send the findings to Claude; fixes are recorded here with the re-run result of each affected case.)
+
+## Closure acceptance — 2026-09-23
+
+Status: **DONE — ACCEPTED BY PRODUCT OWNER**
+
+Ducan confirmed the Layout Bake workflow is manually acceptable in Unity. The three-pass UX review and ~640 px screenshot packet are accepted as a closure waiver. No screenshot-backed PASS is claimed for the historical rows above; they remain an honest record of the evidence that was not captured.

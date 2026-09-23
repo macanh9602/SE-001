@@ -1,6 +1,6 @@
 # D-A — Functional verification (Layout Bake + contour-hash contract)
 
-Status: **EXECUTED (code) — verification PENDING in Unity.** Nothing below is marked PASS until it is run.
+Status: **DONE — Product Owner manual acceptance (2026-09-23).** The checklist below remains the original evidence ledger; unexecuted rows are not rewritten as automated PASS.
 
 **2026-09-23 14:10 — applied to Assets by Claude** (same steps as the script: copied 11, patched 7, hashed 4). The script stays for reference / re-apply:
 
@@ -62,3 +62,14 @@ Known limitation (by data, not by tool): `phase_c_level_01..03_layout` were migr
 | Console clean after opening Layout Bake, Refresh, Bake, Rebake All | PENDING |
 | `tools/style-gate.ps1` (touched C#) | PENDING — local line-length / one-statement check run before staging: clean |
 | `git diff --check` | PENDING |
+
+## 5. Closure acceptance
+
+| Item | Decision | Evidence / note |
+|---|---|---|
+| Functional Layout Bake workflow | ACCEPTED | Ducan confirmed manual verification in the Unity Editor is OK. |
+| Three-pass editor UX review | ACCEPTED BY PRODUCT OWNER | Passes 1/2/3 are accepted for closure without retroactively claiming screenshot-backed PASS rows. |
+| Screenshot packet | WAIVED / ACCEPTED | No screenshot packet is claimed in this closure. |
+| Full EditMode baseline | ACCEPTED EXCEPTION | Existing baseline failures remain recorded; they are non-blocking for D-A closure. |
+
+Final state: **DONE**. This acceptance records product closure; it does not alter the historical automated-evidence rows above.

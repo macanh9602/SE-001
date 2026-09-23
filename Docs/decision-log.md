@@ -1,5 +1,21 @@
 # Decision Log — SE-001
 
+## D-009 — Manual acceptance of V1 and D-A closure
+
+Status: Accepted — 2026-09-23
+Stories: `handoff/phase-V1/PHASE-V1-JAR-VISUAL.md`, `handoff/phase-D/PHASE-D-A-LAYOUT-BAKE.md`
+
+### Chốt
+
+- Ducan confirmed the V1 and D-A workflows are manually acceptable in the Unity Editor.
+- V1 and D-A are marked `DONE — MANUAL ACCEPTANCE`.
+- Missing screenshot UX packets and numeric profiler evidence are explicit accepted deviations; they are not claimed as executed evidence.
+- Existing full-suite baseline failures remain recorded and are accepted as non-blocking for these scoped visual/editor packets.
+
+### Hệ quả
+
+The later device/performance gate may still collect authoritative draw-call and GC numbers. It does not reopen these closures unless a new regression is found.
+
 ## D-008 — Phase V1 jar visual contract
 
 Status: Accepted — 2026-09-23
