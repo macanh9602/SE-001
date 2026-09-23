@@ -17,9 +17,12 @@ namespace SE001.Editor.Level
         private LayoutMaskSet masks;
         private Texture2D maskTexture;
         private LayoutMaskSet previewMask;
+        private readonly LevelEditorLayoutPreviewCache layoutPreviewCache;
+        private LevelEditorLayoutPreviewData vectorPreviewData;
         private Vector2 boardSize;
         private float boardScale = 1f;
         private VisualElement boardMask;
+        private LevelEditorLayoutPreviewElement vectorPreview;
         private Label emptyState;
         private string selectedId = string.Empty;
         private LevelEditorSelectionKind selectedKind;
@@ -35,6 +38,7 @@ namespace SE001.Editor.Level
 
         public LevelEditorCanvas()
         {
+            layoutPreviewCache = new LevelEditorLayoutPreviewCache(new LayoutBakeLibrary());
             AddToClassList("le-canvas");
             pickingMode = PickingMode.Position;
             surface = new VisualElement();
@@ -67,6 +71,7 @@ namespace SE001.Editor.Level
                 ? "No level is open. Use New or Open to begin."
                 : "Choose a Ready layout, then add an entity.";
             emptyState.style.display = boardSize.x > 0f && boardSize.y > 0f ? DisplayStyle.None : DisplayStyle.Flex;
+            vectorPreviewData = layoutPreviewCache.Resolve(selectedLayout);
             RebuildMaskTexture();
             RebuildEntities(level);
             UpdateGeometry();
@@ -101,6 +106,9 @@ namespace SE001.Editor.Level
                 maskTexture = null;
             }
             previewMask = null;
+            vectorPreviewData = null;
+            vectorPreview = null;
+            layoutPreviewCache.Clear();
         }
 
         private void RebuildEntities(SE001LevelJson level)
@@ -108,9 +116,16 @@ namespace SE001.Editor.Level
             surface.Clear();
             handles.Clear();
             boardMask = null;
+            vectorPreview = null;
             if (level == null || boardSize.x <= 0f || boardSize.y <= 0f) return;
 
-            if (maskTexture != null)
+            if (vectorPreviewData != null && Approximately(vectorPreviewData.BoardSize, boardSize))
+            {
+                vectorPreview = new LevelEditorLayoutPreviewElement();
+                vectorPreview.SetData(vectorPreviewData);
+                surface.Add(vectorPreview);
+            }
+            else if (maskTexture != null)
             {
                 boardMask = new Image { image = maskTexture, scaleMode = ScaleMode.StretchToFill };
                 boardMask.AddToClassList("le-board-mask");
@@ -255,6 +270,13 @@ namespace SE001.Editor.Level
                 boardMask.style.width = width;
                 boardMask.style.height = height;
             }
+            if (vectorPreview != null)
+            {
+                vectorPreview.style.left = 0f;
+                vectorPreview.style.top = 0f;
+                vectorPreview.style.width = width;
+                vectorPreview.style.height = height;
+            }
 
             foreach (KeyValuePair<VisualElement, EntityHandle> pair in handles)
             {
@@ -301,6 +323,13 @@ namespace SE001.Editor.Level
 
         private void RebuildMaskTexture()
         {
+            if (vectorPreviewData != null && Approximately(vectorPreviewData.BoardSize, boardSize))
+            {
+                if (maskTexture != null) UnityEngine.Object.DestroyImmediate(maskTexture);
+                maskTexture = null;
+                previewMask = masks;
+                return;
+            }
             if (ReferenceEquals(previewMask, masks) && maskTexture != null) return;
             if (maskTexture != null) UnityEngine.Object.DestroyImmediate(maskTexture);
             maskTexture = null;
@@ -319,11 +348,16 @@ namespace SE001.Editor.Level
             {
                 int index = masks.Index(x, y);
                 pixels[index] = masks.StaticMask[index]
-                    ? new Color32(140, 68, 68, 180)
-                    : (masks.ValidMask[index] ? new Color32(54, 69, 82, 90) : new Color32(25, 28, 34, 150));
+                    ? new Color32(133, 135, 140, 230)
+                    : (masks.ValidMask[index] ? new Color32(218, 219, 221, 255) : new Color32(85, 88, 93, 170));
             }
             maskTexture.SetPixels32(pixels);
             maskTexture.Apply(false, false);
+        }
+
+        private static bool Approximately(Vector2 left, Vector2 right)
+        {
+            return Mathf.Abs(left.x - right.x) <= 0.0005f && Mathf.Abs(left.y - right.y) <= 0.0005f;
         }
 
         private static Vector2 ResolveCupSize(CupData cup)

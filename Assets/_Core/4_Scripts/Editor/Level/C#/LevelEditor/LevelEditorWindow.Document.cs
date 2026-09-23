@@ -14,7 +14,6 @@ namespace SE001.Editor.Level
         private void NewDocument()
         {
             if (!ConfirmDiscardIfDirty("Create a new level?")) return;
-            Undo.RecordObject(documentHost, "New Level");
             documentHost.InitializeNew(LevelEditorDocumentService.NextLevelId(LevelSequence));
             viewState.selectedStableId = string.Empty;
             viewState.selectionKind = LevelEditorSelectionKind.None;
@@ -60,7 +59,6 @@ namespace SE001.Editor.Level
             if (level == null) return;
 
             int repaired = LevelEditorStableIds.NormalizeInMemory(level);
-            Undo.RecordObject(documentHost, "Open Level");
             documentHost.ReplaceDocument(level, projectPath, repaired > 0);
             viewState.selectedStableId = string.Empty;
             viewState.selectionKind = LevelEditorSelectionKind.None;

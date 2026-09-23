@@ -16,8 +16,8 @@
 |---|---|---|---|
 | A | Foundation | DONE / PASS | Architecture alignment and lifecycle foundation |
 | B | Layout + Simulation Foundation | DONE / PASS | Canonical JSON, SVG import, shared geometry/masks, 3D layout, SandSimulation, SandField, integration |
-| C | Complete Playable Core | DONE / CLOSURE PASS | Three authored levels, production visuals, progression, HUD result flow, playthroughs, reload, and performance evidence |
-| D | GD Production Pipeline | PLANNED | Progression/save/sequence, production Level Editor, SVG workflow, validation, preview, unsaved Play Test |
+| C | Complete Playable Core | BLOCKED / HISTORICAL IMPLEMENTATION | Four post-change verification reruns remain pending in `handoff/phase-C-complete-playable-core/PHASE.md`; no new PASS is claimed |
+| D | GD Production Pipeline | BLOCKED / IMPLEMENTED | Production tooling and vector preview are implemented; required automated/manual closure evidence remains pending |
 | E | Feel + Performance + Ship Quality | PLANNED | Sand feel, VFX/material/texture/shadow/quality tiers, device performance |
 
 Phase B worker packets are implementation packets, not architecture gates.

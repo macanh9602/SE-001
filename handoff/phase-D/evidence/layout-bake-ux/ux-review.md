@@ -15,7 +15,7 @@ Severity (Blocker/Major/Minor) | Task | Friction | Expected | Evidence | Fix dir
 
 ## Pass 1 — First use (no guide)
 
-Close the window, then open `SE001 > Phase D > Layout Bake` fresh. Do not read the code or this packet while doing it.
+Close the window, then open `SE001/Layout Bake` fresh. Do not read the code or this packet while doing it.
 
 | # | Task | Expected | Result | Screenshot |
 |---|---|---|---|---|

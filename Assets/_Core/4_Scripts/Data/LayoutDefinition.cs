@@ -6,7 +6,7 @@ namespace SE001.Data
     [CreateAssetMenu(fileName = "LayoutDefinition", menuName = "SE001/Layouts/Layout Definition")]
     public sealed class LayoutDefinition : ScriptableObject
     {
-        public const string RebakeHint = "Open SE001 > Phase D > Layout Bake and rebake this layout.";
+        public const string RebakeHint = "Open SE001/Layout Bake and rebake this layout.";
 
         public string layoutId = string.Empty;
         public GameObject layoutPrefab;

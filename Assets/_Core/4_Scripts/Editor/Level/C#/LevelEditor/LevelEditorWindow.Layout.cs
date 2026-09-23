@@ -30,8 +30,6 @@ namespace SE001.Editor.Level
             saveAsButton = MakeButton("Save As", SaveDocumentAs, "le-button");
             toolbar.Add(saveButton);
             toolbar.Add(saveAsButton);
-            toolbar.Add(MakeButton("Undo", Undo.PerformUndo, "le-button"));
-            toolbar.Add(MakeButton("Redo", Undo.PerformRedo, "le-button"));
             levelsToggle = MakeButton("Levels", ToggleLevelsPane, "le-button");
             toolbar.Add(levelsToggle);
             generalToggle = MakeButton("General", () => SelectEntity(string.Empty, LevelEditorSelectionKind.None),
@@ -230,25 +228,30 @@ namespace SE001.Editor.Level
         private void AddSavedLevelRow(VisualElement parent, LevelEditorDocumentService.SavedLevelDescriptor descriptor)
         {
             VisualElement row = new VisualElement();
-            row.AddToClassList("le-list-row");
+            row.AddToClassList("le-saved-level-row");
             bool isCurrent = documentHost != null &&
                 string.Equals(documentHost.CurrentPath, descriptor.ProjectPath, StringComparison.OrdinalIgnoreCase);
             if (isCurrent) row.AddToClassList("le-row-selected");
 
             Button open = MakeButton(descriptor.DisplayName, () => OpenSavedLevel(descriptor.ProjectPath), "le-list-button");
+            open.AddToClassList("le-saved-level-open");
             open.SetEnabled(descriptor.IsValid);
             open.tooltip = descriptor.IsValid ? "Open this saved level." : "This level cannot be opened: " + descriptor.Error;
             row.Add(open);
 
+            VisualElement actions = new VisualElement();
+            actions.AddToClassList("le-saved-level-actions");
             Label state = new Label(descriptor.IsValid ? (isCurrent ? "Open" : "Saved") : "Unreadable");
             state.AddToClassList("le-badge");
             state.AddToClassList(descriptor.IsValid ? "le-badge-success" : "le-badge-danger");
             state.tooltip = descriptor.IsValid ? descriptor.ProjectPath : descriptor.Error;
-            row.Add(state);
+            actions.Add(state);
 
-            Button delete = MakeButton("Delete...", () => DeleteSavedLevel(descriptor), "le-button-danger");
+            Button delete = MakeButton("Delete", () => DeleteSavedLevel(descriptor), "le-button-danger");
+            delete.AddToClassList("le-saved-level-delete");
             delete.tooltip = "Delete only this saved level JSON. Referenced layouts and assets stay unchanged.";
-            row.Add(delete);
+            actions.Add(delete);
+            row.Add(actions);
             parent.Add(row);
         }
 

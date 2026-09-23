@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Level Editor Inspector Layout Options</title>
+  <style>
+    :root {
+      --se-bg: #242428;
+      --se-panel: #303035;
+      --se-panel-2: #3a3a40;
+      --se-line: #52525a;
+      --se-text: #e7e7eb;
+      --se-muted: #a9a9b2;
+      --se-accent: #5db1ff;
+      --se-danger: #e4b5b5;
+      --se-input: #1c1c20;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 18px; background: transparent; color: var(--se-text); font: 13px/1.35 system-ui, sans-serif; }
+    .se-root { max-width: 1024px; margin: 0 auto; }
+    .se-title { margin: 0 0 12px; font-size: 16px; font-weight: 500; }
+    .se-options { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    button { border: 1px solid var(--se-line); border-radius: 3px; padding: 7px 10px; background: var(--se-panel); color: var(--se-text); cursor: pointer; }
+    button[aria-pressed="true"] { border-color: var(--se-accent); background: #304e68; }
+    .se-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .se-card { min-width: 0; border: 1px solid var(--se-line); background: var(--se-bg); }
+    .se-card h2 { margin: 0; padding: 9px 10px; border-bottom: 1px solid var(--se-line); font-size: 13px; font-weight: 500; }
+    .se-card p { margin: 8px 10px; color: var(--se-muted); font-size: 11px; }
+    .se-inspector { margin: 10px; padding: 10px; background: var(--se-panel); }
+    .se-entity { margin-bottom: 10px; font-size: 14px; font-weight: 500; }
+    .se-tech { margin-bottom: 10px; color: var(--se-muted); font-size: 11px; }
+    .se-label { display: block; margin: 8px 0 3px; color: var(--se-muted); font-size: 11px; }
+    .se-palette { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .se-color { height: 27px; padding: 2px; background: var(--se-panel-2); }
+    .se-color span { display: block; height: 100%; background: #edf0f4; }
+    .se-color:nth-child(2) span { background: #4d84ff; }
+    .se-color:nth-child(3) span { background: #ffd12f; }
+    .se-color:nth-child(4) span { background: #8d55ec; }
+    .se-color:nth-child(5) span { background: #f174b1; }
+    .se-color:nth-child(6) span { background: #3bd16e; }
+    .se-color:nth-child(7) span { background: #f2f3f4; }
+    .se-field { display: grid; grid-template-columns: minmax(80px, 0.8fr) minmax(90px, 1.2fr); gap: 6px; align-items: center; margin-top: 6px; }
+    .se-field label { color: var(--se-muted); font-size: 11px; }
+    .se-input { min-height: 24px; padding: 4px 6px; border: 1px solid var(--se-line); background: var(--se-input); color: var(--se-text); text-align: right; }
+    .se-position { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .se-position .se-field { grid-template-columns: 1fr; gap: 2px; }
+    .se-note { margin-top: 8px; color: var(--se-muted); font-size: 11px; }
+    .se-delete { width: 100%; margin-top: 10px; color: var(--se-danger); }
+    .se-stack .se-field { grid-template-columns: 1fr; gap: 2px; }
+    .se-advanced { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--se-line); color: var(--se-muted); font-size: 11px; }
+    @media (max-width: 760px) { .se-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="se-inspector-layout" class="se-root">
+    <h1 class="se-title">Level Editor Inspector — layout decision</h1>
+    <div class="se-options" role="group" aria-label="Inspector layout options">
+      <button type="button" data-option="current" aria-pressed="true">Current</button>
+      <button type="button" data-option="compact">A — Compact</button>
+      <button type="button" data-option="grouped">B — Grouped</button>
+      <button type="button" data-option="split">C — Split fields</button>
+    </div>
+    <div class="se-grid">
+      <section class="se-card">
+        <h2>Current</h2>
+        <p>High density, but position labels and controls collide at narrow inspector widths.</p>
+        <div class="se-inspector">
+          <div class="se-entity">Cup 1</div>
+          <div class="se-tech">▸ Technical ID</div>
+          <span class="se-label">Accepted color</span>
+          <div class="se-palette"><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button></div>
+          <div class="se-field"><label>Required amount</label><div class="se-input">5</div></div>
+          <div class="se-position"><div class="se-field"><label>Position X</label><div class="se-input">2.777444</div></div><div class="se-field"><label>Position Y</label><div class="se-input">3.90</div></div></div>
+          <div class="se-note">Taper is fixed by the visual contract and is not editable here.</div>
+          <button class="se-delete">Delete Cup</button>
+        </div>
+      </section>
+      <section class="se-card">
+        <h2>A — Compact</h2>
+        <p>Single aligned label/value grid; keeps the current height and improves scan speed.</p>
+        <div class="se-inspector">
+          <div class="se-entity">Cup 1</div>
+          <div class="se-tech">▸ Technical ID</div>
+          <span class="se-label">Accepted color</span>
+          <div class="se-palette"><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button></div>
+          <div class="se-field"><label>Required amount</label><div class="se-input">5</div></div>
+          <div class="se-position"><div class="se-field"><label>Position X</label><div class="se-input">2.777444</div></div><div class="se-field"><label>Position Y</label><div class="se-input">3.90</div></div></div>
+          <div class="se-note">Taper is fixed by the visual contract and is not editable here.</div>
+          <button class="se-delete">Delete Cup</button>
+        </div>
+      </section>
+      <section class="se-card">
+        <h2>B — Grouped (recommended)</h2>
+        <p>Separates appearance, gameplay values and placement; best for GD readability and future fields.</p>
+        <div class="se-inspector">
+          <div class="se-entity">Cup 1</div>
+          <div class="se-tech">▸ Technical ID</div>
+          <span class="se-label">Appearance</span>
+          <div class="se-palette"><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button></div>
+          <span class="se-label">Gameplay</span>
+          <div class="se-field"><label>Required amount</label><div class="se-input">5</div></div>
+          <span class="se-label">Placement</span>
+          <div class="se-position"><div class="se-field"><label>X</label><div class="se-input">2.777444</div></div><div class="se-field"><label>Y</label><div class="se-input">3.90</div></div></div>
+          <div class="se-advanced">Taper is fixed by the visual contract.</div>
+          <button class="se-delete">Delete Cup</button>
+        </div>
+      </section>
+      <section class="se-card">
+        <h2>C — Split fields</h2>
+        <p>Maximum field clarity; increases vertical height and requires more inspector scrolling.</p>
+        <div class="se-inspector se-stack">
+          <div class="se-entity">Source 1</div>
+          <div class="se-tech">▸ Technical ID</div>
+          <span class="se-label">Appearance</span>
+          <div class="se-palette"><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button><button class="se-color"><span></span></button></div>
+          <span class="se-label">Gameplay</span>
+          <div class="se-field"><label>Amount</label><div class="se-input">10</div></div>
+          <span class="se-label">Placement</span>
+          <div class="se-field"><label>Position X</label><div class="se-input">2.850359</div></div>
+          <div class="se-field"><label>Position Y</label><div class="se-input">14.6</div></div>
+          <div class="se-advanced">Starts open · taper/shape rules remain non-editable.</div>
+          <button class="se-delete">Delete Source</button>
+        </div>
+      </section>
+    </div>
+    <script>
+      const root = document.getElementById('se-inspector-layout');
+      root.querySelectorAll('[data-option]').forEach((button) => {
+        button.addEventListener('click', () => {
+          root.querySelectorAll('[data-option]').forEach((item) => item.setAttribute('aria-pressed', item === button ? 'true' : 'false'));
+        });
+      });
+    </script>
+  </div>
+</body>
+</html>

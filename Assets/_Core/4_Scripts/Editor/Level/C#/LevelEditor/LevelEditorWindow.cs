@@ -48,15 +48,12 @@ namespace SE001.Editor.Level
         private void OnEnable()
         {
             layoutLibrary = new LayoutBakeLibrary();
-            Undo.undoRedoPerformed -= OnUndoRedo;
-            Undo.undoRedoPerformed += OnUndoRedo;
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
 
         private void OnDisable()
         {
-            Undo.undoRedoPerformed -= OnUndoRedo;
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             if (boardCanvas != null) boardCanvas.DisposeDerivedTextures();
         }
@@ -82,13 +79,6 @@ namespace SE001.Editor.Level
 
         private SE001LevelJson Document => documentHost != null ? documentHost.Level : null;
         private PhaseCLevelSequence LevelSequence => Resources.Load<PhaseCLevelSequence>("Profiles/PhaseCLevelSequence");
-
-        private void OnUndoRedo()
-        {
-            if (documentHost == null) return;
-            derivedState.Clear();
-            RefreshAll();
-        }
 
         private void OnPlayModeStateChanged(PlayModeStateChange state)
         {
@@ -177,7 +167,6 @@ namespace SE001.Editor.Level
         private void ApplyEdit(Action<SE001LevelJson> change, string undoName)
         {
             if (Document == null || change == null) return;
-            Undo.RecordObject(documentHost, undoName);
             change(Document);
             Document.EnsureCollections();
             documentHost.MarkDirty();
@@ -208,7 +197,6 @@ namespace SE001.Editor.Level
             dragKind = kind;
             dragStartPosition = LevelEditorGeometry.PositionFor(Document, dragId, dragKind);
             dragPreviewValid = true;
-            Undo.RecordObject(documentHost, "Move " + kind);
         }
 
         private void MoveDrag(string stableId, LevelEditorSelectionKind kind, Vector2 position)

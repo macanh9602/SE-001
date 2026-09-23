@@ -104,10 +104,15 @@ namespace SE001.Editor.Level
         private void BuildSourceInspector(SourceData source)
         {
             AddEntityHeader(EntityDisplayName("Source", Document.sources.IndexOf(source) + 1), source.stableId);
+            AddInspectorSectionHeader("Appearance");
             AddColorField(JarPreviewKind.Source, LevelEditorGeometry.SourceSize(source), source.materialId, "Color", "materialId", value => ApplyEdit(
                 level => FindSource(level, source.stableId).materialId = value, "Edit Source Color"));
+
+            AddInspectorSectionHeader("Gameplay");
             AddFloatField("Amount", source.logicalAmount, "amount", value => ApplyEdit(
                 level => FindSource(level, source.stableId).logicalAmount = Mathf.Max(0, Mathf.RoundToInt(value)), "Edit Source Amount"));
+
+            AddInspectorSectionHeader("Placement");
             AddFloatPair("Position", source.position, "position", (x, y) => ApplyEdit(
                 level => FindSource(level, source.stableId).position = new Vector2(x, y), "Edit Source Position"));
             Toggle startsOpen = new Toggle("Starts open") { value = source.startsOpen };
@@ -120,14 +125,21 @@ namespace SE001.Editor.Level
         private void BuildCupInspector(CupData cup)
         {
             AddEntityHeader(EntityDisplayName("Cup", Document.cups.IndexOf(cup) + 1), cup.stableId);
+            AddInspectorSectionHeader("Appearance");
             AddColorField(JarPreviewKind.Cup, LevelEditorGeometry.CupSize(cup), cup.acceptedMaterialId,
                 "Accepted color", "acceptedMaterialId", value => ApplyEdit(
                 level => FindCup(level, cup.stableId).acceptedMaterialId = value, "Edit Cup Color"));
+
+            AddInspectorSectionHeader("Gameplay");
             AddFloatField("Required amount", cup.requiredAmount, "requiredAmount", value => ApplyEdit(
                 level => FindCup(level, cup.stableId).requiredAmount = Mathf.Max(0, Mathf.RoundToInt(value)), "Edit Required Amount"));
+
+            AddInspectorSectionHeader("Placement");
             AddFloatPair("Position", cup.position, "position", (x, y) => ApplyEdit(
                 level => FindCup(level, cup.stableId).position = new Vector2(x, y), "Edit Cup Position"));
-            inspectorPane.Add(new Label("Taper is fixed by the visual contract and is not editable here."));
+            Label taperNote = new Label("Taper is fixed by the visual contract and is not editable here.");
+            taperNote.AddToClassList("le-inspector-note");
+            inspectorPane.Add(taperNote);
             inspectorPane.Add(MakeButton("Delete Cup", DeleteSelected, "le-button-danger"));
         }
 
@@ -135,10 +147,13 @@ namespace SE001.Editor.Level
         {
             AddEntityHeader(EntityDisplayName("Rotating Obstacle",
                 Document.rotatingObstacles.IndexOf(obstacle) + 1), obstacle.stableId);
+            AddInspectorSectionHeader("Placement");
             AddFloatPair("Position", obstacle.position, "position", (x, y) => ApplyEdit(level =>
                 FindRotatingObstacle(level, obstacle.stableId).position = new Vector2(x, y), "Edit Obstacle Position"));
             AddFloatField("Scale", obstacle.scale, "scale", value => ApplyEdit(level =>
                 FindRotatingObstacle(level, obstacle.stableId).scale = Mathf.Max(0.01f, value), "Edit Obstacle Scale"));
+
+            AddInspectorSectionHeader("Motion");
             AddFloatField("Bar length", obstacle.barLength, "barLength", value => ApplyEdit(level =>
                 FindRotatingObstacle(level, obstacle.stableId).barLength = Mathf.Max(0.01f, value), "Edit Bar Length"));
             AddFloatField("Initial angle", obstacle.initialAngle, "initialAngle", value => ApplyEdit(level =>
@@ -158,6 +173,13 @@ namespace SE001.Editor.Level
             inspectorPane.Add(technical);
         }
 
+        private void AddInspectorSectionHeader(string text)
+        {
+            Label section = new Label(text);
+            section.AddToClassList("le-inspector-section-header");
+            inspectorPane.Add(section);
+        }
+
         private void AddFloatField(string label, float value, string key, Action<float> onCommit)
         {
             FloatField field = new FloatField(label) { value = value, isDelayed = true };
@@ -168,16 +190,32 @@ namespace SE001.Editor.Level
 
         private void AddFloatPair(string label, Vector2 value, string key, Action<float, float> onCommit)
         {
-            VisualElement row = new VisualElement();
-            row.AddToClassList("le-field-row");
-            FloatField x = new FloatField(label + " X") { value = value.x, isDelayed = true };
-            FloatField y = new FloatField(label + " Y") { value = value.y, isDelayed = true };
-            row.Add(x);
-            row.Add(y);
-            inspectorPane.Add(row);
-            inspectorFields[key] = row;
+            Label title = new Label(label);
+            title.AddToClassList("le-coordinate-title");
+            inspectorPane.Add(title);
+            VisualElement grid = new VisualElement();
+            grid.AddToClassList("le-coordinate-grid");
+            VisualElement xContainer = CreateCoordinateField("X", value.x, out FloatField x);
+            VisualElement yContainer = CreateCoordinateField("Y", value.y, out FloatField y);
+            grid.Add(xContainer);
+            grid.Add(yContainer);
+            inspectorPane.Add(grid);
+            inspectorFields[key] = grid;
             x.RegisterValueChangedCallback(evt => onCommit(evt.newValue, y.value));
             y.RegisterValueChangedCallback(evt => onCommit(x.value, evt.newValue));
+        }
+
+        private static VisualElement CreateCoordinateField(string axis, float value, out FloatField field)
+        {
+            VisualElement container = new VisualElement();
+            container.AddToClassList("le-coordinate-field");
+            Label axisLabel = new Label(axis);
+            axisLabel.AddToClassList("le-coordinate-label");
+            container.Add(axisLabel);
+            field = new FloatField { value = value, isDelayed = true };
+            field.AddToClassList("le-coordinate-input");
+            container.Add(field);
+            return container;
         }
 
         private void AddColorField(JarPreviewKind kind, Vector2 size, int colorId, string label, string key, Action<int> onCommit)
