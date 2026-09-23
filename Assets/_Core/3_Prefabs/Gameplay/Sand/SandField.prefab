@@ -97,3 +97,4 @@ MonoBehaviour:
   sandColor:
     serializedVersion: 2
     rgba: 4284789980
+  softRender: 0

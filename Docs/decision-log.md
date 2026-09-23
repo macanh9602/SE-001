@@ -226,6 +226,7 @@ Sand rời obstacle bị bắn xéo và tản thành bụi (video repro: 65% h�
 2. Sim: bỏ lateral drift khi airborne, `airDrag` 0.5. Không thêm rule bám theo hạt đang rơi (đã đo: gây kẹt source, chỉ đổ được 44–77%).
 3. Visual: `SandFieldVisual` vẽ vệt + nối khe + nong ±1 cell cho hạt airborne, phủ texture hạt trôi theo dòng (không để thanh màu phẳng). Chỉ là hình, không vào collision/cup count.
 4. Không đổi `maxFallCellsPerStep` (giữ pacing).
+5. Sand texture dùng **Point filter** (`SandField.prefab` → `softRender: 0`) thay vì Bilinear: 1 texel/cell phóng ~5× trên màn hình, Bilinear làm dòng và hạt bị mờ. Pile cũng thành pixel khối, giống visualizer. Không đổi render scale 0.8 của Mobile_RPAsset.
 
 ### Đánh đổi đã chấp nhận
 
