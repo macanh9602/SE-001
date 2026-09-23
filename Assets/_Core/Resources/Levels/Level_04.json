@@ -1,0 +1,87 @@
+{
+    "schemaVersion": 4,
+    "levelId": "Level_04",
+    "layoutId": "test_tool",
+    "board": {
+        "size": {
+            "x": 10.800000190734864,
+            "y": 19.19999885559082
+        }
+    },
+    "sources": [
+        {
+            "stableId": "source_e77d75f105fe",
+            "materialId": 1,
+            "position": {
+                "x": 2.709810495376587,
+                "y": 16.25886344909668
+            },
+            "logicalAmount": 10,
+            "startsOpen": false
+        },
+        {
+            "stableId": "source_53fa95c03661",
+            "materialId": 2,
+            "position": {
+                "x": 9.021686553955079,
+                "y": 13.218587875366211
+            },
+            "logicalAmount": 10,
+            "startsOpen": false
+        },
+        {
+            "stableId": "source_7f9bef6fd01a",
+            "materialId": 3,
+            "position": {
+                "x": 5.551806926727295,
+                "y": 11.698450088500977
+            },
+            "logicalAmount": 10,
+            "startsOpen": false
+        }
+    ],
+    "cups": [
+        {
+            "stableId": "cup_b510dc8a20a5",
+            "acceptedMaterialId": 1,
+            "position": {
+                "x": 3.10636830329895,
+                "y": 3.1394147872924806
+            },
+            "requiredAmount": 5
+        },
+        {
+            "stableId": "cup_649f239a57cd",
+            "acceptedMaterialId": 2,
+            "position": {
+                "x": 6.14664363861084,
+                "y": 6.179689884185791
+            },
+            "requiredAmount": 5
+        },
+        {
+            "stableId": "cup_3afa82d99c99",
+            "acceptedMaterialId": 3,
+            "position": {
+                "x": 9.352150917053223,
+                "y": 7.270223617553711
+            },
+            "requiredAmount": 5
+        }
+    ],
+    "rotatingObstacles": [
+        {
+            "stableId": "rotating_obstacle_11ae6c39ae69",
+            "position": {
+                "x": 2.941135883331299,
+                "y": 8.691221237182618
+            },
+            "scale": 1.0,
+            "barLength": 4.0,
+            "initialAngle": 0.0,
+            "degreesPerSecond": 60.0
+        }
+    ],
+    "drawInkBudget": 10.0,
+    "requiresDrawing": false
+}

@@ -9,6 +9,7 @@ namespace SE001.Data
         public ColorProfile colorProfile;
         public SourceProfile sourceProfile;
         public CupProfile cupProfile;
+        public RotatingObstacleProfile rotatingObstacleProfile;
         public DrawPathProfile drawPathProfile;
         public JuiceProfile juiceProfile;
         public PhaseCLevelSequence levelSequence;

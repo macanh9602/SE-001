@@ -6,7 +6,7 @@ Data contract này triển khai architecture trong `SE001-ARCHITECTURE-BLUEPRINT
 
 | Loại | Ví dụ | Save? |
 |---|---|---|
-| Authoring source-of-truth | `SE001LevelJson`, board, stable entity IDs, Source/Cup/StaticObstacle data | Có |
+| Authoring source-of-truth | `SE001LevelJson`, board, stable entity IDs, Source/Cup/RotatingObstacle data | Có |
 | Generated/baked | Resolved lookup, valid/static masks, editor preview cache | Không; regenerate được |
 | Runtime state | Dynamic draw mask, sand buffers, counters, pending emissions, signals | Không; tạo/hủy theo level |
 
@@ -24,6 +24,7 @@ source-of-truth.
 | `staticObstacles` | array | Legacy schema 2 input only; removed from schema 3 JSON |
 | `sources` | array | Stable material source definitions; có thể rỗng |
 | `cups` | array | Stable collection target definitions; có thể rỗng |
+| `rotatingObstacles` | array | Per-level Cross obstacles with position, scale, length, initial angle and signed rotation speed |
 
 Schema owner là Level Data feature. JSON nằm tại `Assets/_Core/Resources/Levels/`. Array index không
 phải identity; mọi entity dùng stable string ID.
@@ -44,24 +45,30 @@ truth thay thế.
 ### Source
 
 - Stable ID, material ID, authored position.
-- Optional authored body `size` in board units; `(0,0)` resolves to `SourceProfile.bodySize` for backward compatibility.
+- Body size, emission rate and stream width resolve only from `SourceProfile`.
 - Logical material/grain amount.
-- Stream width/shape override chỉ khi product contract yêu cầu.
+- Level JSON does not store body size, emission rate or stream width.
 
 Visual anchor có thể hỗ trợ alignment nhưng không quyết định logical emission position/count.
 
 ### Cup
 
 - Stable ID, accepted material ID.
-- Authored sink shape/position/size.
+- Authored position; outside width/height resolve only from `CupProfile.bodySize`.
 
 ### Phase C position and material contract
 
-`SourceData.position` is the authored nozzle position. `SourceData.size` is the source body width/height; it drives both presentation bounds and tap hit-area, while `(0,0)` uses `SourceProfile.bodySize`. `CupData.position` is the centre of the cup's outside bottom; `CupData.size` is the outside mouth/height rectangle. `materialId` must resolve in `ColorProfile` before a level can spawn. Runtime sand, masks and collected counts are generated state and are not serialized back into level JSON.
+`SourceData.position` is the authored nozzle position. `SourceProfile.bodySize` drives both presentation bounds and tap hit-area. `CupData.position` is the centre of the cup's outside bottom; `CupProfile.bodySize` defines the outside mouth/height rectangle. `materialId` must resolve in `ColorProfile` before a level can spawn. Runtime sand, masks and collected counts are generated state and are not serialized back into level JSON.
 - Required count.
 - Foreign-material tolerance chỉ khi gameplay contract yêu cầu.
 
 Visual cup mesh không quyết định sink geometry.
+
+### RotatingObstacle (Cross)
+
+- Stable ID, board-space pivot position, scale, unscaled bar length, initial angle and signed degrees per second are authored in schema-4 level JSON.
+- `RotatingObstacleProfile` owns global bar width and bounded sand push search radius. Two 9-slice SpriteRenderers use the shared `MAT_Obstacle` material; art can replace the placeholder sprite in the prefab.
+- Runtime rotates at the fixed sand step. A separate transient rotating mask blocks grains and pushes grains swept by the bars without erasing player strokes or changing emitted/occupied counts.
 
 ### Dynamic DrawStroke
 
@@ -74,6 +81,7 @@ Visual cup mesh không quyết định sink geometry.
 
 - `LevelRuntimeState`: stable-ID index và semantic per-level records; non-static, không serialize.
 - `SandSimulation`: grain/material buffers, valid/static/dynamic masks và authoritative physical state.
+- `RotatingObstacleSystem`: per-level moving mask and sand sweep; transient and not serialized.
 - `LevelContext`: lifetime/token và references do `LevelSpawner` tạo; không phải data source.
 - Editor `Document` chứa `SE001LevelJson`; `ViewState` và `DerivedState` không serialize vào JSON.
 
@@ -84,6 +92,8 @@ Visual cup mesh không quyết định sink geometry.
 | Simulation/feel tunable | Feature Profile | Chỉ khi story/data contract cho phép | Một resolver duy nhất |
 | Entity placement/count/geometry | Không | Level JSON | Level loader |
 | Presentation prefab/material | `PrefabProfile` | Không | Factory/profile |
+| Source/Cup body size, Source emission/stream, Cross bar width | Feature Profiles | Không | Runtime/editor profile lookup |
+| Cross placement, scale, length, phase and speed | Không | Level JSON | RotatingObstacleSystem |
 
 Không giữ hai nguồn cho cùng một sự thật. Optional override phải phân biệt rõ unset với giá trị hợp lệ.
 
@@ -93,6 +103,7 @@ Không giữ hai nguồn cho cùng một sự thật. Optional override phải p
 - `levelId` và mọi entity stable ID unique; không dangling reference.
 - Board-space entity geometry hữu hạn, nằm trong contract của `LayoutDefinition`.
 - Schema 3 có `layoutId`, không chứa `board.wallContours` hoặc `staticObstacles`.
+- Schema 4 adds `rotatingObstacles` and removes Source/Cup size plus Source emission/stream overrides. The runtime can load schema 3 with current global Profile values; the Level Editor upgrades schema 3 in memory and saves schema 4.
 - Runtime load đọc bit-packed `LayoutMaskAsset`; cell size/hash lệch phải block với lỗi rõ ràng.
 - Static mask seed trước dynamic mask và trước Source emission.
 - Runtime và Editor preview dùng cùng board mapper/rasterizer, có parity tests.

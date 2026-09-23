@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d7f7f881f19de64dac0451daa40fa86, type: 3}
   m_Name: PhaseCCupProfile
   m_EditorClassIdentifier: 
+  bodySize: {x: 2, y: 2}
   wallThickness: 0.12
   taper: 0
   fillLine: 0.85

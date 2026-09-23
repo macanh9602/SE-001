@@ -13,7 +13,7 @@ namespace SE001.Tests
     public sealed class PhaseCFinishTests
     {
         [Test]
-        public void SourceSize_UsesAuthoredOverrideOrProfileDefault()
+        public void SourceSize_UsesProfileForEverySource()
         {
             SourceProfile profile = ScriptableObject.CreateInstance<SourceProfile>();
             profile.bodySize = new Vector2(0.8f, 1.2f);
@@ -22,7 +22,6 @@ namespace SE001.Tests
                 stableId = "source",
                 materialId = 1,
                 position = Vector2.one,
-                size = new Vector2(1.08f, 1.37f),
                 logicalAmount = 1
             };
             SourceDomain authored = new SourceDomain(authoredData, profile, 1);
@@ -31,8 +30,8 @@ namespace SE001.Tests
                 profile,
                 1);
 
-            Assert.That(authored.Size, Is.EqualTo(authoredData.size));
-            Assert.That(authored.BodyOffset, Is.EqualTo(new Vector2(0f, authoredData.size.y * 0.5f)));
+            Assert.That(authored.Size, Is.EqualTo(profile.bodySize));
+            Assert.That(authored.BodyOffset, Is.EqualTo(new Vector2(0f, profile.bodySize.y * 0.5f)));
             Assert.That(fallback.Size, Is.EqualTo(profile.bodySize));
             Object.DestroyImmediate(profile);
         }
@@ -46,7 +45,6 @@ namespace SE001.Tests
                 stableId = "cup",
                 acceptedMaterialId = 1,
                 position = new Vector2(5.4f, 1f),
-                size = new Vector2(2f, 1.5f),
                 requiredAmount = 1
             };
             CupDomain cup = new CupDomain(data, profile, 1, 0.1f);
@@ -67,7 +65,6 @@ namespace SE001.Tests
                 stableId = "cup",
                 acceptedMaterialId = 1,
                 position = new Vector2(5.4f, 1f),
-                size = new Vector2(2f, 1.5f),
                 requiredAmount = 1
             };
             CupDomain cup = new CupDomain(data, profile, 1, 0.1f);
@@ -90,7 +87,6 @@ namespace SE001.Tests
                 stableId = "cup",
                 acceptedMaterialId = 1,
                 position = new Vector2(5.4f, 1f),
-                size = new Vector2(2f, 1.5f),
                 requiredAmount = 1
             };
             CupDomain cup = new CupDomain(data, profile, 1, 0.1f);

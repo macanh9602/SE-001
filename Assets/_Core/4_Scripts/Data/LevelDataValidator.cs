@@ -97,7 +97,7 @@ namespace SE001.Data
             }
             level.EnsureCollections();
             if (level.schemaVersion <= 0) errors.Add("schemaVersion must be positive.");
-            if (level.schemaVersion > 3) errors.Add("schemaVersion is newer than the supported runtime schema.");
+            if (level.schemaVersion > 4) errors.Add("schemaVersion is newer than the supported runtime schema.");
             if (string.IsNullOrWhiteSpace(level.levelId)) errors.Add("levelId is required.");
             if (!Finite(level.board.size) || level.board.size.x <= 0f || level.board.size.y <= 0f)
                 errors.Add("board.size must be finite and positive.");
@@ -150,8 +150,6 @@ namespace SE001.Data
                      !InsideBoard(item.position, level.board.size));
                 if (invalidSource)
                     errors.Add($"sources[{i}] has invalid material, amount, position, or is outside board.");
-                if (item != null && !ValidOptionalSize(item.size))
-                    errors.Add($"sources[{i}].size must be zero (profile default) or finite and positive.");
                 if (item != null && colorProfile != null)
                 {
                     if (!colorProfile.Contains(item.materialId))
@@ -168,10 +166,9 @@ namespace SE001.Data
                     errors.Add($"cups[{i}] has a missing or duplicate stableId.");
                 bool invalidCup = item != null &&
                     (item.acceptedMaterialId <= 0 || item.requiredAmount <= 0 || !Finite(item.position) ||
-                     !Finite(item.size) || item.size.x <= 0f || item.size.y <= 0f ||
                      !InsideBoard(item.position, level.board.size));
                 if (invalidCup)
-                    errors.Add($"cups[{i}] has invalid material, amount, size, or position.");
+                    errors.Add($"cups[{i}] has invalid material, amount, or position.");
                 if (item != null && colorProfile != null)
                 {
                     if (!colorProfile.Contains(item.acceptedMaterialId))
@@ -179,6 +176,23 @@ namespace SE001.Data
                     else if (!colorProfile.HasJarMaterials(item.acceptedMaterialId))
                         errors.Add($"cups[{i}] colorId {item.acceptedMaterialId} is missing sourceMouthMaterial or cupCapMaterial.");
                 }
+            }
+            for (int i = 0; i < level.rotatingObstacles.Count; i++)
+            {
+                RotatingObstacleData item = level.rotatingObstacles[i];
+                string id = item == null ? null : item.stableId;
+                if (string.IsNullOrWhiteSpace(id) || !ids.Add(id))
+                    errors.Add($"rotatingObstacles[{i}] has a missing or duplicate stableId.");
+                if (item == null || !Finite(item.position) || !InsideBoard(item.position, level.board.size) ||
+                    !Finite(item.scale) || item.scale <= 0f || !Finite(item.barLength) || item.barLength <= 0f ||
+                    !Finite(item.initialAngle) || !Finite(item.degreesPerSecond) || item.degreesPerSecond == 0f)
+                    errors.Add($"rotatingObstacles[{i}] has invalid position, scale, length, angle, or rotation speed.");
+                else if (level.schemaVersion < 4 ||
+                    item.position.x - item.barLength * item.scale * 0.5f < 0f ||
+                    item.position.y - item.barLength * item.scale * 0.5f < 0f ||
+                    item.position.x + item.barLength * item.scale * 0.5f > level.board.size.x ||
+                    item.position.y + item.barLength * item.scale * 0.5f > level.board.size.y)
+                    errors.Add($"rotatingObstacles[{i}] requires schema 4 and a full sweep inside the board.");
             }
             ValidateSupply(level, errors);
             if (!usesBakedLayout) ValidateStaticOverlap(level, errors);
@@ -403,7 +417,8 @@ namespace SE001.Data
             return area * 0.5f;
         }
 
-        private static bool Finite(Vector2 value) => !float.IsNaN(value.x) && !float.IsInfinity(value.x) && !float.IsNaN(value.y) && !float.IsInfinity(value.y);
+        private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+        private static bool Finite(Vector2 value) => Finite(value.x) && Finite(value.y);
         private static bool ValidOptionalSize(Vector2 value) => value == Vector2.zero || Finite(value) && value.x > 0f && value.y > 0f;
         private static bool InsideBoard(Vector2 position, Vector2 size) => position.x >= 0f && position.y >= 0f && position.x <= size.x && position.y <= size.y;
         private static bool Approximately(Vector2 left, Vector2 right) =>

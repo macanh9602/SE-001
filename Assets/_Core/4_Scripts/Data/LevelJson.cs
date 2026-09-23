@@ -7,13 +7,14 @@ namespace SE001.Data
     [Serializable]
     public sealed class SE001LevelJson
     {
-        public int schemaVersion = 3;
+        public int schemaVersion = 4;
         public string levelId = string.Empty;
         public string layoutId = string.Empty;
         public BoardData board = new BoardData();
         [NonSerialized] public List<StaticObstacleData> staticObstacles = new List<StaticObstacleData>();
         public List<SourceData> sources = new List<SourceData>();
         public List<CupData> cups = new List<CupData>();
+        public List<RotatingObstacleData> rotatingObstacles = new List<RotatingObstacleData>();
         public float drawInkBudget;
         public bool requiresDrawing;
 
@@ -58,6 +59,7 @@ namespace SE001.Data
             if (staticObstacles == null) staticObstacles = new List<StaticObstacleData>();
             if (sources == null) sources = new List<SourceData>();
             if (cups == null) cups = new List<CupData>();
+            if (rotatingObstacles == null) rotatingObstacles = new List<RotatingObstacleData>();
         }
 
         private static SE001LevelJson FromLegacyJson(string json)
@@ -136,11 +138,8 @@ namespace SE001.Data
         public string stableId = string.Empty;
         public int materialId = 1;
         public Vector2 position;
-        public Vector2 size;
         public int logicalAmount;
         public bool startsOpen;
-        public float emissionRate;
-        public float streamWidth;
     }
     [Serializable]
     public sealed class CupData
@@ -148,7 +147,17 @@ namespace SE001.Data
         public string stableId = string.Empty;
         public int acceptedMaterialId = 1;
         public Vector2 position;
-        public Vector2 size = Vector2.one;
         public int requiredAmount;
+    }
+
+    [Serializable]
+    public sealed class RotatingObstacleData
+    {
+        public string stableId = string.Empty;
+        public Vector2 position;
+        public float scale = 1f;
+        public float barLength = 4f;
+        public float initialAngle;
+        public float degreesPerSecond = 60f;
     }
 }

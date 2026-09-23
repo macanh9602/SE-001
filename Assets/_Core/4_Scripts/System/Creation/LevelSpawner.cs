@@ -5,6 +5,7 @@ using SE001.Geometry;
 using SE001.Simulation.Sand;
 using SE001.Creation;
 using SE001.Elements.Sand;
+using SE001.Elements.Layout;
 using SE001.Gameplay;
 using SE001.Presentation;
 using SE001.System.Management;
@@ -133,6 +134,25 @@ namespace SE001.System.Creation
             for (int i = 0; i < levelData.cups.Count; i++)
                 cups.Add(new CupDomain(levelData.cups[i], cupProfile, grainsPerUnit, profile.cellSize, gameplayProfile.jarVisualProfile));
             gameplay.Configure(sources, cups, profile.cellSize, cupProfile.wallThickness);
+            if (levelData.rotatingObstacles.Count > 0)
+            {
+                if (gameplayProfile.rotatingObstacleProfile == null || gameplayProfile.prefabProfile == null ||
+                    gameplayProfile.prefabProfile.rotatingObstaclePrefab == null || layoutVisualProfile == null ||
+                    layoutVisualProfile.obstacleMaterial == null)
+                    throw new InvalidOperationException("Rotating obstacle Profile, prefab and shared obstacle material are required.");
+                RotatingObstacleSystem obstacles = new RotatingObstacleSystem(activeContext.SandSimulation,
+                    gameplayProfile.rotatingObstacleProfile, levelData.rotatingObstacles);
+                gameplay.ConfigureRotatingObstacles(obstacles);
+                for (int i = 0; i < obstacles.Count; i++)
+                {
+                    GameObject instance = Instantiate(gameplayProfile.prefabProfile.rotatingObstaclePrefab,
+                        activeContext.ObstacleRoot, false);
+                    RotatingObstacleView view = instance.GetComponent<RotatingObstacleView>();
+                    if (view == null) throw new MissingComponentException("Rotating obstacle prefab requires RotatingObstacleView.");
+                    view.Bind(obstacles, i, gameplayProfile.rotatingObstacleProfile.barWidth,
+                        layoutVisualProfile.obstacleMaterial);
+                }
+            }
             SourceFactory sourceFactory = new SourceFactory();
             CupFactory cupFactory = new CupFactory();
             if (gameplayProfile.prefabProfile == null) throw new InvalidOperationException("Phase C requires PrefabProfile for production visuals.");

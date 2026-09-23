@@ -7,6 +7,7 @@ namespace SE001.Data
     {
         public GameObject boardWallPrefab;
         public GameObject staticObstaclePrefab;
+        public GameObject rotatingObstaclePrefab;
         public GameObject sandFieldPrefab;
         public GameObject sourcePrefab;
         public GameObject cupPrefab;

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rotating Cross Obstacle — gameplay preview</title>
+<style>
+  :root{color-scheme:dark;font:15px system-ui,sans-serif;background:#171a20;color:#e9edf4}
+  body{margin:0;padding:24px;max-width:1120px;margin-inline:auto}
+  h1{font-size:24px;margin:0 0 8px} p{color:#b8c3d2;line-height:1.5}
+  main{display:grid;grid-template-columns:minmax(300px,650px) minmax(260px,1fr);gap:20px}
+  canvas{width:100%;aspect-ratio:1;background:#222832;border:1px solid #4b5768;border-radius:12px}
+  aside{background:#222832;border:1px solid #394659;border-radius:12px;padding:18px}
+  label{display:block;margin:12px 0 5px} input[type=range]{width:100%}
+  output{color:#a7d6ff;font-variant-numeric:tabular-nums}
+  .modes{display:flex;gap:8px;margin-top:18px}.modes button{flex:1;background:#344054;color:#e9edf4;border:1px solid #718198;padding:9px;border-radius:7px;cursor:pointer}
+  .modes button.active{background:#23588a;border-color:#8cc6ff}
+  .note{font-size:13px;border-left:3px solid #f0ba60;padding-left:10px}
+  @media(max-width:760px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>Obstacle chữ X xoay liên tục</h1>
+<p>Hai thanh 9-slice vắt chéo, cùng pivot tại tâm. Kéo thông số để xem diện tích quét và hai cách sand phản ứng khi thanh đi qua.</p>
+<main>
+  <canvas id="scene" width="650" height="650" aria-label="Rotating cross obstacle preview"></canvas>
+  <aside>
+    <label for="length">Độ dài mỗi thanh: <output id="lengthValue"></output></label><input id="length" type="range" min="2" max="9" step="0.1" value="6">
+    <label for="width">Độ dày thanh: <output id="widthValue"></output></label><input id="width" type="range" min="0.25" max="1.2" step="0.05" value="0.6">
+    <label for="scale">Scale toàn bộ: <output id="scaleValue"></output></label><input id="scale" type="range" min="0.5" max="1.6" step="0.05" value="1">
+    <label for="speed">Tốc độ xoay: <output id="speedValue"></output></label><input id="speed" type="range" min="-180" max="180" step="5" value="60">
+    <label for="phase">Góc ban đầu: <output id="phaseValue"></output></label><input id="phase" type="range" min="-180" max="180" step="5" value="0">
+    <div class="modes"><button id="barrier" class="active">Barrier only</button><button id="sweep">Push sweep</button></div>
+    <p id="modeText"></p>
+    <p class="note">Đây là mô phỏng để chốt gameplay, không phải kết quả của SandSimulation thật. Số đo dùng board units và độ/giây giả lập. Màu xám chỉ là placeholder; art/material chính thức chưa có.</p>
+  </aside>
+</main>
+<script>
+const canvas=document.querySelector('#scene'),ctx=canvas.getContext('2d');
+const ids=['length','width','scale','speed','phase'];
+const ui=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
+const dots=Array.from({length:120},(_,i)=>({x:170+(i*73%310),y:-i*19%650,vx:0,vy:0}));
+let mode='barrier',angle=0,last=performance.now();
+function number(id){return Number(ui[id].value)}
+function labels(){
+  for(const id of ids){
+    const unit=id==='speed'?' °/s':id==='phase'?' °':id==='scale'?'×':' board units';
+    document.getElementById(id+'Value').textContent=number(id).toFixed(id==='speed'||id==='phase'?0:2)+unit;
+  }
+}
+for(const id of ids)ui[id].addEventListener('input',labels);
+for(const name of ['barrier','sweep'])document.getElementById(name).onclick=()=>{
+  mode=name;
+  for(const id of ['barrier','sweep'])document.getElementById(id).classList.toggle('active',id===name);
+  document.getElementById('modeText').textContent=name==='barrier'
+    ?'Barrier only: thanh chặn bước di chuyển mới. Hạt đã nằm trong vùng quét không bị xoá; có thể chồng hình tạm thời.'
+    :'Push sweep: thanh đẩy hạt ra khỏi vùng quét. Tương tác rõ hơn nhưng cần quy tắc giải kẹt và CPU cao hơn.';
+};
+document.getElementById('barrier').click();labels();
+function roundedBar(length,width){
+  const x=-length/2,y=-width/2,r=Math.min(width/2,14);
+  ctx.beginPath();ctx.roundRect(x,y,length,width,r);ctx.fill();ctx.stroke();
+}
+function hit(px,py,a,length,width){
+  const dx=px-325,dy=py-330,c=Math.cos(a),s=Math.sin(a);
+  const x=dx*c+dy*s,y=-dx*s+dy*c;
+  return Math.abs(x)<length/2&&Math.abs(y)<width/2;
+}
+function frame(now){
+  const dt=Math.min((now-last)/1000,0.05);last=now;
+  angle+=number('speed')*Math.PI/180*dt;
+  const a=angle+number('phase')*Math.PI/180,scale=number('scale');
+  const length=number('length')*62*scale,width=number('width')*62*scale;
+  ctx.clearRect(0,0,650,650);
+  ctx.fillStyle='#252e39';ctx.fillRect(74,58,502,545);
+  ctx.strokeStyle='#526174';ctx.strokeRect(74,58,502,545);
+  for(const dot of dots){
+    const oldY=dot.y;
+    dot.vy=Math.min(dot.vy+360*dt,155);dot.y+=dot.vy*dt;dot.x+=dot.vx*dt;dot.vx*=0.985;
+    const touching=hit(dot.x,dot.y,a+Math.PI/4,length,width)||hit(dot.x,dot.y,a-Math.PI/4,length,width);
+    if(touching){
+      if(mode==='barrier'){dot.y=oldY;dot.vy=0}
+      else{const spin=Math.sign(number('speed'))||1;dot.x+=spin*65*dt;dot.y-=7;dot.vx=spin*22;dot.vy=-35}
+    }
+    if(dot.y>595||dot.x<80||dot.x>570){dot.x=170+Math.random()*310;dot.y=-20;dot.vx=0;dot.vy=0}
+    ctx.fillStyle='#f1d08a';ctx.fillRect(dot.x,dot.y,4,4);
+  }
+  ctx.save();ctx.translate(325,330);ctx.fillStyle='#9ca2aa';ctx.strokeStyle='#30343b';ctx.lineWidth=2;
+  ctx.rotate(a+Math.PI/4);roundedBar(length,width);ctx.rotate(-Math.PI/2);roundedBar(length,width);ctx.restore();
+  ctx.beginPath();ctx.arc(325,330,14*scale,0,Math.PI*2);ctx.fillStyle='#484a50';ctx.fill();ctx.stroke();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -134,7 +134,7 @@ namespace SE001.Elements.Sand
         private static byte Clamp(float v) => (byte)(v < 0f ? 0f : v > 255f ? 255f : v);
 
         private static bool IsGeometry(SandSimulationState state, int i) =>
-            !state.ValidMask[i] || state.StaticMask[i] || state.CupWallMask[i] || state.DynamicMask[i];
+            !state.ValidMask[i] || state.StaticMask[i] || state.CupWallMask[i] || state.DynamicMask[i] || state.RotatingMask[i];
 
         /// <summary>Overlay for airborne grains collected by the base pass. Only paints empty, non-geometry cells.</summary>
         private void DrawStream(SandSimulationState state, NativeArray<Color32> pixels, int count)

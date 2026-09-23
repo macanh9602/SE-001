@@ -15,6 +15,7 @@ MonoBehaviour:
   colorProfile: {fileID: 11400000, guid: 8e92134f24ef2624e98fa75fa24cc005, type: 2}
   sourceProfile: {fileID: 11400000, guid: 95a18833893415d449302bd75dc33093, type: 2}
   cupProfile: {fileID: 11400000, guid: f498e89b81871f446ab1739e3680483b, type: 2}
+  rotatingObstacleProfile: {fileID: 11400000, guid: 6b45caea38879284cae78246f6d29425, type: 2}
   drawPathProfile: {fileID: 11400000, guid: 8f3fc432f7255c84cb31515f306e7b09, type: 2}
   juiceProfile: {fileID: 11400000, guid: eb48c28a2c5da58449dff97d98822947, type: 2}
   levelSequence: {fileID: 11400000, guid: 327e7a2610a0c604596996985e4f92d5, type: 2}

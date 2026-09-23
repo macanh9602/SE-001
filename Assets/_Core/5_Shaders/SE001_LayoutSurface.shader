@@ -7,6 +7,7 @@ Shader "SE001/LayoutSurface"
     Properties
     {
         [MainTexture] _BaseMap ("Base Map", 2D) = "white" {}
+        [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         [MainColor] _BaseColor ("Base Color", Color) = (0.58, 0.59, 0.6, 1)
         _ShadowStrength ("Received Shadow Strength", Range(0, 1)) = 0.6
         _AmbientBoost ("Ambient Boost", Range(0, 2)) = 1
@@ -45,6 +46,7 @@ Shader "SE001/LayoutSurface"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings
@@ -74,7 +76,9 @@ Shader "SE001/LayoutSurface"
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                half4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
+                half4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) *
+                    SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * _BaseColor;
+                clip(albedo.a - 0.5h);
                 half3 n = normalize(input.normalWS);
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 Light light = GetMainLight(shadowCoord);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SE001.Gameplay;
 using SE001.Data;
+using SE001.Simulation.Sand;
 
 namespace SE001.System.Management
 {
@@ -20,6 +21,7 @@ namespace SE001.System.Management
 
         private readonly List<SourceDomain> sources = new List<SourceDomain>();
         private readonly List<CupDomain> cups = new List<CupDomain>();
+        private RotatingObstacleSystem rotatingObstacles;
         private LevelContext context;
         private float stepAccumulator;
         private int stableSteps;
@@ -68,6 +70,11 @@ namespace SE001.System.Management
             fixedStepHz = Mathf.Max(1f, profile.fixedStepHz);
             stableStepsForLose = Mathf.Max(1, profile.stableStepsForLose);
             if (profile.drawPathProfile != null) maxStrokes = Mathf.Max(1, profile.drawPathProfile.maxStrokes);
+        }
+
+        public void ConfigureRotatingObstacles(RotatingObstacleSystem system)
+        {
+            rotatingObstacles = system;
         }
 
         /// <summary>Stamps the stroke into the dynamic mask. Stroke is truncated when ink runs out.</summary>
@@ -134,6 +141,7 @@ namespace SE001.System.Management
             if (State != GameState.Playing)
             {
                 // Result is final; keep stepping sand only so in-flight grains settle visually (no emission, no rules).
+                rotatingObstacles?.Advance(Time.deltaTime);
                 if (!settled) settled = context.SandSimulation.Step() == 0;
                 return;
             }
@@ -165,6 +173,7 @@ namespace SE001.System.Management
             {
                 if (State == GameState.Playing) { Tick(dt); played++; continue; }
                 if (settled) break;
+                rotatingObstacles?.Advance(dt);
                 settled = context.SandSimulation.Step() == 0;
             }
 
@@ -175,6 +184,7 @@ namespace SE001.System.Management
         {
             StepCount++;
             var sim = context.SandSimulation;
+            int pushed = rotatingObstacles != null ? rotatingObstacles.Advance(dt) : 0;
 
             for (int i = 0; i < sources.Count; i++)
             {
@@ -200,7 +210,7 @@ namespace SE001.System.Management
                 if (collected > 0) CupChanged?.Invoke(cups[i].StableId);
             }
 
-            stableSteps = moved == 0 && collectedTotal == 0 ? stableSteps + 1 : 0;
+            stableSteps = moved == 0 && pushed == 0 && collectedTotal == 0 ? stableSteps + 1 : 0;
 
             bool allFull = cups.Count > 0;
             for (int i = 0; i < cups.Count; i++) allFull &= cups[i].Full;
@@ -228,6 +238,7 @@ namespace SE001.System.Management
         public void CleanupForLevelUnload()
         {
             bound = false;
+            rotatingObstacles = null;
             context = null;
             sources.Clear();
             cups.Clear();

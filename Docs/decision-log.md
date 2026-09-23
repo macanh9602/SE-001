@@ -267,3 +267,34 @@ Hình dòng rộng hơn collision ±1 cell (0.06 unit). Tốc độ đổ của 
 ### Xem lại khi
 
 GD thấy dòng quá dày/mảnh trên device, hoặc level mới cần sand bắn ngang có chủ đích.
+## D-010 — Level Editor naming and progression on Save
+
+Status: Accepted — 2026-09-23
+
+### Bối cảnh
+
+GD yêu cầu tên level dạng `Level_01` theo thứ tự progression; Level Editor trước đó tạo `new_level` và không cập nhật `PhaseCLevelSequence` khi Save.
+
+### Quyết định
+
+- Level Editor hiển thị `Level_XX` theo thứ tự trong `PhaseCLevelSequence`. Giữ nguyên `levelId` của level cũ để không phá reference và file đã authored.
+- New Level lấy ID `Level_XX` kế tiếp. Save JSON thành công thì thêm ID mới vào `PhaseCLevelSequence`; filename phải khớp `levelId` để runtime load được.
+- Entity và Layout được nhóm, tìm kiếm và phân trang trong panel; stable ID nằm ở Technical ID, không là tên chính GD nhìn thấy.
+
+### Phương án loại bỏ và trade-off
+
+Không để GD tự nhập tên hoặc tự sửa progression sau Save: thao tác dễ lệch file JSON với runtime sequence. Thêm ghi asset khi Save trong Editor, không thêm chi phí CPU/GPU/GC/draw call/memory vào gameplay loop.
+
+### Xem lại khi
+
+GD cần thứ tự level khác thứ tự Save hoặc cần đổi tên/đổi vị trí level đã phát hành.
+
+## D-011 — Rotating Cross obstacle and global jar settings
+
+Status: Accepted — 2026-09-23
+
+GD chose a continuously rotating Cross obstacle with two 9-slice bars, shared static-obstacle material, per-level pivot/scale/bar length/initial angle/signed speed, and sand push sweep. The simulation uses a separate moving mask so player strokes remain intact; swept grains relocate to nearby free cells with no loss. Cross bar width and bounded push radius live in `RotatingObstacleProfile`.
+
+Source body size, emission rate and stream width live only in `SourceProfile`; Cup outside size lives only in `CupProfile`, initially 2 × 1.5 board units. Schema 4 omits these jar values and adds Cross entities. Existing schema-3 levels load with global Profile values and are upgraded to schema 4 when saved from the Level Editor. The few legacy Cup shapes that differed therefore become the chosen global size.
+
+Mobile cost: one moving bool mask and a scratch mask per level, bounded Cross footprint scans at the fixed sand step, and two SpriteRenderer draws per Cross. No per-step grain allocation or runtime material creation. Device profiling remains required before production closure.

@@ -12,7 +12,7 @@ namespace SE001.Data
             TextAsset asset = Resources.Load<TextAsset>("Levels/" + levelId);
             if (asset == null) throw new InvalidOperationException("Canonical level JSON was not found: " + levelId);
             SE001LevelJson level = SE001LevelJson.FromJson(asset.text);
-            if (level.schemaVersion != 3)
+            if (level.schemaVersion != 3 && level.schemaVersion != 4)
                 throw new FormatException("Level " + levelId + " uses schema " + level.schemaVersion + ". Run SE001/Phase D/Migrate levels to layoutId.");
             ColorProfile colorProfile = Resources.Load<ColorProfile>("Profiles/PhaseCColorProfile");
             if (colorProfile == null) throw new InvalidOperationException("Phase C ColorProfile asset is missing.");

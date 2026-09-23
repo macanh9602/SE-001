@@ -34,7 +34,8 @@ namespace SE001.Simulation.Sand
             if (masks == null) throw new ArgumentNullException(nameof(masks));
             if ((long)masks.Width * masks.Height > profile.maxCells) throw new InvalidOperationException("Sand grid exceeds profile capacity.");
             int count = masks.Width * masks.Height;
-            State = new SandSimulationState(masks.Width, masks.Height, new byte[count], masks.ValidMask, masks.StaticMask, new bool[count], new bool[count]);
+            State = new SandSimulationState(masks.Width, masks.Height, new byte[count],
+                masks.ValidMask, masks.StaticMask, new bool[count], new bool[count], new bool[count]);
             stamp = new byte[count];
             rng = seed == 0 ? DefaultSeed : seed;
         }
@@ -264,11 +265,31 @@ namespace SE001.Simulation.Sand
             return value;
         }
 
+        public bool TryRelocateGrain(int sourceIndex, int targetIndex, bool[] futureRotatingMask)
+        {
+            if (sourceIndex < 0 || sourceIndex >= State.Cells.Length || targetIndex < 0 || targetIndex >= State.Cells.Length ||
+                State.Cells[sourceIndex] == 0 || State.Cells[targetIndex] != 0 || futureRotatingMask[targetIndex] ||
+                !State.ValidMask[targetIndex] || State.StaticMask[targetIndex] || State.CupWallMask[targetIndex] ||
+                State.DynamicMask[targetIndex]) return false;
+            State.Cells[targetIndex] = State.Cells[sourceIndex];
+            State.Shade[targetIndex] = State.Shade[sourceIndex];
+            State.Velocity[targetIndex] = State.Velocity[sourceIndex];
+            State.Momentum[targetIndex] = State.Momentum[sourceIndex];
+            State.Cells[sourceIndex] = 0;
+            State.Velocity[sourceIndex] = 0f;
+            State.Momentum[sourceIndex] = 0f;
+            int fromY = sourceIndex / State.Width;
+            int toY = targetIndex / State.Width;
+            State.RowCount[fromY]--;
+            State.RowCount[toY]++;
+            return true;
+        }
+
         private bool CanOccupy(int x, int y)
         {
             if (x < 0 || y < 0 || x >= State.Width || y >= State.Height) return false;
             int i = y * State.Width + x;
-            return State.ValidMask[i] && !State.StaticMask[i] && !State.CupWallMask[i] && !State.DynamicMask[i];
+            return State.ValidMask[i] && !State.StaticMask[i] && !State.CupWallMask[i] && !State.DynamicMask[i] && !State.RotatingMask[i];
         }
 
         // xorshift32 — deterministic, allocation-free.

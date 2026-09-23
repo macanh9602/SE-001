@@ -6,7 +6,8 @@ namespace SE001.Simulation.Sand
     /// </summary>
     public sealed class SandSimulationState
     {
-        internal SandSimulationState(int width, int height, byte[] cells, bool[] validMask, bool[] staticMask, bool[] cupWallMask, bool[] dynamicMask)
+        internal SandSimulationState(int width, int height, byte[] cells, bool[] validMask,
+            bool[] staticMask, bool[] cupWallMask, bool[] dynamicMask, bool[] rotatingMask)
         {
             Width = width;
             Height = height;
@@ -15,6 +16,7 @@ namespace SE001.Simulation.Sand
             StaticMask = staticMask;
             CupWallMask = cupWallMask;
             DynamicMask = dynamicMask;
+            RotatingMask = rotatingMask;
             int count = width * height;
             Shade = new byte[count];
             Velocity = new float[count];
@@ -37,6 +39,7 @@ namespace SE001.Simulation.Sand
         public bool[] StaticMask { get; }
         public bool[] CupWallMask { get; }
         public bool[] DynamicMask { get; }
+        public bool[] RotatingMask { get; }
         public int OccupiedCount { get; internal set; }
         public int EmittedCount { get; internal set; }
         public int Index(int x, int y) => y * Width + x;

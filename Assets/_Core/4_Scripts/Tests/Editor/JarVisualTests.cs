@@ -91,7 +91,6 @@ namespace SE001.Tests
                     stableId = "art_aligned_cup",
                     acceptedMaterialId = 1,
                     position = Vector2.zero,
-                    size = new Vector2(2f, 1.5f),
                     requiredAmount = 1
                 },
                 runtime.cupProfile,
@@ -107,7 +106,7 @@ namespace SE001.Tests
         }
 
         [Test]
-        public void Cup_NineSlice_CapThicknessConstantAcrossHeights()
+        public void Cup_NineSlice_CapThicknessConsistentAtGlobalSize()
         {
             GameplayRuntimeProfile runtime = Resources.Load<GameplayRuntimeProfile>("Profiles/PhaseCGameplayRuntimeProfile");
             CupProfile profile = runtime.cupProfile;
@@ -121,7 +120,6 @@ namespace SE001.Tests
                             stableId = "short",
                             acceptedMaterialId = 1,
                             position = Vector2.zero,
-                            size = new Vector2(2f, 1.5f),
                             requiredAmount = 1
                         }, profile, 1, 0.1f),
                     parent.transform, runtime.prefabProfile, runtime));
@@ -132,7 +130,6 @@ namespace SE001.Tests
                             stableId = "tall",
                             acceptedMaterialId = 1,
                             position = new Vector2(3f, 0f),
-                            size = new Vector2(2f, 3f),
                             requiredAmount = 1
                         }, profile, 1, 0.1f),
                     parent.transform, runtime.prefabProfile, runtime));
@@ -151,13 +148,13 @@ namespace SE001.Tests
             SourceProfile sourceProfile = Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
             JarVisualProfile visuals = Resources.Load<JarVisualProfile>("Profiles/JarVisualProfile");
             SourceDomain source = new SourceDomain(
-                new SourceData { stableId = "source", materialId = 1, position = new Vector2(2f, 3f), size = new Vector2(2f, 2f), logicalAmount = 1 },
+                new SourceData { stableId = "source", materialId = 1, position = new Vector2(2f, 3f), logicalAmount = 1 },
                 sourceProfile,
                 1,
                 visuals);
-            Assert.That(source.BodyOffset.y, Is.EqualTo(2f * (212f / 192f - 0.5f)).Within(0.0001f));
-            Assert.That(source.HitTest(source.Position + source.BodyOffset + new Vector2(0.99f, 0.99f), 0f), Is.True);
-            Assert.That(source.HitTest(source.Position + source.BodyOffset + new Vector2(1.1f, 0f), 0f), Is.False);
+            Assert.That(source.BodyOffset.y, Is.EqualTo(source.Size.y * (212f / 192f - 0.5f)).Within(0.0001f));
+            Assert.That(source.HitTest(source.Position + source.BodyOffset + new Vector2(0.39f, 0.59f), 0f), Is.True);
+            Assert.That(source.HitTest(source.Position + source.BodyOffset + new Vector2(0.5f, 0f), 0f), Is.False);
         }
 
         [Test]
@@ -170,7 +167,6 @@ namespace SE001.Tests
                     stableId = "closed_source",
                     materialId = 1,
                     position = new Vector2(2f, 3f),
-                    size = new Vector2(1f, 2f),
                     logicalAmount = 1
                 },
                 runtime.sourceProfile,

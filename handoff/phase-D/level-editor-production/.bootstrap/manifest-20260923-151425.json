@@ -1,0 +1,119 @@
+﻿{
+    "workspace":  "SE-001",
+    "commitBeforeApply":  "c6961b4",
+    "appliedAt":  "2026-09-23T15:14:25.4582406+07:00",
+    "items":  [
+                  {
+                      "path":  "Assets/_Core/4_Scripts/Editor/Level/C#/LevelEditor/LevelEditorDocumentHost.cs",
+                      "action":  "replaced",
+                      "beforeHash":  "00ceafbda61b0a31edc8b03d773f840647ccca1804a1c86a782278ca4d37e387",
+                      "afterHash":  "00ceafbda61b0a31edc8b03d773f840647ccca1804a1c86a782278ca4d37e387",
+                      "backupPath":  "handoff/phase-D/level-editor-production/.bootstrap/backup-20260923-151425/Assets/_Core/4_Scripts/Editor/Level/C#/LevelEditor/LevelEditorDocumentHost.cs"
+                  },
+                  {
+                      "path":  "Assets/_Core/4_Scripts/Editor/Level/C#/LevelEditor/LevelEditorDocumentService.cs",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "00001beca978ac261e8f808af082d2dba817d4b9a2caa297044b86754d5ddf4a",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "Assets/_Core/4_Scripts/Editor/Level/C#/LevelEditor/LevelEditorStableIds.cs",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "a3b44908a12edf1b8e5678a4dd35c157ce6fc28e3cf3dfd1386c7f994c8e7e6a",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "Assets/_Core/4_Scripts/Editor/Level/C#/LevelEditor/LevelEditorState.cs",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "f13113dfa9806c158fce85bef2f9fef34899d532b1cc43726da87ccdfe136506",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "Assets/_Core/4_Scripts/Editor/Level/C#/LevelEditor/LevelEditorWindow.cs",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "28aca3e6f7ff3c4e94b2494806eb35c9852991a50b0e18be2a39a674f06cca86",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "Assets/_Core/4_Scripts/Editor/Level/C#/LevelEditor/LevelEditorWindow.Document.cs",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "171fe112d505ce916aa715e2a62a3836dbd819084f03eb22c0cedaa2501ec5bd",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "Assets/_Core/4_Scripts/Editor/Level/C#/LevelEditor/LevelEditorWindow.Layout.cs",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "ff47c400163aaae029d037eeb18be2012323b8b28f1b21e704b31b05db8a81bd",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "Assets/_Core/4_Scripts/Editor/Level/C#/LevelEditor/LevelEditorWindow.Panels.cs",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "0d615710e33459234c64d8f5cfb30e934b4b4c89672a6ae0070a805363f53649",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "Assets/_Core/4_Scripts/Editor/Level/USS/LevelEditorWindow.uss",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "000cd6e6cb561b56cb31c2fee645365e81b868b838e5ec145db5c42d2bd758f7",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "handoff/phase-D/evidence/level-editor/functional-verification.md",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "531785eeed642e3814edabd6701514dc891079209676aec7531d43c3ca7fb20e",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "handoff/phase-D/evidence/level-editor/implementation.md",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "7b3fb712486711f3c1f9ab30751e69ccc5e64f636815da217ed1e4cedb13bfa8",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "handoff/phase-D/evidence/level-editor/ux-review.md",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "48568a31e9aee5e62d72eed0f93519696fcb95f504ae7020ed8c2c05c2c8a690",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "handoff/phase-D/evidence/level-editor/walkthrough.md",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "a11930a0850c719c36f1d548922a11445f4c674572fe039466607fbadc6c3124",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "handoff/phase-D/level-editor-production/EXECUTE.md",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "f2a29565cb79999ae0865f21a5037687f17ac0b8b73abb9d783043f8f1332be8",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "handoff/phase-D/level-editor-production/REVIEW.md",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "03f6dd97247cc011eca0ef59858a7aeaafde197cb2599bcd285c6c3a7d8d4126",
+                      "backupPath":  null
+                  },
+                  {
+                      "path":  "handoff/phase-D/level-editor-production/RUN.md",
+                      "action":  "added",
+                      "beforeHash":  null,
+                      "afterHash":  "707da8c110a2206ee46cd169ba60ab2b52326a3defafc45ea3c5939d8405ec23",
+                      "backupPath":  null
+                  }
+              ]
+}

@@ -1,0 +1,300 @@
+.le-root {
+    flex-grow: 1;
+    background-color: rgb(35, 35, 38);
+}
+
+.le-toolbar {
+    flex-direction: row;
+    align-items: center;
+    min-height: 40px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(67, 67, 72);
+}
+
+.le-outer-split, .le-inner-split {
+    flex-grow: 1;
+    min-height: 320px;
+}
+
+.le-levels-pane, .le-inspector-pane {
+    background-color: rgb(42, 42, 46);
+    padding: 8px;
+}
+
+.le-levels-pane {
+    min-width: 180px;
+    width: 190px;
+    border-right-width: 1px;
+    border-right-color: rgb(67, 67, 72);
+}
+
+.le-levels-slot {
+    min-width: 180px;
+}
+
+.le-levels-slot > .le-levels-pane {
+    width: 100%;
+    flex-grow: 1;
+}
+
+.le-levels-overlay {
+    position: absolute;
+    left: 0;
+    top: 40px;
+    bottom: 28px;
+    width: 300px;
+    border-right-width: 1px;
+    border-right-color: rgb(90, 90, 96);
+}
+
+.le-inspector-pane {
+    min-width: 240px;
+    width: 280px;
+    border-left-width: 1px;
+    border-left-color: rgb(67, 67, 72);
+}
+
+.le-levels-compact {
+    min-width: 160px;
+    width: 170px;
+}
+
+.le-inspector-narrow {
+    min-width: 220px;
+}
+
+.le-canvas {
+    flex-grow: 1;
+    min-width: 320px;
+    min-height: 320px;
+    background-color: rgb(29, 29, 33);
+    overflow: hidden;
+}
+
+.le-board-surface {
+    background-color: rgb(48, 51, 58);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: rgb(104, 108, 119);
+    border-right-color: rgb(104, 108, 119);
+    border-top-color: rgb(104, 108, 119);
+    border-bottom-color: rgb(104, 108, 119);
+}
+
+.le-board-mask {
+    opacity: 0.85;
+}
+
+.le-empty-state {
+    color: rgb(190, 190, 198);
+    unity-text-align: middle-center;
+    max-width: 360px;
+    white-space: normal;
+}
+
+.le-entity {
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: rgba(255, 255, 255, 0.08);
+    border-right-color: rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(255, 255, 255, 0.08);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.le-entity-selected {
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-left-color: rgb(93, 177, 255);
+    border-right-color: rgb(93, 177, 255);
+    border-top-color: rgb(93, 177, 255);
+    border-bottom-color: rgb(93, 177, 255);
+}
+
+.le-statusbar {
+    flex-direction: row;
+    align-items: center;
+    min-height: 28px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-top-width: 1px;
+    border-top-color: rgb(67, 67, 72);
+    color: rgb(191, 191, 198);
+}
+
+.le-status-blocking, .le-validation-blocking {
+    color: rgb(255, 190, 190);
+    background-color: rgba(112, 49, 49, 0.7);
+}
+
+.le-status-warning, .le-validation-warning {
+    color: rgb(255, 239, 190);
+    background-color: rgba(112, 85, 38, 0.7);
+}
+
+.le-validation-info {
+    color: rgb(190, 220, 255);
+}
+
+.le-button {
+    min-height: 28px;
+    margin-right: 4px;
+}
+
+.le-button-primary {
+    min-height: 30px;
+    min-width: 88px;
+    margin-right: 6px;
+    unity-font-style: bold;
+    background-color: rgb(61, 112, 174);
+    color: white;
+}
+
+.le-button-secondary {
+    min-height: 28px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.le-button-danger {
+    min-height: 28px;
+    margin-top: 8px;
+    color: rgb(255, 210, 210);
+}
+
+.le-section-header, #inspector-title, #levels-title, #entity-header, #validation-header, #layout-header, #level-settings-header {
+    unity-font-style: bold;
+    font-size: 13px;
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+.le-list-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.le-list-button {
+    flex-grow: 1;
+    flex-direction: row;
+    align-items: center;
+    min-height: 27px;
+    unity-text-align: middle-left;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.le-entity-thumbnail {
+    width: 23px;
+    height: 25px;
+    margin-right: 6px;
+}
+
+.le-color-palette {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.le-color-choice {
+    width: 43px;
+    height: 49px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    padding: 3px;
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: rgb(75, 75, 80);
+    border-right-color: rgb(75, 75, 80);
+    border-top-color: rgb(75, 75, 80);
+    border-bottom-color: rgb(75, 75, 80);
+}
+
+.le-color-choice-selected {
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-left-color: rgb(93, 177, 255);
+    border-right-color: rgb(93, 177, 255);
+    border-top-color: rgb(93, 177, 255);
+    border-bottom-color: rgb(93, 177, 255);
+}
+
+.le-color-preview {
+    width: 32px;
+    height: 38px;
+}
+
+.le-entity-group {
+    margin-top: 6px;
+}
+
+.le-row-selected {
+    background-color: rgba(61, 112, 174, 0.45);
+}
+
+.le-badge {
+    margin-left: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    font-size: 10px;
+}
+
+.le-badge-success {
+    color: rgb(222, 245, 226);
+    background-color: rgb(46, 91, 61);
+}
+
+.le-badge-warning {
+    color: rgb(255, 239, 190);
+    background-color: rgb(112, 85, 38);
+}
+
+.le-badge-danger {
+    color: rgb(255, 220, 220);
+    background-color: rgb(112, 49, 49);
+}
+
+.le-field-row {
+    flex-direction: row;
+}
+
+.le-field-row > .unity-base-field {
+    flex-grow: 1;
+    margin-right: 4px;
+}
+
+.le-muted {
+    color: rgb(155, 155, 165);
+    font-size: 11px;
+}
+
+.le-validation-panel {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top-width: 1px;
+    border-top-color: rgb(67, 67, 72);
+}
+
+.le-validation-row {
+    margin-bottom: 3px;
+    white-space: normal;
+    unity-text-align: middle-left;
+}
+
+.le-pane-hidden {
+    display: none;
+}

@@ -72,7 +72,6 @@ namespace SE001.Tests
                     stableId = "test_cup",
                     acceptedMaterialId = 1,
                     position = new Vector2(5.4f, 1f),
-                    size = new Vector2(2f, 1.5f),
                     requiredAmount = 1
                 },
                 profile,
@@ -184,8 +183,7 @@ namespace SE001.Tests
                 stableId = "test_source",
                 materialId = 1,
                 position = Vector2.one,
-                logicalAmount = 1,
-                size = new Vector2(1f, 1f)
+                logicalAmount = 1
             };
             return new SourceDomain(data, runtime.sourceProfile, runtime.sandProfile.grainsPerUnit);
         }

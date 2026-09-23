@@ -23,10 +23,10 @@ namespace SE001.Gameplay
             remaining = Initial;
             openDelay = profile.valveOpenDelay;
             // emissionRate is grains per 60 Hz step (sand-feel-lab 'rate'); converted to grains/second.
-            grainsPerSecond = (data.emissionRate > 0f ? data.emissionRate : profile.emissionRate) * 60f;
-            streamWidthCells = Mathf.Max(1, Mathf.RoundToInt(data.streamWidth > 0f ? data.streamWidth : profile.streamWidth));
+            grainsPerSecond = profile.emissionRate * 60f;
+            streamWidthCells = Mathf.Max(1, profile.streamWidth);
             Position = data.position;
-            Size = data.size.x > 0f && data.size.y > 0f ? data.size : profile.bodySize;
+            Size = profile.bodySize;
             BodyOffset = new Vector2(0f, JarVisualGeometry.SourceBodyOffsetY(Size.y, profile, visualProfile));
             state = remaining == 0 ? SourceValveState.Empty : data.startsOpen ? SourceValveState.Open : SourceValveState.Closed;
         }
@@ -101,7 +101,7 @@ namespace SE001.Gameplay
     }
 
     /// <summary>
-    /// Cup geometry from CupData + CupProfile only (never from the mesh).
+    /// Cup geometry from CupProfile only (never from the mesh).
     /// position = bottom-center, size = outer width (at the mouth) / height. Tapered bucket:
     /// bottom width = size.x * (1 - taper). Slanted side walls + bottom block sand; top open until full.
     /// Full = sand volume reaches the fill line (fillLine * interior height) → Required grains derive
@@ -127,7 +127,7 @@ namespace SE001.Gameplay
             StableId = data.stableId;
             AcceptedMaterialId = (byte)data.acceptedMaterialId;
             Position = data.position;
-            Size = data.size;
+            Size = profile.bodySize;
             RequiredLogical = Mathf.Max(1, data.requiredAmount);
             taper = profile.taper;
             fillLine = profile.fillLine;

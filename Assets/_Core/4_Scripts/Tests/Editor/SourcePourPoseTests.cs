@@ -115,7 +115,6 @@ namespace SE001.Tests
                     stableId = "pour_pose_source",
                     materialId = 1,
                     position = new Vector2(2f, 3f),
-                    size = new Vector2(1f, 1.2f),
                     logicalAmount = 4,
                     startsOpen = startsOpen
                 },

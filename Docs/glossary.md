@@ -15,6 +15,8 @@
 
 ## 2. Authoring / architecture
 
+`Level name (GD)`: tên `Level_XX` hiển thị theo vị trí trong `PhaseCLevelSequence`; level cũ giữ `levelId` nội bộ để bảo toàn reference. `levelId` là ID ổn định dùng cho JSON filename và runtime load.
+
 | Term | Nghĩa | Tên trong code |
 |---|---|---|
 | Source of truth | Data authored duy nhất được save | `AuthoringData` |
@@ -47,6 +49,8 @@
 | Canonical contour | Finite, filled, closed simple polygon in board-space | `PolygonContourData` |
 | Valid mask | Generated cells where sand may exist inside the board | `validMask` |
 | Static mask | Generated cells blocked by authored wall/obstacles | `staticObstacleMask` |
+| Rotating Obstacle / Cross | Per-level X-shaped continuously rotating obstacle that pushes sand; its bars share the static obstacle material | `RotatingObstacleData`, `RotatingObstacleSystem` |
+| Rotating mask | Transient occupied cells of all Cross obstacles, separate from the player's stroke mask | `SandSimulationState.RotatingMask` |
 
 | Term | Đo bằng gì | Nói lên gì | Không nói lên |
 |---|---|---|---|
