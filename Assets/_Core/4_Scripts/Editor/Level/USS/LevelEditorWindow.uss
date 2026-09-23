@@ -148,6 +148,12 @@
     margin-right: 4px;
 }
 
+.le-button-selected {
+    background-color: rgb(61, 90, 126);
+    border-bottom-width: 2px;
+    border-bottom-color: rgb(93, 177, 255);
+}
+
 .le-button-primary {
     min-height: 30px;
     min-width: 88px;

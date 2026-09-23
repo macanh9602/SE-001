@@ -114,9 +114,8 @@ namespace SE001.Editor.Level
                 ShowNotification(new GUIContent("Choose a Ready layout before adding a Source."));
                 return;
             }
-            SourceProfile profile = Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
-            Vector2 size = profile != null ? profile.bodySize : new Vector2(0.8f, 1.2f);
-            Vector2 position = FindOpenCenter(size);
+            Vector2 size = LevelEditorGeometry.SourceVisualSize();
+            Vector2 position = FindOpenCenter(size, false, LevelEditorGeometry.SourceVisualOffset());
             string id = LevelEditorStableIds.Create("source");
             ApplyEdit(level => level.sources.Add(new SourceData
             {
@@ -137,8 +136,8 @@ namespace SE001.Editor.Level
                 return;
             }
             CupProfile profile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
-            Vector2 size = profile != null ? profile.bodySize : new Vector2(2f, 1.5f);
-            Vector2 position = FindOpenCenter(size);
+            Vector2 size = profile != null ? profile.bodySize : new Vector2(2f, 2f);
+            Vector2 position = FindOpenCenter(size, false, LevelEditorGeometry.CupVisualOffset());
             string id = LevelEditorStableIds.Create("cup");
             ApplyEdit(level => level.cups.Add(new CupData
             {
@@ -171,22 +170,23 @@ namespace SE001.Editor.Level
             SelectEntity(id, LevelEditorSelectionKind.RotatingObstacle);
         }
 
-        private Vector2 FindOpenCenter(Vector2 size, bool rotating = false)
+        private Vector2 FindOpenCenter(Vector2 size, bool rotating = false,
+            Vector2 visualOffset = default(Vector2))
         {
             Vector2 center = Document.board.size * 0.5f;
             if (IsPlacementOpen(center, size) &&
                 LevelEditorGeometry.InBoard(center, size, Document.board.size) &&
                 PlacementFootprintOpen(center, size, rotating))
-                return center;
+                return center - visualOffset;
             for (int y = 1; y < 10; y++)
             for (int x = 1; x < 10; x++)
             {
                 Vector2 candidate = new Vector2(Document.board.size.x * x / 10f, Document.board.size.y * y / 10f);
                 if (LevelEditorGeometry.InBoard(candidate, size, Document.board.size) &&
                     PlacementFootprintOpen(candidate, size, rotating) &&
-                    IsPlacementOpen(candidate, size)) return candidate;
+                    IsPlacementOpen(candidate, size)) return candidate - visualOffset;
             }
-            return center;
+            return center - visualOffset;
         }
 
         private bool PlacementFootprintOpen(Vector2 position, Vector2 size, bool rotating)
@@ -204,13 +204,15 @@ namespace SE001.Editor.Level
             {
                 SourceData source = Document.sources[i];
                 if (source != null && LevelEditorGeometry.Overlaps(
-                        position, size, source.position, LevelEditorGeometry.SourceSize(source))) return false;
+                        position, size, source.position + LevelEditorGeometry.SourceVisualOffset(source),
+                        LevelEditorGeometry.SourceVisualSize())) return false;
             }
             for (int i = 0; i < Document.cups.Count; i++)
             {
                 CupData cup = Document.cups[i];
                 if (cup != null && LevelEditorGeometry.Overlaps(
-                        position, size, cup.position, LevelEditorGeometry.CupSize(cup))) return false;
+                        position, size, cup.position + LevelEditorGeometry.CupVisualOffset(),
+                        LevelEditorGeometry.CupSize(cup))) return false;
             }
             return true;
         }

@@ -5,6 +5,8 @@ using NUnit.Framework;
 using SE001.Data;
 using SE001.Editor.Level;
 using SE001.Geometry;
+using SE001.Gameplay;
+using SE001.Presentation;
 using UnityEngine;
 
 namespace SE001.Tests
@@ -78,6 +80,89 @@ namespace SE001.Tests
 
             Assert.That(LevelEditorGeometry.FootprintOpen(masks, new Vector2(0.25f, 0.25f), new Vector2(0.2f, 0.2f), 0.1f), Is.True);
             Assert.That(LevelEditorGeometry.FootprintOpen(masks, new Vector2(0.55f, 0.55f), new Vector2(0.2f, 0.2f), 0.1f), Is.False);
+        }
+
+        [Test]
+        public void EntityPreview_UsesRuntimeAnchorsAndArtFootprint()
+        {
+            SourceProfile source = Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
+            CupProfile cup = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
+            JarVisualProfile art = Resources.Load<JarVisualProfile>("Profiles/JarVisualProfile");
+            Assert.That(source, Is.Not.Null);
+            Assert.That(cup, Is.Not.Null);
+            Assert.That(art, Is.Not.Null);
+
+            float compositeHeight = source.bodySize.y * art.sourceCompositeHeightPixels /
+                art.sourceBodyHeightPixels;
+            Vector2 closedOffset = LevelEditorGeometry.SourceVisualOffset(false);
+            Vector2 openOffset = LevelEditorGeometry.SourceVisualOffset(true);
+            Assert.That(LevelEditorGeometry.SourceVisualSize().y, Is.EqualTo(compositeHeight).Within(0.0001f));
+            Assert.That(closedOffset.y, Is.EqualTo(
+                JarVisualGeometry.SourceBodyOffsetY(source.bodySize.y, source, art) +
+                (compositeHeight - source.bodySize.y) * 0.5f).Within(0.0001f));
+            Assert.That(openOffset.y, Is.EqualTo(compositeHeight * 0.5f).Within(0.0001f));
+            Assert.That(LevelEditorGeometry.CupVisualOffset().y,
+                Is.EqualTo(cup.bodySize.y * 0.5f).Within(0.0001f));
+        }
+
+        [Test]
+        public void Placement_UsesCupBottomAnchorAndSourceVisibleTop()
+        {
+            SE001LevelJson level = new SE001LevelJson
+            {
+                board = new BoardData { size = new Vector2(10f, 10f) }
+            };
+            level.cups.Add(new CupData { stableId = "cup", position = new Vector2(5f, 0.1f) });
+            level.sources.Add(new SourceData { stableId = "source", position = new Vector2(5f, 8.6f) });
+            LayoutMaskSet masks = new LayoutMaskSet(100, 100);
+            for (int i = 0; i < masks.ValidMask.Length; i++) masks.ValidMask[i] = true;
+
+            Assert.That(LevelEditorValidation.IsPositionValid(level, masks, 0.1f,
+                "cup", LevelEditorSelectionKind.Cup, level.cups[0].position), Is.True);
+            Assert.That(LevelEditorValidation.IsPositionValid(level, masks, 0.1f,
+                "source", LevelEditorSelectionKind.Source, level.sources[0].position), Is.False);
+        }
+
+        [Test]
+        public void RuntimeJarRendererBounds_MatchEditorPreviewFootprints()
+        {
+            PrefabProfile prefabs = Resources.Load<PrefabProfile>("Profiles/PhaseBPrefabProfile");
+            SourceProfile sourceProfile = Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
+            CupProfile cupProfile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
+            JarVisualProfile art = Resources.Load<JarVisualProfile>("Profiles/JarVisualProfile");
+            Assert.That(prefabs, Is.Not.Null);
+            GameObject sourceObject = Object.Instantiate(prefabs.sourcePrefab);
+            GameObject cupObject = Object.Instantiate(prefabs.cupPrefab);
+            try
+            {
+                SourceData sourceData = new SourceData { position = new Vector2(2f, 3f), logicalAmount = 10 };
+                SourceDomain source = new SourceDomain(sourceData, sourceProfile, 12, art);
+                PhaseCSourceVisual sourceVisual = sourceObject.GetComponent<PhaseCSourceVisual>();
+                sourceVisual.Bind(source, null, null, art, null);
+                Bounds sourceBounds = sourceVisual.BodyRenderer.bounds;
+                sourceBounds.Encapsulate(sourceVisual.MouthRenderer.bounds);
+                Assert.That(sourceBounds.center.y - sourceData.position.y,
+                    Is.EqualTo(LevelEditorGeometry.SourceVisualOffset(false).y).Within(0.002f));
+                Assert.That(sourceBounds.size.y,
+                    Is.EqualTo(LevelEditorGeometry.SourceVisualSize().y).Within(0.002f));
+
+                CupData cupData = new CupData { position = new Vector2(4f, 2f), requiredAmount = 5 };
+                CupDomain cup = new CupDomain(cupData, cupProfile, 12, 0.1f, art);
+                PhaseCCupVisual cupVisual = cupObject.GetComponent<PhaseCCupVisual>();
+                cupVisual.Bind(cup, null, null, art);
+                Bounds cupBounds = cupVisual.BodyRenderer.bounds;
+                cupBounds.Encapsulate(cupVisual.CapTopRenderer.bounds);
+                cupBounds.Encapsulate(cupVisual.CapBottomRenderer.bounds);
+                Assert.That(cupBounds.center.y - cupData.position.y,
+                    Is.EqualTo(LevelEditorGeometry.CupVisualOffset().y).Within(0.002f));
+                Assert.That(cupBounds.size.y,
+                    Is.EqualTo(cupProfile.bodySize.y).Within(0.002f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(sourceObject);
+                Object.DestroyImmediate(cupObject);
+            }
         }
 
         [Test]

@@ -11,6 +11,7 @@ namespace SE001.Editor.Level
     {
         private const int ListPageSize = 25;
         private Button levelsToggle;
+        private Button generalToggle;
         private VisualElement levelsSlot;
         private bool compactLevels;
         private bool levelsDrawerOpen;
@@ -32,6 +33,10 @@ namespace SE001.Editor.Level
             toolbar.Add(MakeButton("Redo", Undo.PerformRedo, "le-button"));
             levelsToggle = MakeButton("Levels", ToggleLevelsPane, "le-button");
             toolbar.Add(levelsToggle);
+            generalToggle = MakeButton("General", () => SelectEntity(string.Empty, LevelEditorSelectionKind.None),
+                "le-button");
+            generalToggle.tooltip = "Level settings, including Ink budget";
+            toolbar.Add(generalToggle);
             VisualElement spacer = new VisualElement();
             spacer.style.flexGrow = 1f;
             toolbar.Add(spacer);

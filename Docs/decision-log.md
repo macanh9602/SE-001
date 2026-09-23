@@ -297,4 +297,6 @@ GD chose a continuously rotating Cross obstacle with two 9-slice bars, shared st
 
 Source body size, emission rate and stream width live only in `SourceProfile`; Cup outside size lives only in `CupProfile`, initially 2 × 1.5 board units. Schema 4 omits these jar values and adds Cross entities. Existing schema-3 levels load with global Profile values and are upgraded to schema 4 when saved from the Level Editor. The few legacy Cup shapes that differed therefore become the chosen global size.
 
+GD revised the global Cup outside size to **2 × 2 board units** on 2026-09-23. `CupProfile` is the authoritative setting; Editor preview and runtime both read it.
+
 Mobile cost: one moving bool mask and a scratch mask per level, bounded Cross footprint scans at the fixed sand step, and two SpriteRenderer draws per Cross. No per-step grain allocation or runtime material creation. Device profiling remains required before production closure.

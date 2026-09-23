@@ -26,6 +26,7 @@ namespace SE001.Editor.Level
         private EntityHandle activeDrag;
         private bool dragging;
         private int dragPointerId = -1;
+        private Vector2 dragPointerOffset;
 
         public event Action<string, LevelEditorSelectionKind> EntitySelected;
         public event Action<string, LevelEditorSelectionKind> DragStarted;
@@ -120,7 +121,7 @@ namespace SE001.Editor.Level
                 SourceData source = level.sources[i];
                 if (source == null) continue;
                 AddEntity(JarPreviewKind.Source, source.stableId, source.materialId, source.position,
-                    ResolveSourceSize(source), ResolveSourceFill(source));
+                    LevelEditorGeometry.SourceVisualSize(), ResolveSourceFill(source), source.startsOpen);
             }
 
             for (int i = 0; i < level.cups.Count; i++)
@@ -150,16 +151,20 @@ namespace SE001.Editor.Level
             RefreshSelectionClasses();
         }
 
-        private void AddEntity(JarPreviewKind kind, string stableId, int colorId, Vector2 position, Vector2 size, float fill)
+        private void AddEntity(JarPreviewKind kind, string stableId, int colorId, Vector2 position,
+            Vector2 size, float fill, bool pouring = false)
         {
             LevelEditorSelectionKind selectionKind = kind == JarPreviewKind.Source
                 ? LevelEditorSelectionKind.Source
                 : LevelEditorSelectionKind.Cup;
             LevelEditorCanvasData.SetPosition(stableId, selectionKind, position);
-            Texture2D preview = JarPreviewUtility.GetPreview(kind, colorId, size, fill);
+            Texture2D preview = JarPreviewUtility.GetPreview(kind, colorId, size, fill, pouring);
             Image image = new Image { image = preview, scaleMode = ScaleMode.ScaleToFit };
             image.AddToClassList("le-entity");
-            image.userData = new EntityHandle(stableId, selectionKind, size);
+            Vector2 visualOffset = kind == JarPreviewKind.Source
+                ? LevelEditorGeometry.SourceVisualOffset(pouring)
+                : LevelEditorGeometry.CupVisualOffset();
+            image.userData = new EntityHandle(stableId, selectionKind, size, visualOffset);
             image.RegisterCallback<PointerDownEvent>(OnEntityPointerDown);
             surface.Add(image);
             handles.Add(image, (EntityHandle)image.userData);
@@ -178,6 +183,8 @@ namespace SE001.Editor.Level
             activeDrag = handle;
             dragging = true;
             dragPointerId = evt.pointerId;
+            dragPointerOffset = GetBoardPoint(evt.position) -
+                LevelEditorCanvasData.PositionFor(handle.StableId, handle.Kind);
             this.CapturePointer(evt.pointerId);
             DragStarted?.Invoke(handle.StableId, handle.Kind);
             evt.StopPropagation();
@@ -185,7 +192,7 @@ namespace SE001.Editor.Level
 
         private void OnPointerDown(PointerDownEvent evt)
         {
-            if (evt.button == 0 && evt.target == this)
+            if (evt.button == 0 && (evt.target == this || evt.target == surface || evt.target == boardMask))
             {
                 EntitySelected?.Invoke(string.Empty, LevelEditorSelectionKind.None);
             }
@@ -194,7 +201,7 @@ namespace SE001.Editor.Level
         private void OnPointerMove(PointerMoveEvent evt)
         {
             if (!dragging || evt.pointerId != dragPointerId) return;
-            Vector2 point = GetBoardPoint(evt.position);
+            Vector2 point = GetBoardPoint(evt.position) - dragPointerOffset;
             DragMoved?.Invoke(activeDrag.StableId, activeDrag.Kind, point);
             evt.StopPropagation();
         }
@@ -205,7 +212,7 @@ namespace SE001.Editor.Level
             dragging = false;
             dragPointerId = -1;
             this.ReleasePointer(evt.pointerId);
-            Vector2 point = GetBoardPoint(evt.position);
+            Vector2 point = GetBoardPoint(evt.position) - dragPointerOffset;
             DragEnded?.Invoke(activeDrag.StableId, activeDrag.Kind, point);
             activeDrag = default(EntityHandle);
             evt.StopPropagation();
@@ -256,7 +263,7 @@ namespace SE001.Editor.Level
                 float imageHeight = Mathf.Max(12f, size.y * boardScale);
                 image.style.width = imageWidth;
                 image.style.height = imageHeight;
-                Vector2 position = FindEntityPosition(handle.StableId, handle.Kind);
+                Vector2 position = FindEntityPosition(handle.StableId, handle.Kind) + handle.VisualOffset;
                 image.style.left = position.x * boardScale - imageWidth * 0.5f;
                 image.style.top = (boardSize.y - position.y) * boardScale - imageHeight * 0.5f;
             }
@@ -273,8 +280,9 @@ namespace SE001.Editor.Level
             foreach (KeyValuePair<VisualElement, EntityHandle> pair in handles)
             {
                 if (pair.Value.StableId != stableId || pair.Value.Kind != kind) continue;
-                pair.Key.style.left = position.x * boardScale - pair.Key.resolvedStyle.width * 0.5f;
-                pair.Key.style.top = (boardSize.y - position.y) * boardScale - pair.Key.resolvedStyle.height * 0.5f;
+                Vector2 center = position + pair.Value.VisualOffset;
+                pair.Key.style.left = center.x * boardScale - pair.Key.resolvedStyle.width * 0.5f;
+                pair.Key.style.top = (boardSize.y - center.y) * boardScale - pair.Key.resolvedStyle.height * 0.5f;
                 break;
             }
         }
@@ -315,17 +323,10 @@ namespace SE001.Editor.Level
             maskTexture.Apply(false, false);
         }
 
-        private static Vector2 ResolveSourceSize(SourceData source)
-        {
-            SourceProfile profile = Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
-            Vector2 fallback = profile != null ? profile.bodySize : new Vector2(0.8f, 1.2f);
-            return fallback;
-        }
-
         private static Vector2 ResolveCupSize(CupData cup)
         {
             CupProfile profile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
-            return profile != null ? profile.bodySize : new Vector2(2f, 1.5f);
+            return profile != null ? profile.bodySize : new Vector2(2f, 2f);
         }
 
         private static float ResolveSourceFill(SourceData source)
@@ -335,16 +336,19 @@ namespace SE001.Editor.Level
 
         private readonly struct EntityHandle
         {
-            public EntityHandle(string stableId, LevelEditorSelectionKind kind, Vector2 size)
+            public EntityHandle(string stableId, LevelEditorSelectionKind kind, Vector2 size,
+                Vector2 visualOffset = default(Vector2))
             {
                 StableId = stableId ?? string.Empty;
                 Kind = kind;
                 Size = size;
+                VisualOffset = visualOffset;
             }
 
             public string StableId { get; }
             public LevelEditorSelectionKind Kind { get; }
             public Vector2 Size { get; }
+            public Vector2 VisualOffset { get; }
         }
     }
 

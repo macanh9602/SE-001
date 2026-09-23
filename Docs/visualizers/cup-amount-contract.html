@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Source Amount và Cup Required — SE-001</title>
+<style>
+:root{--bg:#0e1116;--panel:#171d26;--line:#303948;--text:#e8edf4;--muted:#a6b2c1;--blue:#6aa8ff;--yellow:#f1c550;--red:#ef7780;--green:#64d6a3}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 system-ui,sans-serif}
+main{max-width:1100px;margin:auto;padding:24px}h1{font-size:22px;margin:0 0 6px}h2{font-size:15px;margin:0 0 8px}.sub{color:var(--muted);margin:0 0 20px}
+.controls,.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:18px}
+label{display:block;color:var(--muted)}input[type=range]{width:100%;accent-color:var(--blue)}output{float:right;color:var(--blue);font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}.card.rec{border-color:var(--blue)}.tag{color:var(--green);font-size:12px;font-weight:700}.cup{position:relative;width:90px;height:160px;border:8px solid #cbd6e6;border-top:0;border-radius:0 0 13px 13px;margin:18px auto;background:#26303e;overflow:hidden}.sand{position:absolute;bottom:0;left:0;right:0;background:var(--yellow);height:0;transition:height .2s}.line{position:absolute;left:0;right:0;bottom:85%;border-top:2px dashed var(--green)}
+.metric{font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;text-align:center}.note{color:var(--muted);font-size:12px}.bad{color:var(--red)}.good{color:var(--green)}code{color:var(--blue)}
+</style>
+</head>
+<body><main>
+<h1>Vì sao Source 10 không làm đầy Cup 5?</h1>
+<p class="sub">Số đo trực tiếp từ Level_04, CupProfile 2 × 2, grid 0.06 board units. Giả định minh họa: toàn bộ sand cùng màu đều rơi vào một Cup; vật cản và thất thoát chỉ làm kết quả thực tế thấp hơn.</p>
+<section class="controls">
+  <label>Source Amount <output id="sourceValue">10</output><input id="source" type="range" min="1" max="30" value="10"></label>
+  <label>Cup Required Amount <output id="targetValue">5</output><input id="target" type="range" min="1" max="15" value="5"></label>
+</section>
+<div class="cards">
+  <section class="card"><h2>Đang chạy</h2><div class="cup"><div class="sand" id="currentSand"></div><div class="line"></div></div><div class="metric bad" id="currentMetric"></div><p class="note">Mỗi unit Source tạo 30 grains. Cup chỉ Full khi có 572 grains trong vùng fill line. Required Amount hiện chỉ đổi nhãn HUD, không đổi ngưỡng Full.</p></section>
+  <section class="card rec"><div class="tag">ĐỀ XUẤT</div><h2>Cup target theo dung tích thật</h2><div class="cup"><div class="sand" id="proposedSand"></div><div class="line"></div></div><div class="metric good" id="proposedMetric"></div><p class="note">Với Cup global 2 × 2 và target chuẩn 5 unit, 1 unit cần khoảng 115 grains. Required của Cup được suy ra từ Profile, không nhập riêng mỗi Cup. Source 10 đủ cho một Cup nếu ít nhất khoảng nửa lượng sand tới được Cup.</p></section>
+  <section class="card"><h2>Giữ hệ số 30 hiện tại</h2><div class="cup"><div class="sand" id="manualSand"></div><div class="line"></div></div><div class="metric" id="manualMetric"></div><p class="note">Cần Source Amount tối thiểu 20 chỉ để đạt fill line trong điều kiện lý tưởng. Cup Required 5 tiếp tục không phản ánh dung tích; GD phải tự bù nguồn.</p></section>
+</div>
+<p class="note" style="margin-top:18px">Mobile: phương án đề xuất giữ nguyên grid, memory và draw call; số grains thực tế/phút và thời gian phát có thể tăng khoảng 3.8 lần so với Amount tương đương hiện tại. Cần profile trên Redmi 9A trước khi đóng story.</p>
+</main><script>
+const source=document.getElementById('source'),target=document.getElementById('target');
+function update(){const amount=+source.value,need=+target.value,physical=572,oldUnit=30,newUnit=115;
+document.getElementById('sourceValue').textContent=amount+' unit';document.getElementById('targetValue').textContent=need+' unit';
+const oldGrains=amount*oldUnit,newGrains=amount*newUnit;const oldPct=Math.min(100,Math.round(oldGrains/physical*85)),newPct=Math.min(100,Math.round(newGrains/physical*85));
+document.getElementById('currentSand').style.height=oldPct+'%';document.getElementById('proposedSand').style.height=newPct+'%';document.getElementById('manualSand').style.height=oldPct+'%';
+document.getElementById('currentMetric').textContent=oldGrains+' / '+physical+' grains · '+Math.round(oldGrains/physical*100)+'% mục tiêu';
+document.getElementById('proposedMetric').textContent=newGrains+' / '+physical+' grains · '+(newGrains>=physical?'đủ lý thuyết':'thiếu');
+document.getElementById('manualMetric').textContent='Cần ít nhất '+Math.ceil(physical/oldUnit)+' unit Source';
+}source.addEventListener('input',update);target.addEventListener('input',update);update();
+</script></body></html>

@@ -57,8 +57,9 @@ namespace SE001.Editor.Level
                 if (source == null) continue;
                 ValidateId(source.stableId, "Source", i, ids, issues);
                 ValidateColor(source.materialId, colors, source.stableId, "Color", issues);
-                Vector2 size = LevelEditorGeometry.SourceSize(source);
-                ValidateBounds(source.stableId, LevelEditorSelectionKind.Source, source.position, size, level.board.size, masks, cellSize, issues);
+                Vector2 size = LevelEditorGeometry.SourceVisualSize();
+                Vector2 center = source.position + LevelEditorGeometry.SourceVisualOffset(source);
+                ValidateBounds(source.stableId, LevelEditorSelectionKind.Source, center, size, level.board.size, masks, cellSize, issues);
                 if (source.logicalAmount <= 0)
                     Add(issues, LevelEditorIssueSeverity.Warning, source.stableId, "amount",
                         "This Source has no sand.", "Source", "Set Amount above zero if this Source should emit sand.");
@@ -74,7 +75,8 @@ namespace SE001.Editor.Level
                 ValidateId(cup.stableId, "Cup", i, ids, issues);
                 ValidateColor(cup.acceptedMaterialId, colors, cup.stableId, "Accepted color", issues);
                 Vector2 size = LevelEditorGeometry.CupSize(cup);
-                ValidateBounds(cup.stableId, LevelEditorSelectionKind.Cup, cup.position, size, level.board.size, masks, cellSize, issues);
+                ValidateBounds(cup.stableId, LevelEditorSelectionKind.Cup,
+                    cup.position + LevelEditorGeometry.CupVisualOffset(), size, level.board.size, masks, cellSize, issues);
                 if (cup.requiredAmount <= 0)
                     Add(issues, LevelEditorIssueSeverity.Warning, cup.stableId, "requiredAmount",
                         "This Cup does not require sand.", "Cup", "Set Required Amount above zero for a collection goal.");
@@ -110,7 +112,8 @@ namespace SE001.Editor.Level
                 {
                     CupData cup = level.cups[cupIndex];
                     if (cup == null || !LevelEditorGeometry.Overlaps(
-                            source.position, LevelEditorGeometry.SourceSize(source), cup.position, LevelEditorGeometry.CupSize(cup))) continue;
+                            source.position + LevelEditorGeometry.SourceVisualOffset(source), LevelEditorGeometry.SourceVisualSize(),
+                            cup.position + LevelEditorGeometry.CupVisualOffset(), LevelEditorGeometry.CupSize(cup))) continue;
                     Add(issues, LevelEditorIssueSeverity.Blocking, source.stableId, "position",
                         "Source and Cup overlap.", "Source and Cup placement", "Move one entity so their footprints do not overlap.");
                 }
@@ -126,11 +129,12 @@ namespace SE001.Editor.Level
             Vector2 position)
         {
             if (level == null || level.board == null || masks == null) return false;
-            Vector2 size = LevelEditorGeometry.SizeFor(level, stableId, kind);
-            if (!LevelEditorGeometry.InBoard(position, size, level.board.size)) return false;
+            Vector2 size = LevelEditorGeometry.VisualSizeFor(level, stableId, kind);
+            Vector2 center = position + LevelEditorGeometry.VisualOffsetFor(level, stableId, kind);
+            if (!LevelEditorGeometry.InBoard(center, size, level.board.size)) return false;
             return kind == LevelEditorSelectionKind.RotatingObstacle
-                ? LevelEditorGeometry.RotatingFootprintOpen(masks, position, size.x * 0.5f, cellSize)
-                : LevelEditorGeometry.FootprintOpen(masks, position, size, cellSize);
+                ? LevelEditorGeometry.RotatingFootprintOpen(masks, center, size.x * 0.5f, cellSize)
+                : LevelEditorGeometry.FootprintOpen(masks, center, size, cellSize);
         }
 
         private static void ValidateId(string id, string label, int index, Dictionary<string, string> ids, List<LevelEditorIssue> issues)
@@ -211,10 +215,60 @@ namespace SE001.Editor.Level
             return fallback;
         }
 
+        public static Vector2 SourceVisualSize()
+        {
+            Vector2 body = SourceSize(null);
+            JarVisualProfile visual = UnityEngine.Resources.Load<JarVisualProfile>("Profiles/JarVisualProfile");
+            if (visual == null) return body;
+            float ratio = body.y / Mathf.Max(0.001f, visual.sourceBodyHeightPixels);
+            return new Vector2(visual.sourceBodyWidthPixels * ratio, visual.sourceCompositeHeightPixels * ratio);
+        }
+
+        public static Vector2 SourceVisualOffset(SourceData authored = null)
+        {
+            return SourceVisualOffset(authored != null && authored.startsOpen);
+        }
+
+        public static Vector2 SourceVisualOffset(bool pouring)
+        {
+            Vector2 body = SourceSize(null);
+            Vector2 composite = SourceVisualSize();
+            if (pouring)
+                return new Vector2(0f, composite.y * 0.5f);
+            SourceProfile source = UnityEngine.Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
+            JarVisualProfile visual = UnityEngine.Resources.Load<JarVisualProfile>("Profiles/JarVisualProfile");
+            float bodyCenter = JarVisualGeometry.SourceBodyOffsetY(body.y, source, visual);
+            float extra = composite.y - body.y;
+            return new Vector2(0f, bodyCenter + extra * 0.5f);
+        }
+
+        public static Vector2 CupVisualOffset()
+        {
+            return new Vector2(0f, CupSize(null).y * 0.5f);
+        }
+
+        public static Vector2 VisualOffsetFor(SE001LevelJson level, string stableId,
+            LevelEditorSelectionKind kind)
+        {
+            if (kind == LevelEditorSelectionKind.Source)
+            {
+                for (int i = 0; i < level.sources.Count; i++)
+                    if (level.sources[i] != null && level.sources[i].stableId == stableId)
+                        return SourceVisualOffset(level.sources[i]);
+                return SourceVisualOffset();
+            }
+            return kind == LevelEditorSelectionKind.Cup ? CupVisualOffset() : Vector2.zero;
+        }
+
+        public static Vector2 VisualSizeFor(SE001LevelJson level, string stableId, LevelEditorSelectionKind kind)
+        {
+            return kind == LevelEditorSelectionKind.Source ? SourceVisualSize() : SizeFor(level, stableId, kind);
+        }
+
         public static Vector2 CupSize(CupData cup)
         {
             CupProfile profile = UnityEngine.Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
-            return profile != null ? profile.bodySize : new Vector2(2f, 1.5f);
+            return profile != null ? profile.bodySize : new Vector2(2f, 2f);
         }
 
         public static float RotatingBarWidth()

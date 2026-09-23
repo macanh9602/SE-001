@@ -23,16 +23,19 @@ namespace SE001.Editor
             public int width;
             public int height;
             public int fill;
+            public bool pouring;
             public int profileHash;
 
             public bool Equals(PreviewKey other)
             {
                 return kind == other.kind && colorId == other.colorId && width == other.width && height == other.height &&
-                       fill == other.fill && profileHash == other.profileHash;
+                       fill == other.fill && pouring == other.pouring && profileHash == other.profileHash;
             }
 
             public override bool Equals(object obj) => obj is PreviewKey && Equals((PreviewKey)obj);
-            public override int GetHashCode() => (((((int)kind * 397) ^ colorId) * 397 ^ width) * 397 ^ height) * 397 ^ fill ^ profileHash;
+            public override int GetHashCode() =>
+                ((((((int)kind * 397) ^ colorId) * 397 ^ width) * 397 ^ height) * 397 ^ fill) * 397 ^
+                (pouring ? 1 : 0) ^ profileHash;
         }
 
         private static readonly Dictionary<PreviewKey, Texture2D> Cache = new Dictionary<PreviewKey, Texture2D>();
@@ -41,7 +44,8 @@ namespace SE001.Editor
 
         public static int BuildCount => buildCount;
 
-        public static Texture2D GetPreview(JarPreviewKind kind, int colorId, Vector2 size, float fillRatio)
+        public static Texture2D GetPreview(JarPreviewKind kind, int colorId, Vector2 size,
+            float fillRatio, bool pouring = false)
         {
             ColorProfile colors = Resources.Load<ColorProfile>("Profiles/PhaseCColorProfile");
             JarVisualProfile visuals = Resources.Load<JarVisualProfile>("Profiles/JarVisualProfile");
@@ -54,8 +58,8 @@ namespace SE001.Editor
 
             int height = Mathf.Max(1, Mathf.RoundToInt(size.y * 100f));
             float sourceAspect = visuals != null
-                ? visuals.sourceBodyWidthPixels / Mathf.Max(1f, visuals.sourceBodyHeightPixels)
-                : 156f / 192f;
+                ? visuals.sourceBodyWidthPixels / Mathf.Max(1f, visuals.sourceCompositeHeightPixels)
+                : 156f / 212f;
             int width = kind == JarPreviewKind.Source
                 ? Mathf.Max(1, Mathf.RoundToInt(height * sourceAspect))
                 : Mathf.Max(1, Mathf.RoundToInt(size.x * 100f));
@@ -66,11 +70,12 @@ namespace SE001.Editor
                 width = width,
                 height = height,
                 fill = Mathf.RoundToInt(Mathf.Clamp01(fillRatio) * 10000f),
+                pouring = pouring,
                 profileHash = profileHash
             };
             Texture2D cached;
             if (Cache.TryGetValue(key, out cached) && cached != null) return cached;
-            Texture2D preview = BuildPreview(kind, colorId, width, height, fillRatio, colors, visuals);
+            Texture2D preview = BuildPreview(kind, colorId, width, height, fillRatio, pouring, colors, visuals);
             Cache.Add(key, preview);
             buildCount++;
             return preview;
@@ -117,6 +122,7 @@ namespace SE001.Editor
             int width,
             int height,
             float fillRatio,
+            bool pouring,
             ColorProfile colors,
             JarVisualProfile visuals)
         {
@@ -175,7 +181,8 @@ namespace SE001.Editor
                     LoadTextureFromMaterial(entry.sourceMouthMaterial),
                     mouthX, 0, mouthWidth, mouthHeight,
                     entry.sourceMouthMaterial, Color.white, false);
-                RotatePixels180(sourcePixels, pixels, width, height);
+                if (pouring) Array.Copy(sourcePixels, pixels, sourcePixels.Length);
+                else RotatePixels180(sourcePixels, pixels, width, height);
             }
             else
             {

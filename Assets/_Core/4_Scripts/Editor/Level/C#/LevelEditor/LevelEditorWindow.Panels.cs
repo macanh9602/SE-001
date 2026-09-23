@@ -20,6 +20,9 @@ namespace SE001.Editor.Level
         private void RefreshInspector()
         {
             if (inspectorPane == null) return;
+            if (generalToggle != null)
+                generalToggle.EnableInClassList("le-button-selected",
+                    viewState.selectionKind == LevelEditorSelectionKind.None);
             inspectorFields.Clear();
             inspectorPane.Clear();
             inspectorPane.Add(new Label("Inspector") { name = "inspector-title" });
@@ -47,7 +50,7 @@ namespace SE001.Editor.Level
 
         private void BuildLevelInspector()
         {
-            inspectorPane.Add(new Label("Level settings") { name = "level-settings-header" });
+            inspectorPane.Add(new Label("General · Level settings") { name = "level-settings-header" });
             TextField levelId = new TextField("Level name")
             {
                 value = LevelEditorDocumentService.DisplayName(LevelSequence, Document.levelId),
