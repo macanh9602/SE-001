@@ -52,6 +52,12 @@ namespace SE001.Data
             return TryGetEntry(colorId, out entry) && entry.cupCapMaterial != null && entry.sourceMouthMaterial != null;
         }
 
+        public bool HasBowlMaterials(int colorId)
+        {
+            ColorProfileEntry entry;
+            return TryGetEntry(colorId, out entry) && entry.bowlMainMaterial != null;
+        }
+
         public Color32[] BuildSandLookup()
         {
             int maxId = 0;
@@ -78,5 +84,6 @@ namespace SE001.Data
         public string displayName;
         public Material cupCapMaterial;
         public Material sourceMouthMaterial;
+        public Material bowlMainMaterial;
     }
 }

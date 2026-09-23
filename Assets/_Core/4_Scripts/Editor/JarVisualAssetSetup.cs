@@ -15,6 +15,8 @@ namespace SE001.Editor
         private const string MaskFolder = ProfileFolder + "/JarMasks";
         private const string MaterialFolder = "Assets/_Core/1_Materials/Jar";
         private const string MeshFolder = "Assets/_Core/3_Prefabs/Gameplay/JarVisualMeshes";
+        private const string BowlProfilePath = ProfileFolder + "/BowlVisualProfile.asset";
+        private const string BowlPrefabPath = "Assets/_Core/3_Prefabs/Gameplay/Bowl/Bowl.prefab";
         private const string TuningPath = "handoff/phase-V1/jar-tint-tuning.json";
         private const string EnvPath = "Assets/_Core/0_Texture2D/Env/";
 
@@ -45,8 +47,11 @@ namespace SE001.Editor
         public static void BakeJarMasks()
         {
             JarVisualProfile profile = GetOrCreate<JarVisualProfile>(ProfileFolder + "/JarVisualProfile.asset");
+            BowlVisualProfile bowlProfile = GetOrCreate<BowlVisualProfile>(BowlProfilePath);
             BakeProfile(profile);
+            BakeBowlProfile(bowlProfile);
             EditorUtility.SetDirty(profile);
+            EditorUtility.SetDirty(bowlProfile);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
@@ -54,11 +59,12 @@ namespace SE001.Editor
         public static void RebuildJarPrefabs()
         {
             JarVisualProfile profile = AssetDatabase.LoadAssetAtPath<JarVisualProfile>(ProfileFolder + "/JarVisualProfile.asset");
+            BowlVisualProfile bowlProfile = AssetDatabase.LoadAssetAtPath<BowlVisualProfile>(BowlProfilePath);
             PhaseCVisualMaterials materials = AssetDatabase.LoadAssetAtPath<PhaseCVisualMaterials>(ProfileFolder + "/PhaseCVisualMaterials.asset");
-            if (profile == null || materials == null)
+            if (profile == null || bowlProfile == null || materials == null)
                 throw new InvalidOperationException("Run the Jar Materials setup from the development tooling.");
-            RebuildMeshes(profile);
-            RebuildPrefabs(profile, materials);
+            RebuildMeshes(profile, bowlProfile);
+            RebuildPrefabs(profile, bowlProfile, materials);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
@@ -69,19 +75,23 @@ namespace SE001.Editor
             EnsureFolder(MaskFolder);
             EnsureFolder(MaterialFolder);
             EnsureFolder(MeshFolder);
+            EnsureFolder("Assets/_Core/3_Prefabs/Gameplay/Bowl");
 
             ConfigureTextureImporters();
             JarVisualProfile profile = GetOrCreate<JarVisualProfile>(ProfileFolder + "/JarVisualProfile.asset");
+            BowlVisualProfile bowlProfile = GetOrCreate<BowlVisualProfile>(BowlProfilePath);
             BakeProfile(profile);
-            RebuildMeshes(profile);
+            BakeBowlProfile(bowlProfile);
+            RebuildMeshes(profile, bowlProfile);
 
             PhaseCVisualMaterials materials = GetOrCreate<PhaseCVisualMaterials>(ProfileFolder + "/PhaseCVisualMaterials.asset");
-            RebuildSharedMaterials(profile, materials);
+            RebuildSharedMaterials(profile, bowlProfile, materials);
             RebuildColorProfile(materials);
-            RebuildPrefabs(profile, materials);
-            BindRuntimeProfile(profile, materials);
+            RebuildPrefabs(profile, bowlProfile, materials);
+            BindRuntimeProfile(profile, bowlProfile, materials);
 
             EditorUtility.SetDirty(profile);
+            EditorUtility.SetDirty(bowlProfile);
             EditorUtility.SetDirty(materials);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -93,6 +103,8 @@ namespace SE001.Editor
             ConfigureTexture("T_Cup_Body.png", false);
             ConfigureTexture("T_Source_Body.png", false);
             ConfigureTexture("T_Source_Mounth.png", false);
+            ConfigureTexture("T_Bowl_Main.png", false);
+            ConfigureTexture("T_Bowl_Spec.png", false);
 
             string path = EnvPath + "T_Cup_Head.png";
             TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
@@ -198,6 +210,120 @@ namespace SE001.Editor
             profile.sourceFillRowSpans = spans;
         }
 
+        private static void BakeBowlProfile(BowlVisualProfile profile)
+        {
+            Texture2D main = LoadTexture("T_Bowl_Main.png");
+            Texture2D spec = LoadTexture("T_Bowl_Spec.png");
+            const int alphaThreshold = 64;
+            profile.mainTexture = main;
+            profile.specTexture = spec;
+            profile.mainWidthPixels = main.width;
+            profile.mainHeightPixels = main.height;
+            profile.specWidthPixels = spec.width;
+            profile.specHeightPixels = spec.height;
+            profile.alphaThreshold = alphaThreshold;
+            profile.rimPixelY = DetectBowlRim(main, alphaThreshold);
+            profile.wallThicknessPixels = Mathf.Max(1f, main.width * 0.03f);
+            profile.defaultWorldWidth = main.width * 0.01f;
+            profile.specOffsetPixels = new Vector2(
+                (main.width - spec.width) * 0.5f,
+                (main.height - spec.height) * 0.5f);
+
+            Color32[] source = main.GetPixels32();
+            BowlRowSpan[] outer = new BowlRowSpan[main.height];
+            BowlRowSpan[] inner = new BowlRowSpan[main.height];
+            Color32[] maskPixels = new Color32[source.Length];
+            for (int y = 0; y < main.height; y++)
+            {
+                int min = main.width;
+                int max = -1;
+                for (int x = 0; x < main.width; x++)
+                {
+                    if (source[y * main.width + x].a < alphaThreshold) continue;
+                    min = Mathf.Min(min, x);
+                    max = Mathf.Max(max, x);
+                }
+
+                if (max < min)
+                {
+                    outer[y] = new BowlRowSpan(1f, 0f);
+                    inner[y] = new BowlRowSpan(1f, 0f);
+                    continue;
+                }
+
+                outer[y] = new BowlRowSpan(min, max);
+                float inset = profile.wallThicknessPixels;
+                inner[y] = new BowlRowSpan(min + inset, max - inset);
+                for (int x = min; x <= max; x++)
+                    maskPixels[y * main.width + x] = new Color32(255, 255, 255, source[y * main.width + x].a);
+            }
+
+            Texture2D mask = CreateOrUpdateMask(MaskFolder + "/BowlSilhouetteMask.asset", main.width, main.height);
+            mask.SetPixels32(maskPixels);
+            mask.Apply(false, false);
+            profile.outerRowSpans = outer;
+            profile.innerRowSpans = inner;
+            profile.outerContour = BuildContour(outer, main.width, main.height);
+            profile.innerContour = BuildContour(inner, main.width, main.height);
+            profile.silhouetteMask = mask;
+        }
+
+        private static int DetectBowlRim(Texture2D texture, int alphaThreshold)
+        {
+            Color32[] pixels = texture.GetPixels32();
+            int widest = 0;
+            int widestTopRow = 0;
+            for (int topY = 0; topY < texture.height; topY++)
+            {
+                int width = RowWidth(pixels, texture.width, texture.height - 1 - topY, alphaThreshold);
+                if (width <= widest) continue;
+                widest = width;
+                widestTopRow = topY;
+            }
+
+            int drop = Mathf.Max(1, Mathf.RoundToInt(widest * 0.04f));
+            for (int topY = widestTopRow + 1; topY < texture.height; topY++)
+                if (RowWidth(pixels, texture.width, texture.height - 1 - topY, alphaThreshold) <= widest - drop)
+                    return texture.height - 1 - topY;
+            return Mathf.Max(0, texture.height - 1 - widestTopRow);
+        }
+
+        private static int RowWidth(Color32[] pixels, int width, int y, int alphaThreshold)
+        {
+            int min = width;
+            int max = -1;
+            for (int x = 0; x < width; x++)
+            {
+                if (pixels[y * width + x].a < alphaThreshold) continue;
+                min = Mathf.Min(min, x);
+                max = Mathf.Max(max, x);
+            }
+            return max >= min ? max - min + 1 : 0;
+        }
+
+        private static Vector2[] BuildContour(BowlRowSpan[] rows, int width, int height)
+        {
+            List<Vector2> left = new List<Vector2>();
+            List<Vector2> right = new List<Vector2>();
+            int stride = Mathf.Max(1, Mathf.CeilToInt(height / 19f));
+            for (int y = 0; y < height; y += stride)
+            {
+                BowlRowSpan span = rows[y];
+                if (!span.IsValid) continue;
+                left.Add(new Vector2(span.minX / Mathf.Max(1f, width), y / Mathf.Max(1f, height - 1f)));
+                right.Add(new Vector2(span.maxX / Mathf.Max(1f, width), y / Mathf.Max(1f, height - 1f)));
+            }
+            BowlRowSpan last = rows[height - 1];
+            if (last.IsValid)
+            {
+                left.Add(new Vector2(last.minX / (float)width, (height - 1f) / Mathf.Max(1f, height - 1f)));
+                right.Add(new Vector2(last.maxX / (float)width, (height - 1f) / Mathf.Max(1f, height - 1f)));
+            }
+            right.Reverse();
+            left.AddRange(right);
+            return left.ToArray();
+        }
+
         private static void CopyAlpha(
             Color32[] source,
             int sourceWidth,
@@ -220,13 +346,17 @@ namespace SE001.Editor
                 }
         }
 
-        private static void RebuildSharedMaterials(JarVisualProfile profile, PhaseCVisualMaterials visualMaterials)
+        private static void RebuildSharedMaterials(
+            JarVisualProfile profile,
+            BowlVisualProfile bowlProfile,
+            PhaseCVisualMaterials visualMaterials)
         {
             Shader tint = LoadShader("Assets/_Core/5_Shaders/SE001_JarTint.shader");
             Shader fill = LoadShader("Assets/_Core/5_Shaders/SE001_JarSandFill.shader");
             Shader shadow = LoadShader("Assets/_Core/5_Shaders/SE001_JarShadow.shader");
             Texture2D sourceBody = LoadTexture("T_Source_Body.png");
             Texture2D cupBody = LoadTexture("T_Cup_Body.png");
+            Texture2D bowlSpec = LoadTexture("T_Bowl_Spec.png");
 
             Material sourceBodyMaterial = GetOrCreateMaterial(MaterialFolder + "/MAT_Jar_SourceBody.mat", tint);
             SetTintMaterial(sourceBodyMaterial, tint, sourceBody, Color.white, 0f, 1f, 1f, 0f, 3002);
@@ -241,12 +371,18 @@ namespace SE001.Editor
             SetShadowMaterial(sourceShadowMaterial, shadow, profile.sourceSilhouetteMask, profile.shadowMultiplier);
             Material cupShadowMaterial = GetOrCreateMaterial(MaterialFolder + "/MAT_Jar_CupShadow.mat", shadow);
             SetShadowMaterial(cupShadowMaterial, shadow, profile.cupSilhouetteMask, profile.shadowMultiplier);
+            Material bowlSpecMaterial = GetOrCreateMaterial(MaterialFolder + "/MAT_Jar_BowlSpec.mat", tint);
+            SetTintMaterial(bowlSpecMaterial, tint, bowlSpec, Color.white, 0f, 1f, 1f, 0f, 3004);
+            Material bowlShadowMaterial = GetOrCreateMaterial(MaterialFolder + "/MAT_Jar_BowlShadow.mat", shadow);
+            SetShadowMaterial(bowlShadowMaterial, shadow, bowlProfile.silhouetteMask, profile.shadowMultiplier);
 
             visualMaterials.sourceBodyMaterial = sourceBodyMaterial;
             visualMaterials.cupBodyMaterial = cupBodyMaterial;
             visualMaterials.sourceFillMaterial = sourceFillMaterial;
             visualMaterials.sourceShadowMaterial = sourceShadowMaterial;
             visualMaterials.cupShadowMaterial = cupShadowMaterial;
+            visualMaterials.bowlSpecMaterial = bowlSpecMaterial;
+            visualMaterials.bowlShadowMaterial = bowlShadowMaterial;
             visualMaterials.sourceMaterial = sourceBodyMaterial;
             visualMaterials.cupMaterial = cupBodyMaterial;
             visualMaterials.cupBackMaterial = cupBodyMaterial;
@@ -273,6 +409,10 @@ namespace SE001.Editor
                 SetTintMaterial(
                     mouth, cap.shader, LoadTexture("T_Source_Mounth.png"), ParseHex(item.capTint),
                     item.hue, item.saturation, item.lightness, item.colorize, 3003);
+                Material bowl = GetOrCreateMaterial(MaterialFolder + "/MAT_BowlMain_" + item.displayName + ".mat", cap.shader);
+                SetTintMaterial(
+                    bowl, cap.shader, LoadTexture("T_Bowl_Main.png"), ParseHex(item.capTint),
+                    item.hue, item.saturation, item.lightness, item.colorize, 3002);
                 profile.entries.Add(new ColorProfileEntry
                 {
                     colorId = item.colorId,
@@ -280,18 +420,29 @@ namespace SE001.Editor
                     uiColor = sand,
                     displayName = item.displayName,
                     cupCapMaterial = cap,
-                    sourceMouthMaterial = mouth
+                    sourceMouthMaterial = mouth,
+                    bowlMainMaterial = bowl
                 });
             }
             EditorUtility.SetDirty(profile);
         }
 
-        private static void BindRuntimeProfile(JarVisualProfile profile, PhaseCVisualMaterials materials)
+        private static void BindRuntimeProfile(
+            JarVisualProfile profile,
+            BowlVisualProfile bowlProfile,
+            PhaseCVisualMaterials materials)
         {
             GameplayRuntimeProfile runtime = AssetDatabase.LoadAssetAtPath<GameplayRuntimeProfile>(ProfileFolder + "/PhaseCGameplayRuntimeProfile.asset");
             if (runtime == null) return;
             runtime.jarVisualProfile = profile;
+            runtime.bowlVisualProfile = bowlProfile;
+            runtime.receiverStyle = ReceiverStyle.Bowl;
             runtime.visualMaterials = materials;
+            if (runtime.prefabProfile != null)
+            {
+                runtime.prefabProfile.bowlPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BowlPrefabPath);
+                EditorUtility.SetDirty(runtime.prefabProfile);
+            }
             if (runtime.cupProfile != null)
             {
                 runtime.cupProfile.taper = 0f;
@@ -300,7 +451,7 @@ namespace SE001.Editor
             EditorUtility.SetDirty(runtime);
         }
 
-        private static void RebuildMeshes(JarVisualProfile profile)
+        private static void RebuildMeshes(JarVisualProfile profile, BowlVisualProfile bowlProfile)
         {
             CreateQuadMesh(MeshFolder + "/SourceBody.asset", 1.56f, 1.92f, new Rect(0f, 0f, 1f, 1f));
             CreateQuadMesh(MeshFolder + "/SourceMouth.asset", 0.71f, 0.28f, new Rect(0f, 0f, 1f, 1f));
@@ -309,9 +460,23 @@ namespace SE001.Editor
             CreateQuadMesh(MeshFolder + "/CupCapTop.asset", 1.60f, 0.44f, new Rect(10f / 182f, 173f / 217f, 160f / 182f, 44f / 217f));
             CreateQuadMesh(MeshFolder + "/CupCapBottom.asset", 1.56f, 0.49f, new Rect(12f / 182f, 0f, 156f / 182f, 49f / 217f));
             CreateQuadMesh(MeshFolder + "/CupSilhouette.asset", 1.82f, 2.17f, new Rect(0f, 0f, 1f, 1f));
+            float bowlWidth = bowlProfile != null ? bowlProfile.defaultWorldWidth : 1f;
+            float bowlHeight = bowlProfile != null ? bowlProfile.WorldHeightForWidth(bowlWidth) : 1f;
+            float specWidth = bowlProfile != null
+                ? bowlWidth * bowlProfile.specWidthPixels / Mathf.Max(1f, bowlProfile.mainWidthPixels)
+                : bowlWidth;
+            float specHeight = bowlProfile != null
+                ? bowlHeight * bowlProfile.specHeightPixels / Mathf.Max(1f, bowlProfile.mainHeightPixels)
+                : bowlHeight;
+            CreateQuadMesh(MeshFolder + "/BowlMain.asset", bowlWidth, bowlHeight, new Rect(0f, 0f, 1f, 1f));
+            CreateQuadMesh(MeshFolder + "/BowlSpec.asset", specWidth, specHeight, new Rect(0f, 0f, 1f, 1f));
+            CreateQuadMesh(MeshFolder + "/BowlSilhouette.asset", bowlWidth, bowlHeight, new Rect(0f, 0f, 1f, 1f));
         }
 
-        private static void RebuildPrefabs(JarVisualProfile profile, PhaseCVisualMaterials materials)
+        private static void RebuildPrefabs(
+            JarVisualProfile profile,
+            BowlVisualProfile bowlProfile,
+            PhaseCVisualMaterials materials)
         {
             Material sourceBody = materials.ResolveSourceBody();
             Material cupBody = materials.ResolveCupBody();
@@ -325,12 +490,17 @@ namespace SE001.Editor
             Mesh capTopMesh = AssetDatabase.LoadAssetAtPath<Mesh>(MeshFolder + "/CupCapTop.asset");
             Mesh capBottomMesh = AssetDatabase.LoadAssetAtPath<Mesh>(MeshFolder + "/CupCapBottom.asset");
             Mesh cupShadowMesh = AssetDatabase.LoadAssetAtPath<Mesh>(MeshFolder + "/CupSilhouette.asset");
+            Mesh bowlMainMesh = AssetDatabase.LoadAssetAtPath<Mesh>(MeshFolder + "/BowlMain.asset");
+            Mesh bowlSpecMesh = AssetDatabase.LoadAssetAtPath<Mesh>(MeshFolder + "/BowlSpec.asset");
+            Mesh bowlShadowMesh = AssetDatabase.LoadAssetAtPath<Mesh>(MeshFolder + "/BowlSilhouette.asset");
 
             BuildSourcePrefab(
                 "Assets/_Core/3_Prefabs/Gameplay/Source/SandSource.prefab",
                 sourceBodyMesh, sourceMouthMesh, sourceShadowMesh,
                 sourceBody, sourceFill, sourceShadow);
             BuildCupPrefab("Assets/_Core/3_Prefabs/Gameplay/Cup/Cup.prefab", cupBodyMesh, capTopMesh, capBottomMesh, cupShadowMesh, cupBody, cupShadow);
+            BuildBowlPrefab(BowlPrefabPath, bowlMainMesh, bowlSpecMesh, bowlShadowMesh,
+                materials.bowlSpecMaterial, materials.bowlShadowMaterial);
         }
 
         private static void BuildSourcePrefab(
@@ -379,6 +549,27 @@ namespace SE001.Editor
             SavePrefabRoot(root, path);
         }
 
+        private static void BuildBowlPrefab(
+            string path,
+            Mesh mainMesh,
+            Mesh specMesh,
+            Mesh shadowMesh,
+            Material specMaterial,
+            Material shadowMaterial)
+        {
+            GameObject root = LoadOrCreatePrefabRoot(path, "Bowl");
+            RemoveAllChildren(root.transform);
+            if (root.GetComponent<BowlVisual>() == null) root.AddComponent<BowlVisual>();
+            Transform view = CreateChild(root.transform, "View");
+            AddRenderer(CreateChild(view, "Shadow"), shadowMesh, shadowMaterial);
+            AddRenderer(CreateChild(view, "Main"), mainMesh, null);
+            AddRenderer(CreateChild(view, "Spec"), specMesh, specMaterial);
+            Transform anchors = CreateChild(root.transform, "Anchors");
+            CreateChild(anchors, "Entry");
+            CreateChild(anchors, "Feedback");
+            SavePrefabRoot(root, path);
+        }
+
         private static GameObject LoadOrCreatePrefabRoot(string path, string name)
         {
             GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -390,8 +581,10 @@ namespace SE001.Editor
         private static void SavePrefabRoot(GameObject root, string path)
         {
             EnsureFolder(Path.GetDirectoryName(path).Replace('\\', '/'));
+            bool isPrefabContents = AssetDatabase.LoadAssetAtPath<GameObject>(path) != null;
             PrefabUtility.SaveAsPrefabAsset(root, path);
-            PrefabUtility.UnloadPrefabContents(root);
+            if (isPrefabContents) PrefabUtility.UnloadPrefabContents(root);
+            else UnityEngine.Object.DestroyImmediate(root);
         }
 
         private static void RemoveAllChildren(Transform root)

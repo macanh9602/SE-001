@@ -35,8 +35,8 @@
             "stableId": "cup_638cfc7f4c59",
             "acceptedMaterialId": 1,
             "position": {
-                "x": 2.7562825679779054,
-                "y": 3.4117040634155275
+                "x": 2.908461809158325,
+                "y": 2.067450523376465
             },
             "requiredAmount": 5
         },
@@ -44,8 +44,8 @@
             "stableId": "cup_c69006beebce",
             "acceptedMaterialId": 2,
             "position": {
-                "x": 7.680206775665283,
-                "y": 4.370051860809326
+                "x": 7.730933666229248,
+                "y": 4.8265910148620609
             },
             "requiredAmount": 5
         }

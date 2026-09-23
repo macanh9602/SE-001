@@ -1,0 +1,767 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e9e2f8d7de945d2a6fc0a8e6d0d7cf1, type: 3}
+  m_Name: BowlVisualProfile
+  m_EditorClassIdentifier: 
+  mainTexture: {fileID: 2800000, guid: a4376edf365595b4192e9b40e4fecff7, type: 3}
+  specTexture: {fileID: 2800000, guid: c9e8a9801c8bfb84f9f3ebd9806c6951, type: 3}
+  mainWidthPixels: 352
+  mainHeightPixels: 164
+  specWidthPixels: 312
+  specHeightPixels: 144
+  alphaThreshold: 64
+  rimPixelY: 130
+  wallThicknessPixels: 10.559999
+  defaultWorldWidth: 3.52
+  shadowOffsetPixels: {x: -6, y: -24}
+  specOffsetPixels: {x: 20, y: 10}
+  outerContour:
+  - {x: 0.36363637, y: 0}
+  - {x: 0.25852272, y: 0.055214725}
+  - {x: 0.20738636, y: 0.11042945}
+  - {x: 0.17329545, y: 0.16564417}
+  - {x: 0.14488636, y: 0.2208589}
+  - {x: 0.125, y: 0.2760736}
+  - {x: 0.10795455, y: 0.33128834}
+  - {x: 0.09375, y: 0.38650307}
+  - {x: 0.07954545, y: 0.4417178}
+  - {x: 0.07102273, y: 0.4969325}
+  - {x: 0.0625, y: 0.5521472}
+  - {x: 0.053977273, y: 0.607362}
+  - {x: 0.042613637, y: 0.6625767}
+  - {x: 0.03409091, y: 0.71779144}
+  - {x: 0.025568182, y: 0.77300614}
+  - {x: 0.017045455, y: 0.82822084}
+  - {x: 0.0085227275, y: 0.8834356}
+  - {x: 0.0028409092, y: 0.9386503}
+  - {x: 0.019886363, y: 0.993865}
+  - {x: 0.028409092, y: 1}
+  - {x: 0.97159094, y: 1}
+  - {x: 0.97727275, y: 0.993865}
+  - {x: 0.99715906, y: 0.9386503}
+  - {x: 0.99147725, y: 0.8834356}
+  - {x: 0.98295456, y: 0.82822084}
+  - {x: 0.9744318, y: 0.77300614}
+  - {x: 0.9630682, y: 0.71779144}
+  - {x: 0.95454544, y: 0.6625767}
+  - {x: 0.94602275, y: 0.607362}
+  - {x: 0.9375, y: 0.5521472}
+  - {x: 0.92897725, y: 0.4969325}
+  - {x: 0.9176136, y: 0.4417178}
+  - {x: 0.90625, y: 0.38650307}
+  - {x: 0.89204544, y: 0.33128834}
+  - {x: 0.875, y: 0.2760736}
+  - {x: 0.85227275, y: 0.2208589}
+  - {x: 0.82670456, y: 0.16564417}
+  - {x: 0.78977275, y: 0.11042945}
+  - {x: 0.74147725, y: 0.055214725}
+  - {x: 0.6363636, y: 0}
+  innerContour:
+  - {x: 0.39363635, y: 0}
+  - {x: 0.28852272, y: 0.055214725}
+  - {x: 0.23738636, y: 0.11042945}
+  - {x: 0.20329545, y: 0.16564417}
+  - {x: 0.17488636, y: 0.2208589}
+  - {x: 0.15499999, y: 0.2760736}
+  - {x: 0.13795453, y: 0.33128834}
+  - {x: 0.123749994, y: 0.38650307}
+  - {x: 0.10954545, y: 0.4417178}
+  - {x: 0.10102272, y: 0.4969325}
+  - {x: 0.092499994, y: 0.5521472}
+  - {x: 0.083977275, y: 0.607362}
+  - {x: 0.072613634, y: 0.6625767}
+  - {x: 0.06409091, y: 0.71779144}
+  - {x: 0.05556818, y: 0.77300614}
+  - {x: 0.047045454, y: 0.82822084}
+  - {x: 0.038522724, y: 0.8834356}
+  - {x: 0.032840908, y: 0.9386503}
+  - {x: 0.04988636, y: 0.993865}
+  - {x: 0.05840909, y: 1}
+  - {x: 0.9415909, y: 1}
+  - {x: 0.9472727, y: 0.993865}
+  - {x: 0.9671591, y: 0.9386503}
+  - {x: 0.9614773, y: 0.8834356}
+  - {x: 0.95295453, y: 0.82822084}
+  - {x: 0.94443184, y: 0.77300614}
+  - {x: 0.9330682, y: 0.71779144}
+  - {x: 0.92454547, y: 0.6625767}
+  - {x: 0.9160227, y: 0.607362}
+  - {x: 0.9075, y: 0.5521472}
+  - {x: 0.8989773, y: 0.4969325}
+  - {x: 0.88761365, y: 0.4417178}
+  - {x: 0.87625, y: 0.38650307}
+  - {x: 0.86204547, y: 0.33128834}
+  - {x: 0.845, y: 0.2760736}
+  - {x: 0.8222727, y: 0.2208589}
+  - {x: 0.79670453, y: 0.16564417}
+  - {x: 0.7597727, y: 0.11042945}
+  - {x: 0.7114773, y: 0.055214725}
+  - {x: 0.60636365, y: 0}
+  outerRowSpans:
+  - minX: 128
+    maxX: 224
+  - minX: 120
+    maxX: 232
+  - minX: 115
+    maxX: 237
+  - minX: 110
+    maxX: 242
+  - minX: 106
+    maxX: 246
+  - minX: 103
+    maxX: 249
+  - minX: 99
+    maxX: 253
+  - minX: 96
+    maxX: 256
+  - minX: 94
+    maxX: 258
+  - minX: 91
+    maxX: 261
+  - minX: 89
+    maxX: 263
+  - minX: 86
+    maxX: 265
+  - minX: 84
+    maxX: 268
+  - minX: 82
+    maxX: 270
+  - minX: 80
+    maxX: 271
+  - minX: 79
+    maxX: 273
+  - minX: 77
+    maxX: 275
+  - minX: 75
+    maxX: 277
+  - minX: 73
+    maxX: 278
+  - minX: 72
+    maxX: 280
+  - minX: 70
+    maxX: 282
+  - minX: 69
+    maxX: 283
+  - minX: 67
+    maxX: 284
+  - minX: 66
+    maxX: 286
+  - minX: 65
+    maxX: 287
+  - minX: 63
+    maxX: 288
+  - minX: 62
+    maxX: 290
+  - minX: 61
+    maxX: 291
+  - minX: 60
+    maxX: 292
+  - minX: 59
+    maxX: 293
+  - minX: 57
+    maxX: 294
+  - minX: 56
+    maxX: 295
+  - minX: 55
+    maxX: 296
+  - minX: 54
+    maxX: 298
+  - minX: 53
+    maxX: 298
+  - minX: 52
+    maxX: 299
+  - minX: 51
+    maxX: 300
+  - minX: 50
+    maxX: 301
+  - minX: 50
+    maxX: 302
+  - minX: 49
+    maxX: 303
+  - minX: 48
+    maxX: 304
+  - minX: 47
+    maxX: 305
+  - minX: 46
+    maxX: 306
+  - minX: 45
+    maxX: 306
+  - minX: 45
+    maxX: 307
+  - minX: 44
+    maxX: 308
+  - minX: 43
+    maxX: 309
+  - minX: 42
+    maxX: 309
+  - minX: 42
+    maxX: 310
+  - minX: 41
+    maxX: 311
+  - minX: 40
+    maxX: 312
+  - minX: 39
+    maxX: 312
+  - minX: 39
+    maxX: 313
+  - minX: 38
+    maxX: 314
+  - minX: 38
+    maxX: 314
+  - minX: 37
+    maxX: 315
+  - minX: 36
+    maxX: 315
+  - minX: 36
+    maxX: 316
+  - minX: 35
+    maxX: 317
+  - minX: 35
+    maxX: 317
+  - minX: 34
+    maxX: 318
+  - minX: 34
+    maxX: 318
+  - minX: 33
+    maxX: 319
+  - minX: 33
+    maxX: 319
+  - minX: 32
+    maxX: 320
+  - minX: 32
+    maxX: 320
+  - minX: 31
+    maxX: 321
+  - minX: 31
+    maxX: 321
+  - minX: 30
+    maxX: 322
+  - minX: 30
+    maxX: 322
+  - minX: 29
+    maxX: 322
+  - minX: 29
+    maxX: 323
+  - minX: 28
+    maxX: 323
+  - minX: 28
+    maxX: 324
+  - minX: 28
+    maxX: 324
+  - minX: 27
+    maxX: 325
+  - minX: 27
+    maxX: 325
+  - minX: 26
+    maxX: 325
+  - minX: 26
+    maxX: 326
+  - minX: 26
+    maxX: 326
+  - minX: 25
+    maxX: 326
+  - minX: 25
+    maxX: 327
+  - minX: 25
+    maxX: 327
+  - minX: 24
+    maxX: 327
+  - minX: 24
+    maxX: 328
+  - minX: 24
+    maxX: 328
+  - minX: 23
+    maxX: 329
+  - minX: 23
+    maxX: 329
+  - minX: 22
+    maxX: 329
+  - minX: 22
+    maxX: 330
+  - minX: 22
+    maxX: 330
+  - minX: 21
+    maxX: 330
+  - minX: 21
+    maxX: 331
+  - minX: 21
+    maxX: 331
+  - minX: 20
+    maxX: 331
+  - minX: 20
+    maxX: 332
+  - minX: 20
+    maxX: 332
+  - minX: 19
+    maxX: 332
+  - minX: 19
+    maxX: 333
+  - minX: 19
+    maxX: 333
+  - minX: 18
+    maxX: 333
+  - minX: 18
+    maxX: 334
+  - minX: 18
+    maxX: 334
+  - minX: 17
+    maxX: 335
+  - minX: 17
+    maxX: 335
+  - minX: 16
+    maxX: 335
+  - minX: 16
+    maxX: 336
+  - minX: 16
+    maxX: 336
+  - minX: 15
+    maxX: 336
+  - minX: 15
+    maxX: 337
+  - minX: 15
+    maxX: 337
+  - minX: 14
+    maxX: 337
+  - minX: 14
+    maxX: 338
+  - minX: 14
+    maxX: 338
+  - minX: 13
+    maxX: 338
+  - minX: 13
+    maxX: 339
+  - minX: 13
+    maxX: 339
+  - minX: 12
+    maxX: 339
+  - minX: 12
+    maxX: 340
+  - minX: 11
+    maxX: 340
+  - minX: 11
+    maxX: 341
+  - minX: 11
+    maxX: 341
+  - minX: 10
+    maxX: 341
+  - minX: 10
+    maxX: 342
+  - minX: 10
+    maxX: 342
+  - minX: 9
+    maxX: 342
+  - minX: 9
+    maxX: 343
+  - minX: 9
+    maxX: 343
+  - minX: 8
+    maxX: 343
+  - minX: 8
+    maxX: 344
+  - minX: 8
+    maxX: 344
+  - minX: 7
+    maxX: 344
+  - minX: 7
+    maxX: 345
+  - minX: 7
+    maxX: 345
+  - minX: 6
+    maxX: 345
+  - minX: 6
+    maxX: 346
+  - minX: 5
+    maxX: 346
+  - minX: 5
+    maxX: 347
+  - minX: 5
+    maxX: 347
+  - minX: 4
+    maxX: 347
+  - minX: 4
+    maxX: 348
+  - minX: 4
+    maxX: 348
+  - minX: 3
+    maxX: 348
+  - minX: 3
+    maxX: 349
+  - minX: 3
+    maxX: 349
+  - minX: 2
+    maxX: 349
+  - minX: 2
+    maxX: 350
+  - minX: 2
+    maxX: 350
+  - minX: 1
+    maxX: 350
+  - minX: 1
+    maxX: 351
+  - minX: 1
+    maxX: 351
+  - minX: 1
+    maxX: 351
+  - minX: 1
+    maxX: 351
+  - minX: 1
+    maxX: 351
+  - minX: 1
+    maxX: 351
+  - minX: 1
+    maxX: 350
+  - minX: 2
+    maxX: 350
+  - minX: 2
+    maxX: 349
+  - minX: 3
+    maxX: 349
+  - minX: 4
+    maxX: 348
+  - minX: 5
+    maxX: 347
+  - minX: 6
+    maxX: 346
+  - minX: 7
+    maxX: 344
+  - minX: 10
+    maxX: 342
+  innerRowSpans:
+  - minX: 138.56
+    maxX: 213.44
+  - minX: 130.56
+    maxX: 221.44
+  - minX: 125.56
+    maxX: 226.44
+  - minX: 120.56
+    maxX: 231.44
+  - minX: 116.56
+    maxX: 235.44
+  - minX: 113.56
+    maxX: 238.44
+  - minX: 109.56
+    maxX: 242.44
+  - minX: 106.56
+    maxX: 245.44
+  - minX: 104.56
+    maxX: 247.44
+  - minX: 101.56
+    maxX: 250.44
+  - minX: 99.56
+    maxX: 252.44
+  - minX: 96.56
+    maxX: 254.44
+  - minX: 94.56
+    maxX: 257.44
+  - minX: 92.56
+    maxX: 259.44
+  - minX: 90.56
+    maxX: 260.44
+  - minX: 89.56
+    maxX: 262.44
+  - minX: 87.56
+    maxX: 264.44
+  - minX: 85.56
+    maxX: 266.44
+  - minX: 83.56
+    maxX: 267.44
+  - minX: 82.56
+    maxX: 269.44
+  - minX: 80.56
+    maxX: 271.44
+  - minX: 79.56
+    maxX: 272.44
+  - minX: 77.56
+    maxX: 273.44
+  - minX: 76.56
+    maxX: 275.44
+  - minX: 75.56
+    maxX: 276.44
+  - minX: 73.56
+    maxX: 277.44
+  - minX: 72.56
+    maxX: 279.44
+  - minX: 71.56
+    maxX: 280.44
+  - minX: 70.56
+    maxX: 281.44
+  - minX: 69.56
+    maxX: 282.44
+  - minX: 67.56
+    maxX: 283.44
+  - minX: 66.56
+    maxX: 284.44
+  - minX: 65.56
+    maxX: 285.44
+  - minX: 64.56
+    maxX: 287.44
+  - minX: 63.559998
+    maxX: 287.44
+  - minX: 62.559998
+    maxX: 288.44
+  - minX: 61.559998
+    maxX: 289.44
+  - minX: 60.559998
+    maxX: 290.44
+  - minX: 60.559998
+    maxX: 291.44
+  - minX: 59.559998
+    maxX: 292.44
+  - minX: 58.559998
+    maxX: 293.44
+  - minX: 57.559998
+    maxX: 294.44
+  - minX: 56.559998
+    maxX: 295.44
+  - minX: 55.559998
+    maxX: 295.44
+  - minX: 55.559998
+    maxX: 296.44
+  - minX: 54.559998
+    maxX: 297.44
+  - minX: 53.559998
+    maxX: 298.44
+  - minX: 52.559998
+    maxX: 298.44
+  - minX: 52.559998
+    maxX: 299.44
+  - minX: 51.559998
+    maxX: 300.44
+  - minX: 50.559998
+    maxX: 301.44
+  - minX: 49.559998
+    maxX: 301.44
+  - minX: 49.559998
+    maxX: 302.44
+  - minX: 48.559998
+    maxX: 303.44
+  - minX: 48.559998
+    maxX: 303.44
+  - minX: 47.559998
+    maxX: 304.44
+  - minX: 46.559998
+    maxX: 304.44
+  - minX: 46.559998
+    maxX: 305.44
+  - minX: 45.559998
+    maxX: 306.44
+  - minX: 45.559998
+    maxX: 306.44
+  - minX: 44.559998
+    maxX: 307.44
+  - minX: 44.559998
+    maxX: 307.44
+  - minX: 43.559998
+    maxX: 308.44
+  - minX: 43.559998
+    maxX: 308.44
+  - minX: 42.559998
+    maxX: 309.44
+  - minX: 42.559998
+    maxX: 309.44
+  - minX: 41.559998
+    maxX: 310.44
+  - minX: 41.559998
+    maxX: 310.44
+  - minX: 40.559998
+    maxX: 311.44
+  - minX: 40.559998
+    maxX: 311.44
+  - minX: 39.559998
+    maxX: 311.44
+  - minX: 39.559998
+    maxX: 312.44
+  - minX: 38.559998
+    maxX: 312.44
+  - minX: 38.559998
+    maxX: 313.44
+  - minX: 38.559998
+    maxX: 313.44
+  - minX: 37.559998
+    maxX: 314.44
+  - minX: 37.559998
+    maxX: 314.44
+  - minX: 36.559998
+    maxX: 314.44
+  - minX: 36.559998
+    maxX: 315.44
+  - minX: 36.559998
+    maxX: 315.44
+  - minX: 35.559998
+    maxX: 315.44
+  - minX: 35.559998
+    maxX: 316.44
+  - minX: 35.559998
+    maxX: 316.44
+  - minX: 34.559998
+    maxX: 316.44
+  - minX: 34.559998
+    maxX: 317.44
+  - minX: 34.559998
+    maxX: 317.44
+  - minX: 33.559998
+    maxX: 318.44
+  - minX: 33.559998
+    maxX: 318.44
+  - minX: 32.559998
+    maxX: 318.44
+  - minX: 32.559998
+    maxX: 319.44
+  - minX: 32.559998
+    maxX: 319.44
+  - minX: 31.56
+    maxX: 319.44
+  - minX: 31.56
+    maxX: 320.44
+  - minX: 31.56
+    maxX: 320.44
+  - minX: 30.56
+    maxX: 320.44
+  - minX: 30.56
+    maxX: 321.44
+  - minX: 30.56
+    maxX: 321.44
+  - minX: 29.56
+    maxX: 321.44
+  - minX: 29.56
+    maxX: 322.44
+  - minX: 29.56
+    maxX: 322.44
+  - minX: 28.56
+    maxX: 322.44
+  - minX: 28.56
+    maxX: 323.44
+  - minX: 28.56
+    maxX: 323.44
+  - minX: 27.56
+    maxX: 324.44
+  - minX: 27.56
+    maxX: 324.44
+  - minX: 26.56
+    maxX: 324.44
+  - minX: 26.56
+    maxX: 325.44
+  - minX: 26.56
+    maxX: 325.44
+  - minX: 25.56
+    maxX: 325.44
+  - minX: 25.56
+    maxX: 326.44
+  - minX: 25.56
+    maxX: 326.44
+  - minX: 24.56
+    maxX: 326.44
+  - minX: 24.56
+    maxX: 327.44
+  - minX: 24.56
+    maxX: 327.44
+  - minX: 23.56
+    maxX: 327.44
+  - minX: 23.56
+    maxX: 328.44
+  - minX: 23.56
+    maxX: 328.44
+  - minX: 22.56
+    maxX: 328.44
+  - minX: 22.56
+    maxX: 329.44
+  - minX: 21.56
+    maxX: 329.44
+  - minX: 21.56
+    maxX: 330.44
+  - minX: 21.56
+    maxX: 330.44
+  - minX: 20.56
+    maxX: 330.44
+  - minX: 20.56
+    maxX: 331.44
+  - minX: 20.56
+    maxX: 331.44
+  - minX: 19.56
+    maxX: 331.44
+  - minX: 19.56
+    maxX: 332.44
+  - minX: 19.56
+    maxX: 332.44
+  - minX: 18.56
+    maxX: 332.44
+  - minX: 18.56
+    maxX: 333.44
+  - minX: 18.56
+    maxX: 333.44
+  - minX: 17.56
+    maxX: 333.44
+  - minX: 17.56
+    maxX: 334.44
+  - minX: 17.56
+    maxX: 334.44
+  - minX: 16.56
+    maxX: 334.44
+  - minX: 16.56
+    maxX: 335.44
+  - minX: 15.559999
+    maxX: 335.44
+  - minX: 15.559999
+    maxX: 336.44
+  - minX: 15.559999
+    maxX: 336.44
+  - minX: 14.559999
+    maxX: 336.44
+  - minX: 14.559999
+    maxX: 337.44
+  - minX: 14.559999
+    maxX: 337.44
+  - minX: 13.559999
+    maxX: 337.44
+  - minX: 13.559999
+    maxX: 338.44
+  - minX: 13.559999
+    maxX: 338.44
+  - minX: 12.559999
+    maxX: 338.44
+  - minX: 12.559999
+    maxX: 339.44
+  - minX: 12.559999
+    maxX: 339.44
+  - minX: 11.559999
+    maxX: 339.44
+  - minX: 11.559999
+    maxX: 340.44
+  - minX: 11.559999
+    maxX: 340.44
+  - minX: 11.559999
+    maxX: 340.44
+  - minX: 11.559999
+    maxX: 340.44
+  - minX: 11.559999
+    maxX: 340.44
+  - minX: 11.559999
+    maxX: 340.44
+  - minX: 11.559999
+    maxX: 339.44
+  - minX: 12.559999
+    maxX: 339.44
+  - minX: 12.559999
+    maxX: 338.44
+  - minX: 13.559999
+    maxX: 338.44
+  - minX: 14.559999
+    maxX: 337.44
+  - minX: 15.559999
+    maxX: 336.44
+  - minX: 16.56
+    maxX: 335.44
+  - minX: 17.56
+    maxX: 333.44
+  - minX: 20.56
+    maxX: 331.44
+  silhouetteMask: {fileID: 2800000, guid: 3370d8efc3e192b4eb83b5a9e6c49cb5, type: 2}

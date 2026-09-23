@@ -55,8 +55,22 @@ namespace SE001.Editor.Level
             Dictionary<int, int> supply = new Dictionary<int, int>();
             CupProfile cupProfile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
             JarVisualProfile jarProfile = Resources.Load<JarVisualProfile>("Profiles/JarVisualProfile");
+            GameplayRuntimeProfile runtimeProfile = Resources.Load<GameplayRuntimeProfile>("Profiles/PhaseCGameplayRuntimeProfile");
+            BowlVisualProfile bowlProfile = Resources.Load<BowlVisualProfile>("Profiles/BowlVisualProfile");
             SandSimulationProfile sandProfile =
                 Resources.Load<SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile");
+            if (runtimeProfile != null && runtimeProfile.receiverStyle == ReceiverStyle.Bowl)
+            {
+                if (bowlProfile == null || !bowlProfile.IsBaked)
+                    Add(issues, LevelEditorIssueSeverity.Blocking, string.Empty, "receiverStyle",
+                        "The active Bowl receiver profile is missing or not baked.", "Receiver profile",
+                        "Run the Jar Materials setup before authoring Bowl levels.");
+                else if (cellSize > 0f && bowlProfile.wallThicknessPixels *
+                    bowlProfile.WorldPixelsPerPixel(bowlProfile.defaultWorldWidth) < cellSize)
+                    Add(issues, LevelEditorIssueSeverity.Warning, string.Empty, "receiverStyle",
+                        "Bowl is too small for the current sand grid.", "Receiver profile",
+                        "Increase the global Bowl width or use a finer sand grid.");
+            }
             for (int i = 0; i < level.sources.Count; i++)
             {
                 SourceData source = level.sources[i];
@@ -89,15 +103,17 @@ namespace SE001.Editor.Level
                 else if (cupProfile != null && sandProfile != null && cellSize > 0f)
                 {
                     CupDomain capacityProbe = new CupDomain(
-                        cup, cupProfile, sandProfile.grainsPerUnit, cellSize, jarProfile);
+                        cup, cupProfile, sandProfile.grainsPerUnit, cellSize, jarProfile,
+                        runtimeProfile != null ? runtimeProfile.receiverStyle : ReceiverStyle.Cup,
+                        bowlProfile);
                     if (capacityProbe.Required > capacityProbe.Capacity)
                     {
                         float logicalCapacity =
                             capacityProbe.Capacity / (float)Mathf.Max(1, sandProfile.grainsPerUnit);
                         Add(issues, LevelEditorIssueSeverity.Blocking, cup.stableId, "requiredAmount",
-                            "Required Amount " + cup.requiredAmount + " is larger than this Cup can hold.",
-                            "Cup capacity is about " + logicalCapacity.ToString("0.0") + " units.",
-                            "Lower Required Amount or adjust the global Cup profile.");
+                            "Required Amount " + cup.requiredAmount + " is larger than this receiver can hold.",
+                            "Receiver capacity is about " + logicalCapacity.ToString("0.0") + " units.",
+                            "Lower Required Amount or adjust the active receiver profile.");
                     }
                 }
                 int amount;
@@ -154,6 +170,8 @@ namespace SE001.Editor.Level
             if (!LevelEditorGeometry.InBoard(center, size, level.board.size)) return false;
             return kind == LevelEditorSelectionKind.RotatingObstacle
                 ? LevelEditorGeometry.RotatingFootprintOpen(masks, center, size.x * 0.5f, cellSize)
+                : kind == LevelEditorSelectionKind.Cup
+                    ? LevelEditorGeometry.ReceiverFootprintOpen(masks, center, size, cellSize)
                 : LevelEditorGeometry.FootprintOpen(masks, center, size, cellSize);
         }
 
@@ -194,6 +212,8 @@ namespace SE001.Editor.Level
                     "The entity is outside the board.", kind.ToString(), "Move it inside the visible board area.");
             else if (masks != null && !(kind == LevelEditorSelectionKind.RotatingObstacle
                 ? LevelEditorGeometry.RotatingFootprintOpen(masks, position, size.x * 0.5f, cellSize)
+                : kind == LevelEditorSelectionKind.Cup
+                    ? LevelEditorGeometry.ReceiverFootprintOpen(masks, position, size, cellSize)
                 : LevelEditorGeometry.FootprintOpen(masks, position, size, cellSize)))
                 Add(issues, LevelEditorIssueSeverity.Blocking, stableId, "position",
                     "The entity overlaps baked layout geometry.", kind.ToString(), "Move it away from walls and static obstacles.");
@@ -287,8 +307,21 @@ namespace SE001.Editor.Level
 
         public static Vector2 CupSize(CupData cup)
         {
+            GameplayRuntimeProfile runtime = UnityEngine.Resources.Load<GameplayRuntimeProfile>(
+                "Profiles/PhaseCGameplayRuntimeProfile");
+            BowlVisualProfile bowl = UnityEngine.Resources.Load<BowlVisualProfile>("Profiles/BowlVisualProfile");
+            if (runtime != null && runtime.receiverStyle == ReceiverStyle.Bowl && bowl != null)
+                return bowl.WorldSize;
             CupProfile profile = UnityEngine.Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
             return profile != null ? profile.bodySize : new Vector2(2f, 2f);
+        }
+
+        public static JarPreviewKind ReceiverPreviewKind()
+        {
+            GameplayRuntimeProfile runtime = UnityEngine.Resources.Load<GameplayRuntimeProfile>(
+                "Profiles/PhaseCGameplayRuntimeProfile");
+            return runtime != null && runtime.receiverStyle == ReceiverStyle.Bowl
+                ? JarPreviewKind.Bowl : JarPreviewKind.Cup;
         }
 
         public static float RotatingBarWidth()
@@ -398,6 +431,60 @@ namespace SE001.Editor.Level
                 if (!masks.ValidMask[index] || masks.StaticMask[index]) return false;
             }
             return true;
+        }
+
+        public static bool ReceiverFootprintOpen(LayoutMaskSet masks, Vector2 position, Vector2 size, float cellSize)
+        {
+            GameplayRuntimeProfile runtime = UnityEngine.Resources.Load<GameplayRuntimeProfile>(
+                "Profiles/PhaseCGameplayRuntimeProfile");
+            BowlVisualProfile bowl = UnityEngine.Resources.Load<BowlVisualProfile>("Profiles/BowlVisualProfile");
+            if (runtime == null || runtime.receiverStyle != ReceiverStyle.Bowl || bowl == null || !bowl.IsBaked)
+                return FootprintOpen(masks, position, size, cellSize);
+            if (masks == null || cellSize <= 0f) return false;
+
+            int minX = Mathf.FloorToInt((position.x - size.x * 0.5f) / cellSize);
+            int maxX = Mathf.CeilToInt((position.x + size.x * 0.5f) / cellSize);
+            int minY = Mathf.FloorToInt((position.y - size.y * 0.5f) / cellSize);
+            int maxY = Mathf.CeilToInt((position.y + size.y * 0.5f) / cellSize);
+            Vector2[] offsets =
+            {
+                Vector2.zero,
+                new Vector2(-cellSize * 0.5f, -cellSize * 0.5f),
+                new Vector2(-cellSize * 0.5f, cellSize * 0.5f),
+                new Vector2(cellSize * 0.5f, -cellSize * 0.5f),
+                new Vector2(cellSize * 0.5f, cellSize * 0.5f)
+            };
+            for (int y = minY; y <= maxY; y++)
+            for (int x = minX; x <= maxX; x++)
+            {
+                Vector2 cellCenter = new Vector2((x + 0.5f) * cellSize, (y + 0.5f) * cellSize);
+                bool inside = false;
+                for (int sampleIndex = 0; sampleIndex < offsets.Length; sampleIndex++)
+                {
+                    if (IsInsideBowl(cellCenter + offsets[sampleIndex], position, size, bowl))
+                    {
+                        inside = true;
+                        break;
+                    }
+                }
+                if (!inside) continue;
+                if (x < 0 || y < 0 || x >= masks.Width || y >= masks.Height) return false;
+                int index = masks.Index(x, y);
+                if (!masks.ValidMask[index] || masks.StaticMask[index]) return false;
+            }
+            return true;
+        }
+
+        private static bool IsInsideBowl(Vector2 sample, Vector2 center, Vector2 size, BowlVisualProfile bowl)
+        {
+            float left = center.x - size.x * 0.5f;
+            float bottom = center.y - size.y * 0.5f;
+            float scale = bowl.WorldPixelsPerPixel(size.x);
+            int pixelY = bowl.PixelRowForLocalY(sample.y - bottom, size.x);
+            BowlRowSpan span;
+            if (!bowl.TryGetOuterSpan(pixelY, out span)) return false;
+            float pixelX = (sample.x - left) / Mathf.Max(0.0001f, scale);
+            return pixelX >= span.minX && pixelX <= span.maxX;
         }
     }
 }

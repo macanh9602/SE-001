@@ -126,7 +126,7 @@ namespace SE001.Editor.Level
         {
             AddEntityHeader(EntityDisplayName("Cup", Document.cups.IndexOf(cup) + 1), cup.stableId);
             AddInspectorSectionHeader("Appearance");
-            AddColorField(JarPreviewKind.Cup, LevelEditorGeometry.CupSize(cup), cup.acceptedMaterialId,
+            AddColorField(LevelEditorGeometry.ReceiverPreviewKind(), LevelEditorGeometry.CupSize(cup), cup.acceptedMaterialId,
                 "Accepted color", "acceptedMaterialId", value => ApplyEdit(
                 level => FindCup(level, cup.stableId).acceptedMaterialId = value, "Edit Cup Color"));
 

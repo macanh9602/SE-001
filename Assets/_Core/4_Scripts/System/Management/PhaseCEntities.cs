@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using SE001.Data;
 using SE001.Simulation.Sand;
@@ -101,7 +102,7 @@ namespace SE001.Gameplay
     }
 
     /// <summary>
-    /// Cup geometry from CupProfile only (never from the mesh).
+    /// Receiver geometry from authored profile data only (never from the mesh).
     /// position = bottom-center, size = outer width (at the mouth) / height. Tapered bucket:
     /// bottom width = size.x * (1 - taper). Slanted side walls + bottom block sand; top open until full.
     /// Full = the authored logical target converted through SandSimulationProfile.grainsPerUnit.
@@ -109,6 +110,8 @@ namespace SE001.Gameplay
     /// </summary>
     public sealed class CupDomain
     {
+        private readonly ReceiverStyle receiverStyle;
+        private readonly BowlVisualProfile bowlProfile;
         private readonly float taper;
         private readonly float fillLine;
         private float wall;
@@ -123,15 +126,36 @@ namespace SE001.Gameplay
             int grainsPerUnit,
             float cellSize,
             JarVisualProfile visualProfile = null)
+            : this(data, profile, grainsPerUnit, cellSize, visualProfile, ReceiverStyle.Cup, null)
+        {
+        }
+
+        public CupDomain(
+            CupData data,
+            CupProfile profile,
+            int grainsPerUnit,
+            float cellSize,
+            JarVisualProfile visualProfile,
+            ReceiverStyle style,
+            BowlVisualProfile valueBowlProfile)
         {
             StableId = data.stableId;
             AcceptedMaterialId = (byte)data.acceptedMaterialId;
             Position = data.position;
-            Size = profile.bodySize;
+            receiverStyle = style;
+            bowlProfile = valueBowlProfile;
+            Size = style == ReceiverStyle.Bowl && valueBowlProfile != null
+                ? valueBowlProfile.WorldSize : profile.bodySize;
             RequiredLogical = Mathf.Max(1, data.requiredAmount);
             taper = profile.taper;
             fillLine = profile.fillLine;
-            BuildCells(profile.wallThickness, cellSize, visualProfile);
+            if (style == ReceiverStyle.Bowl)
+            {
+                if (valueBowlProfile == null || !valueBowlProfile.IsBaked)
+                    throw new InvalidOperationException("BowlVisualProfile must contain a baked Bowl contour.");
+                BuildBowlCells(cellSize);
+            }
+            else BuildCells(profile.wallThickness, cellSize, visualProfile);
             long targetGrains = (long)RequiredLogical * Mathf.Max(1, grainsPerUnit);
             required = targetGrains > int.MaxValue ? int.MaxValue : (int)targetGrains;
         }
@@ -163,10 +187,11 @@ namespace SE001.Gameplay
         public float EffectiveInnerWidth => Mathf.Max(0f, geometryOuterWidth - wall * 2f);
         public float EffectiveBottomY => geometryBottom;
         public float EffectiveSandBottomY => geometryBottom + wall;
-        public float Taper => taper;
+        public float Taper => receiverStyle == ReceiverStyle.Bowl ? 0f : taper;
         public float FillLineY => fillLineY;
         public int MinY => minY;
         public int MaxY => maxY;
+        public ReceiverStyle Style => receiverStyle;
 
         private float OuterHalfWidthAt(float y)
         {
@@ -213,8 +238,63 @@ namespace SE001.Gameplay
             }
         }
 
+        private void BuildBowlCells(float cell)
+        {
+            float pixelsToWorld = bowlProfile.WorldPixelsPerPixel(Size.x);
+            wall = Mathf.Max(bowlProfile.wallThicknessPixels * pixelsToWorld, cell * 1.5f);
+            geometryOuterWidth = Size.x;
+            geometryBottom = Position.y;
+            outerMinY = Mathf.FloorToInt(geometryBottom / cell);
+            outerMaxY = Mathf.CeilToInt((Position.y + Size.y) / cell) - 1;
+
+            float interiorTop = Position.y + bowlProfile.rimPixelY * pixelsToWorld;
+            minY = Mathf.CeilToInt((geometryBottom + wall) / cell - 0.5f);
+            maxY = Mathf.CeilToInt(interiorTop / cell) - 1;
+            int rows = Mathf.Max(0, maxY - minY + 1);
+            rowMinX = new int[rows];
+            rowMaxX = new int[rows];
+            fillLineY = interiorTop;
+            capacity = 0;
+
+            for (int r = 0; r < rows; r++)
+            {
+                int y = minY + r;
+                float localY = (y + 0.5f) * cell - Position.y;
+                int pixelY = bowlProfile.PixelRowForLocalY(localY, Size.x);
+                BowlRowSpan span;
+                if (pixelY >= bowlProfile.rimPixelY || !bowlProfile.TryGetInnerSpan(pixelY, out span))
+                {
+                    rowMinX[r] = 1;
+                    rowMaxX[r] = 0;
+                    continue;
+                }
+
+                rowMinX[r] = PixelToCellMin(span.minX, pixelsToWorld, cell);
+                rowMaxX[r] = PixelToCellMax(span.maxX, pixelsToWorld, cell);
+                capacity += Mathf.Max(0, rowMaxX[r] - rowMinX[r] + 1);
+            }
+        }
+
+        private int PixelToCellMin(float pixel, float pixelsToWorld, float cell)
+        {
+            float world = Position.x + (pixel - bowlProfile.mainWidthPixels * 0.5f) * pixelsToWorld;
+            return Mathf.CeilToInt(world / cell - 0.5f);
+        }
+
+        private int PixelToCellMax(float pixel, float pixelsToWorld, float cell)
+        {
+            float world = Position.x + (pixel + 1f - bowlProfile.mainWidthPixels * 0.5f) * pixelsToWorld;
+            return Mathf.FloorToInt(world / cell - 0.5f);
+        }
+
         public void RegisterWalls(SandSimulation sim, float cell, float wallThickness)
         {
+            if (receiverStyle == ReceiverStyle.Bowl)
+            {
+                RegisterBowlWalls(sim, cell);
+                return;
+            }
+
             for (int y = outerMinY; y <= outerMaxY; y++)
             {
                 float yc = (y + 0.5f) * cell;
@@ -228,6 +308,26 @@ namespace SE001.Gameplay
                     if (dx > outer) continue;
                     if (bottom || dx > outer - wall) sim.SetCupWall(x, y, true);
                 }
+            }
+        }
+
+        private void RegisterBowlWalls(SandSimulation sim, float cell)
+        {
+            float pixelsToWorld = bowlProfile.WorldPixelsPerPixel(Size.x);
+            for (int y = outerMinY; y <= outerMaxY; y++)
+            {
+                float localY = (y + 0.5f) * cell - Position.y;
+                int pixelY = bowlProfile.PixelRowForLocalY(localY, Size.x);
+                BowlRowSpan outer;
+                if (!bowlProfile.TryGetOuterSpan(pixelY, out outer)) continue;
+                int x0 = PixelToCellMin(outer.minX, pixelsToWorld, cell);
+                int x1 = PixelToCellMax(outer.maxX, pixelsToWorld, cell);
+                BowlRowSpan inner;
+                bool hasInner = bowlProfile.TryGetInnerSpan(pixelY, out inner);
+                int innerMin = hasInner ? PixelToCellMin(inner.minX, pixelsToWorld, cell) : 1;
+                int innerMax = hasInner ? PixelToCellMax(inner.maxX, pixelsToWorld, cell) : 0;
+                for (int x = x0; x <= x1; x++)
+                    if (x < innerMin || x > innerMax) sim.SetCupWall(x, y, true);
             }
         }
 

@@ -11,7 +11,8 @@ namespace SE001.Editor
     public enum JarPreviewKind
     {
         Source,
-        Cup
+        Cup,
+        Bowl
     }
 
     public static class JarPreviewUtility
@@ -49,7 +50,8 @@ namespace SE001.Editor
         {
             ColorProfile colors = Resources.Load<ColorProfile>("Profiles/PhaseCColorProfile");
             JarVisualProfile visuals = Resources.Load<JarVisualProfile>("Profiles/JarVisualProfile");
-            int profileHash = ComputeProfileHash(colors, visuals);
+            BowlVisualProfile bowlVisuals = Resources.Load<BowlVisualProfile>("Profiles/BowlVisualProfile");
+            int profileHash = ComputeProfileHash(colors, visuals, bowlVisuals);
             if (profileHash != lastProfileHash)
             {
                 ClearCache();
@@ -63,6 +65,8 @@ namespace SE001.Editor
             int width = kind == JarPreviewKind.Source
                 ? Mathf.Max(1, Mathf.RoundToInt(height * sourceAspect))
                 : Mathf.Max(1, Mathf.RoundToInt(size.x * 100f));
+            if (kind == JarPreviewKind.Bowl && bowlVisuals != null)
+                height = Mathf.Max(1, Mathf.RoundToInt(bowlVisuals.WorldHeightForWidth(size.x) * 100f));
             PreviewKey key = new PreviewKey
             {
                 kind = kind,
@@ -75,7 +79,7 @@ namespace SE001.Editor
             };
             Texture2D cached;
             if (Cache.TryGetValue(key, out cached) && cached != null) return cached;
-            Texture2D preview = BuildPreview(kind, colorId, width, height, fillRatio, pouring, colors, visuals);
+            Texture2D preview = BuildPreview(kind, colorId, width, height, fillRatio, pouring, colors, visuals, bowlVisuals);
             Cache.Add(key, preview);
             buildCount++;
             return preview;
@@ -90,10 +94,10 @@ namespace SE001.Editor
 
         public static void GeneratePreviewGrid()
         {
-            const int cellWidth = 180;
+            const int cellWidth = 380;
             const int cellHeight = 220;
             const int columns = 7;
-            const int rows = 2;
+            const int rows = 3;
             Texture2D grid = new Texture2D(cellWidth * columns, cellHeight * rows, TextureFormat.RGBA32, false, false);
             Color32[] clear = new Color32[grid.width * grid.height];
             for (int i = 0; i < clear.Length; i++) clear[i] = new Color32(38, 34, 86, 255);
@@ -103,8 +107,12 @@ namespace SE001.Editor
             {
                 Texture2D source = GetPreview(JarPreviewKind.Source, colorId, new Vector2(0.9f, 1.8f), 0.65f);
                 Texture2D cup = GetPreview(JarPreviewKind.Cup, colorId, new Vector2(1.5f, 1.8f), 0f);
+                BowlVisualProfile bowlProfile = Resources.Load<BowlVisualProfile>("Profiles/BowlVisualProfile");
+                Vector2 bowlSize = bowlProfile != null ? bowlProfile.WorldSize : new Vector2(1f, 1f);
+                Texture2D bowl = GetPreview(JarPreviewKind.Bowl, colorId, bowlSize, 0f);
                 CopyInto(grid, source, (colorId - 1) * cellWidth + (cellWidth - source.width) / 2, 20);
                 CopyInto(grid, cup, (colorId - 1) * cellWidth + (cellWidth - cup.width) / 2, cellHeight + 20);
+                CopyInto(grid, bowl, (colorId - 1) * cellWidth + (cellWidth - bowl.width) / 2, cellHeight * 2 + 20);
             }
             grid.Apply(false, false);
             string path = "handoff/phase-V1/evidence/JarPreviewGrid.png";
@@ -123,7 +131,8 @@ namespace SE001.Editor
             float fillRatio,
             bool pouring,
             ColorProfile colors,
-            JarVisualProfile visuals)
+            JarVisualProfile visuals,
+            BowlVisualProfile bowlVisuals)
         {
             Texture2D output = new Texture2D(width, height, TextureFormat.RGBA32, false, false)
             {
@@ -183,7 +192,7 @@ namespace SE001.Editor
                 if (pouring) Array.Copy(sourcePixels, pixels, sourcePixels.Length);
                 else RotatePixels180(sourcePixels, pixels, width, height);
             }
-            else
+            else if (kind == JarPreviewKind.Cup)
             {
                 Material cupBodyMaterial = mats != null ? mats.ResolveCupBody() : null;
                 Texture2D body = LoadTextureFromMaterial(cupBodyMaterial);
@@ -209,6 +218,32 @@ namespace SE001.Editor
                     pixels, width, height, cap, new RectInt(12, 0, 156, 49),
                     0, 0, width, bottomCapHeight,
                     entry.cupCapMaterial, Color.white, false);
+            }
+            else
+            {
+                Texture2D main = LoadTextureFromMaterial(entry.bowlMainMaterial);
+                if (main == null && bowlVisuals != null) main = bowlVisuals.mainTexture;
+                Texture2D shadow = bowlVisuals != null ? bowlVisuals.silhouetteMask : null;
+                DrawTexture(pixels, width, height, shadow, 0, 0, width, height, null,
+                    new Color(0.25f, 0.25f, 0.25f, 0.22f), true);
+                DrawTexture(pixels, width, height, main, 0, 0, width, height,
+                    entry.bowlMainMaterial, Color.white, false);
+                if (bowlVisuals != null)
+                {
+                    Texture2D spec = bowlVisuals.specTexture;
+                    int specWidth = Mathf.Max(1, Mathf.RoundToInt(width * bowlVisuals.specWidthPixels /
+                        Mathf.Max(1f, bowlVisuals.mainWidthPixels)));
+                    int specHeight = Mathf.Max(1, Mathf.RoundToInt(height * bowlVisuals.specHeightPixels /
+                        Mathf.Max(1f, bowlVisuals.mainHeightPixels)));
+                    int specX = Mathf.RoundToInt(width * bowlVisuals.specOffsetPixels.x /
+                        Mathf.Max(1f, bowlVisuals.mainWidthPixels));
+                    int specTop = Mathf.RoundToInt(height * bowlVisuals.specOffsetPixels.y /
+                        Mathf.Max(1f, bowlVisuals.mainHeightPixels));
+                    DrawTexture(pixels, width, height, spec, specX, height - specTop - specHeight,
+                        specWidth, specHeight, AssetDatabase.LoadAssetAtPath<PhaseCVisualMaterials>(
+                            "Assets/_Core/Resources/Profiles/PhaseCVisualMaterials.asset")?.bowlSpecMaterial,
+                        Color.white, false);
+                }
             }
 
             output.SetPixels32(pixels);
@@ -435,7 +470,10 @@ namespace SE001.Editor
             return material != null ? material.GetTexture("_BaseMap") as Texture2D : null;
         }
 
-        private static int ComputeProfileHash(ColorProfile colors, JarVisualProfile visuals)
+        private static int ComputeProfileHash(
+            ColorProfile colors,
+            JarVisualProfile visuals,
+            BowlVisualProfile bowlVisuals)
         {
             unchecked
             {
@@ -447,6 +485,7 @@ namespace SE001.Editor
                         hash = hash * 31 + entry.colorId;
                         hash = hash * 31 + MaterialContentHash(entry.cupCapMaterial);
                         hash = hash * 31 + MaterialContentHash(entry.sourceMouthMaterial);
+                        hash = hash * 31 + MaterialContentHash(entry.bowlMainMaterial);
                         hash = hash * 31 + entry.sandColor.GetHashCode();
                     }
                 if (visuals != null)
@@ -462,6 +501,15 @@ namespace SE001.Editor
                     hash = hash * 31 + visuals.sourceBodyWidthPixels.GetHashCode();
                     hash = hash * 31 + visuals.sourceBodyHeightPixels.GetHashCode();
                     hash = hash * 31 + visuals.sourceCompositeHeightPixels.GetHashCode();
+                }
+                if (bowlVisuals != null)
+                {
+                    hash = hash * 31 + AssetContentHash(bowlVisuals.mainTexture);
+                    hash = hash * 31 + AssetContentHash(bowlVisuals.specTexture);
+                    hash = hash * 31 + AssetContentHash(bowlVisuals.silhouetteMask);
+                    hash = hash * 31 + bowlVisuals.rimPixelY;
+                    hash = hash * 31 + bowlVisuals.wallThicknessPixels.GetHashCode();
+                    hash = hash * 31 + bowlVisuals.defaultWorldWidth.GetHashCode();
                 }
                 return hash;
             }

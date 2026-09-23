@@ -146,7 +146,7 @@ namespace SE001.Editor.Level
             {
                 CupData cup = level.cups[i];
                 if (cup == null) continue;
-                AddEntity(JarPreviewKind.Cup, cup.stableId, cup.acceptedMaterialId, cup.position,
+                AddEntity(LevelEditorGeometry.ReceiverPreviewKind(), cup.stableId, cup.acceptedMaterialId, cup.position,
                     ResolveCupSize(cup), 0f);
             }
 
@@ -173,15 +173,13 @@ namespace SE001.Editor.Level
             Vector2 size, float fill, bool pouring = false)
         {
             LevelEditorSelectionKind selectionKind = kind == JarPreviewKind.Source
-                ? LevelEditorSelectionKind.Source
-                : LevelEditorSelectionKind.Cup;
+                ? LevelEditorSelectionKind.Source : LevelEditorSelectionKind.Cup;
             LevelEditorCanvasData.SetPosition(stableId, selectionKind, position);
             Texture2D preview = JarPreviewUtility.GetPreview(kind, colorId, size, fill, pouring);
             Image image = new Image { image = preview, scaleMode = ScaleMode.ScaleToFit };
             image.AddToClassList("le-entity");
             Vector2 visualOffset = kind == JarPreviewKind.Source
-                ? LevelEditorGeometry.SourceVisualOffset(pouring)
-                : LevelEditorGeometry.CupVisualOffset();
+                ? LevelEditorGeometry.SourceVisualOffset(pouring) : LevelEditorGeometry.CupVisualOffset();
             image.userData = new EntityHandle(stableId, selectionKind, size, visualOffset);
             image.RegisterCallback<PointerDownEvent>(OnEntityPointerDown);
             surface.Add(image);
@@ -362,8 +360,7 @@ namespace SE001.Editor.Level
 
         private static Vector2 ResolveCupSize(CupData cup)
         {
-            CupProfile profile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
-            return profile != null ? profile.bodySize : new Vector2(2f, 2f);
+            return LevelEditorGeometry.CupSize(cup);
         }
 
         private static float ResolveSourceFill(SourceData source)

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Phase V1b implementation notes</title>
+</head>
+<body>
+  <h1>Phase V1b — Bowl Receiver Visual</h1>
+  <p><strong>Status:</strong> <strong>EXECUTED</strong> on 2026-09-24. Manual Unity acceptance is still pending, so this packet is not marked DONE.</p>
+  <p>Bowl is now the default game-wide receiver style through <code>GameplayRuntimeProfile.receiverStyle</code>. Cup remains the switchable backup and its existing level data/API path is preserved.</p>
+  <h2>Implementation</h2>
+  <ul>
+    <li>Added measured <code>BowlVisualProfile</code> with outer/inner row spans, contours, rim row, wall thickness, native aspect, spec offset and silhouette mask.</li>
+    <li>Added <code>Bowl.prefab</code> with <code>View/Shadow</code>, <code>View/Main</code> and <code>View/Spec</code>, plus seven dedicated Bowl tint materials and shared spec/shadow materials.</li>
+    <li>Refactored receiver creation through <code>ReceiverFactory</code>; the existing <code>CupDomain</code> simulation path remains the gameplay authority.</li>
+    <li>Level Editor previews, inspector swatches and placement validation resolve the active receiver style. Bowl validation uses the baked contour row spans.</li>
+    <li>No level JSON/schema change was made. The existing <code>grainsPerUnit</code> semantics remain unchanged.</li>
+  </ul>
+  <h2>Evidence and verification</h2>
+  <ul>
+    <li>Texture measurements: <code>evidence/bowl-measurements.md</code>.</li>
+    <li>Preview grid regenerated at <code>handoff/phase-V1/evidence/JarPreviewGrid.png</code> with a cell width that fits the full Bowl art.</li>
+    <li>Unity MCP compile/reimport completed with 0 console errors and 0 warnings during implementation.</li>
+    <li>Runtime profile probe confirmed a baked Bowl profile, size 3.52 × 1.64 and generated row-based capacity.</li>
+    <li>Automated tests and manual visual walkthrough were intentionally skipped per developer instruction; developer must perform the manual Bowl/Cup switch, Level Editor preview/placement, fill-through-glass and responsive walkthrough.</li>
+  </ul>
+  <p><strong>Performance:</strong> Bowl art uses prefab meshes, shared materials and <code>MaterialPropertyBlock</code> feedback. It does not create materials/textures/meshes in the runtime interaction loop and does not add per-cell scene objects.</p>
+</body>
+</html>

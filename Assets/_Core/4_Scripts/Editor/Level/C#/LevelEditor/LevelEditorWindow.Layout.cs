@@ -376,7 +376,7 @@ namespace SE001.Editor.Level
         {
             Button row = MakeButton(string.Empty, () => SelectEntity(stableId, kind), "le-list-button");
             JarPreviewKind previewKind = kind == LevelEditorSelectionKind.Source
-                ? JarPreviewKind.Source : JarPreviewKind.Cup;
+                ? JarPreviewKind.Source : LevelEditorGeometry.ReceiverPreviewKind();
             Image preview = new Image
             {
                 image = JarPreviewUtility.GetPreview(previewKind, colorId, size, 1f),

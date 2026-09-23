@@ -21,3 +21,5 @@ MonoBehaviour:
   sourceFillMaterial: {fileID: 2100000, guid: f617817f22f1c1a489e1e6ca68142a33, type: 2}
   sourceShadowMaterial: {fileID: 2100000, guid: 6a1b217b69add8741944a29f4b96b99e, type: 2}
   cupShadowMaterial: {fileID: 2100000, guid: 6b606960e0cf8ea47a294fa6636cca2f, type: 2}
+  bowlSpecMaterial: {fileID: 2100000, guid: a0868b621867a46429a9ff14658780e9, type: 2}
+  bowlShadowMaterial: {fileID: 2100000, guid: e4caba7501d77e54da5c006cbfab0a97, type: 2}

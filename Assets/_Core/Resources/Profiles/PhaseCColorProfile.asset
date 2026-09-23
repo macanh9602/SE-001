@@ -23,6 +23,7 @@ MonoBehaviour:
     displayName: Red
     cupCapMaterial: {fileID: 2100000, guid: 5ca88cadc52ee494a9e907e7327c12fe, type: 2}
     sourceMouthMaterial: {fileID: 2100000, guid: 22cd5f2775386f946a78a2f2a5844f08, type: 2}
+    bowlMainMaterial: {fileID: 2100000, guid: b612c93b5ff129548ad3553174e225b1, type: 2}
   - colorId: 2
     sandColor:
       serializedVersion: 2
@@ -33,6 +34,7 @@ MonoBehaviour:
     displayName: Cobalt
     cupCapMaterial: {fileID: 2100000, guid: 555433e377cbbae49908c8a3c639d9d5, type: 2}
     sourceMouthMaterial: {fileID: 2100000, guid: dcf3d1a0414ac354991b8ed23fb60058, type: 2}
+    bowlMainMaterial: {fileID: 2100000, guid: 5741020b517281448beb2b221f8bee7e, type: 2}
   - colorId: 3
     sandColor:
       serializedVersion: 2
@@ -43,6 +45,7 @@ MonoBehaviour:
     displayName: Yellow
     cupCapMaterial: {fileID: 2100000, guid: afa840c60e7005d47b9a16a0f46b1e64, type: 2}
     sourceMouthMaterial: {fileID: 2100000, guid: 0d102c794ca8da941a7edf071a64a2d2, type: 2}
+    bowlMainMaterial: {fileID: 2100000, guid: f55c52d7c036fb2468bcfdd33173dd8e, type: 2}
   - colorId: 4
     sandColor:
       serializedVersion: 2
@@ -53,6 +56,7 @@ MonoBehaviour:
     displayName: Purple
     cupCapMaterial: {fileID: 2100000, guid: ef2dc3e034a5c8140849f440b7bab206, type: 2}
     sourceMouthMaterial: {fileID: 2100000, guid: b71a1a367db095f41a9273017b84f220, type: 2}
+    bowlMainMaterial: {fileID: 2100000, guid: 82ca9dcf6c91c69479b5607bf947d5cf, type: 2}
   - colorId: 5
     sandColor:
       serializedVersion: 2
@@ -63,6 +67,7 @@ MonoBehaviour:
     displayName: Pink
     cupCapMaterial: {fileID: 2100000, guid: e9b0da579adb1a442ba00e6a47084797, type: 2}
     sourceMouthMaterial: {fileID: 2100000, guid: 31261b1956bdc984280b244e24150c1b, type: 2}
+    bowlMainMaterial: {fileID: 2100000, guid: c66d51adc768a0a4885e561f34b9eda7, type: 2}
   - colorId: 6
     sandColor:
       serializedVersion: 2
@@ -73,6 +78,7 @@ MonoBehaviour:
     displayName: Green
     cupCapMaterial: {fileID: 2100000, guid: 96291b178e43073479e4758a2130c2e1, type: 2}
     sourceMouthMaterial: {fileID: 2100000, guid: aeae36e33bf901a45bd98e2c34dbb755, type: 2}
+    bowlMainMaterial: {fileID: 2100000, guid: 823a799f0baef8f4ca606315485d612d, type: 2}
   - colorId: 7
     sandColor:
       serializedVersion: 2
@@ -83,3 +89,4 @@ MonoBehaviour:
     displayName: White
     cupCapMaterial: {fileID: 2100000, guid: 430eb65dd6e4d7d4aa3675bf0d1ed19c, type: 2}
     sourceMouthMaterial: {fileID: 2100000, guid: 4ed6a6caa01e72c45900b81b0c7312df, type: 2}
+    bowlMainMaterial: {fileID: 2100000, guid: 47e189696e3ee84419f4c420703de608, type: 2}

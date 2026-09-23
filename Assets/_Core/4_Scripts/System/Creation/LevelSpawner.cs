@@ -133,7 +133,8 @@ namespace SE001.System.Creation
             for (int i = 0; i < levelData.sources.Count; i++)
                 sources.Add(new SourceDomain(levelData.sources[i], sourceProfile, grainsPerUnit, gameplayProfile.jarVisualProfile));
             for (int i = 0; i < levelData.cups.Count; i++)
-                cups.Add(new CupDomain(levelData.cups[i], cupProfile, grainsPerUnit, profile.cellSize, gameplayProfile.jarVisualProfile));
+                cups.Add(new CupDomain(levelData.cups[i], cupProfile, grainsPerUnit, profile.cellSize,
+                    gameplayProfile.jarVisualProfile, gameplayProfile.receiverStyle, gameplayProfile.bowlVisualProfile));
             for (int i = 0; i < cups.Count; i++)
             {
                 if (cups[i].Required <= cups[i].Capacity) continue;
@@ -163,12 +164,12 @@ namespace SE001.System.Creation
                 }
             }
             SourceFactory sourceFactory = new SourceFactory();
-            CupFactory cupFactory = new CupFactory();
+            ReceiverFactory receiverFactory = new ReceiverFactory();
             if (gameplayProfile.prefabProfile == null) throw new InvalidOperationException("Phase C requires PrefabProfile for production visuals.");
             for (int i = 0; i < sources.Count; i++)
                 sourceFactory.Create(new SourceCreateParameters(sources[i], activeContext.SourceRoot, gameplayProfile.prefabProfile, gameplayProfile));
             for (int i = 0; i < cups.Count; i++)
-                cupFactory.Create(new CupCreateParameters(cups[i], activeContext.CupRoot, gameplayProfile.prefabProfile, gameplayProfile));
+                receiverFactory.Create(new CupCreateParameters(cups[i], activeContext.CupRoot, gameplayProfile.prefabProfile, gameplayProfile));
             activeContext.RegisterParticipant(activeContext.LevelRoot.gameObject.AddComponent<PhaseCDrawVisualController>());
             // Level sanity (dev): per material, source grains must cover the cups' fill-line volume.
             for (int c = 0; c < cups.Count; c++)
@@ -223,6 +224,9 @@ namespace SE001.System.Creation
                 context.CupRoot.GetComponentsInChildren<PhaseCCupVisual>();
             for (int i = 0; i < cupVisuals.Length; i++)
                 cupVisuals[i].ReleaseForUnload();
+            BowlVisual[] bowlVisuals = context.CupRoot.GetComponentsInChildren<BowlVisual>();
+            for (int i = 0; i < bowlVisuals.Length; i++)
+                bowlVisuals[i].ReleaseForUnload();
             DestroyOwnedRoot(levelRoot);
 
             if (ReferenceEquals(activeContext, context))

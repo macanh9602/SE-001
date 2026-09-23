@@ -11,6 +11,7 @@ namespace SE001.Data
         public GameObject sandFieldPrefab;
         public GameObject sourcePrefab;
         public GameObject cupPrefab;
+        public GameObject bowlPrefab;
         public GameObject drawStrokePrefab;
     }
 }

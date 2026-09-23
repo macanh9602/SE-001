@@ -16,6 +16,8 @@ namespace SE001.Data
         public Material sourceFillMaterial;
         public Material sourceShadowMaterial;
         public Material cupShadowMaterial;
+        public Material bowlSpecMaterial;
+        public Material bowlShadowMaterial;
 
         public Material ResolveSourceBody() => sourceBodyMaterial != null ? sourceBodyMaterial : sourceMaterial;
         public Material ResolveCupBody() => cupBodyMaterial != null ? cupBodyMaterial : cupMaterial;
