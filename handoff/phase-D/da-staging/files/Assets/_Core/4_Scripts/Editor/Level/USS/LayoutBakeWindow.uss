@@ -1,0 +1,335 @@
+/* Layout Bake — editor visual system (skills/editor-ux-review/refs/editor-visual-system.md).
+   One accent (primary). Semantic colors carry state only. */
+
+.lb-root {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.lb-header {
+    padding: 10px 12px 8px 12px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0, 0, 0, 0.35);
+}
+
+.lb-title {
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.lb-subtitle {
+    color: rgba(200, 200, 210, 0.75);
+    margin-top: 2px;
+}
+
+.lb-scroll {
+    flex-grow: 1;
+}
+
+.lb-section {
+    margin: 10px 12px 0 12px;
+    padding: 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.lb-section-title {
+    font-size: 13px;
+    -unity-font-style: bold;
+    margin-bottom: 6px;
+}
+
+.lb-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lb-grow {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.lb-svg-field {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: 0;
+}
+
+.lb-hint {
+    color: rgba(200, 200, 210, 0.7);
+    font-size: 11px;
+    white-space: normal;
+    margin: 2px 0 4px 0;
+}
+
+.lb-path {
+    color: rgba(200, 200, 210, 0.5);
+    font-size: 10px;
+    white-space: normal;
+    margin: 0 0 6px 2px;
+}
+
+.lb-preview-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.lb-preview {
+    width: 150px;
+    height: 240px;
+    margin-right: 12px;
+    margin-bottom: 6px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.lb-metrics {
+    flex-grow: 1;
+    min-width: 220px;
+}
+
+.lb-metric {
+    flex-direction: row;
+    margin-bottom: 3px;
+}
+
+.lb-metric-label {
+    width: 88px;
+    color: rgba(200, 200, 210, 0.7);
+}
+
+.lb-metric-value {
+    flex-grow: 1;
+    white-space: normal;
+}
+
+.lb-action-row {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.lb-disabled-reason {
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: normal;
+    color: rgba(230, 190, 120, 0.95);
+    -unity-text-align: middle-right;
+    margin-right: 8px;
+}
+
+/* Buttons: primary > secondary > danger/bulk */
+.btn-primary {
+    background-color: rgb(58, 121, 187);
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    height: 26px;
+    padding-left: 14px;
+    padding-right: 14px;
+    border-width: 0;
+}
+
+.btn-primary:hover {
+    background-color: rgb(70, 136, 205);
+}
+
+.btn-primary:disabled {
+    background-color: rgba(58, 121, 187, 0.35);
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.btn-secondary {
+    height: 22px;
+}
+
+.btn-bulk {
+    height: 22px;
+    margin-top: 8px;
+    align-self: flex-start;
+}
+
+.btn-warning {
+    background-color: rgb(166, 110, 30);
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    border-width: 0;
+}
+
+/* Messages */
+.lb-message {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: 3px;
+    border-left-width: 3px;
+    white-space: normal;
+}
+
+.lb-message-title {
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.lb-message-body {
+    white-space: normal;
+}
+
+.msg-error {
+    border-left-color: rgb(214, 76, 76);
+    background-color: rgba(214, 76, 76, 0.14);
+}
+
+.msg-warning {
+    border-left-color: rgb(222, 164, 58);
+    background-color: rgba(222, 164, 58, 0.14);
+}
+
+.msg-success {
+    border-left-color: rgb(92, 178, 104);
+    background-color: rgba(92, 178, 104, 0.14);
+}
+
+.msg-info {
+    border-left-color: rgb(110, 150, 210);
+    background-color: rgba(110, 150, 210, 0.12);
+}
+
+.field-error {
+    color: rgb(236, 110, 110);
+}
+
+.field-ok {
+    color: rgba(200, 200, 210, 0.75);
+}
+
+/* Existing layouts */
+.lb-list-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.lb-search {
+    width: 180px;
+    flex-shrink: 1;
+}
+
+.lb-layout-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 5px 6px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+}
+
+.lb-layout-row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.lb-layout-row--selected {
+    background-color: rgba(58, 121, 187, 0.22);
+}
+
+.lb-layout-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: 8px;
+}
+
+.lb-layout-name {
+    -unity-font-style: bold;
+}
+
+.lb-layout-detail {
+    color: rgba(200, 200, 210, 0.7);
+    font-size: 11px;
+    white-space: normal;
+}
+
+.lb-badge {
+    width: 112px;
+    padding: 2px 6px;
+    border-radius: 9px;
+    -unity-text-align: middle-center;
+    font-size: 11px;
+    -unity-font-style: bold;
+    flex-shrink: 0;
+}
+
+.badge-success {
+    background-color: rgba(92, 178, 104, 0.25);
+    color: rgb(150, 220, 160);
+}
+
+.badge-warning {
+    background-color: rgba(222, 164, 58, 0.25);
+    color: rgb(240, 200, 120);
+}
+
+.badge-blocking {
+    background-color: rgba(214, 76, 76, 0.25);
+    color: rgb(245, 150, 150);
+}
+
+.lb-row-actions {
+    flex-direction: row;
+    flex-shrink: 0;
+}
+
+.empty-state {
+    padding: 14px 8px;
+    color: rgba(200, 200, 210, 0.8);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.lb-confirm {
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 3px;
+    border-width: 1px;
+    border-color: rgb(222, 164, 58);
+    background-color: rgba(222, 164, 58, 0.1);
+}
+
+.lb-advanced {
+    margin: 10px 12px 12px 12px;
+}
+
+.lb-advanced-text {
+    color: rgba(200, 200, 210, 0.55);
+    font-size: 11px;
+    white-space: normal;
+}
+
+/* Status bar: always visible */
+.lb-status {
+    flex-direction: row;
+    align-items: center;
+    min-height: 24px;
+    padding: 3px 10px;
+    border-top-width: 1px;
+    border-top-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+.lb-status-label {
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: normal;
+}
+
+.status-error {
+    color: rgb(245, 150, 150);
+}
+
+.status-warning {
+    color: rgb(240, 200, 120);
+}
+
+.status-success {
+    color: rgb(150, 220, 160);
+}

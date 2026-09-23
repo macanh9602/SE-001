@@ -11,5 +11,8 @@ namespace SE001.Data
         public float valveOpenDelay = 0.2f;
         public float valveCloseRotateTime = 0.15f;
         public float hitPadding = 0.2f;
+
+        // Used only when a JarVisualProfile is available. The fallback keeps old authoring fixtures compatible.
+        public float fallbackMouthAnchorFactor = 0.5f;
     }
 }

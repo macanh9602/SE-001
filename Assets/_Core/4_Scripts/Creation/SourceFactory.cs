@@ -26,6 +26,7 @@ namespace SE001.Creation
                 parameters.Domain,
                 parameters.Runtime != null ? parameters.Runtime.colorProfile : null,
                 parameters.Runtime != null ? parameters.Runtime.visualMaterials : null,
+                parameters.Runtime != null ? parameters.Runtime.jarVisualProfile : null,
                 parameters.Runtime != null ? parameters.Runtime.juiceProfile : null);
             return visual;
         }

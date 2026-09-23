@@ -45,8 +45,9 @@ namespace SE001.Tests
             Assert.That(visual.BodyRenderer, Is.Not.Null);
             Assert.That(visual.NozzleRenderer, Is.Not.Null);
             Assert.That(visual.transform.Find("Pivot/View/Body"), Is.Not.Null);
-            Assert.That(visual.transform.Find("Pivot/View/Nozzle"), Is.Not.Null);
-            Assert.That(visual.NozzleRenderer.sharedMaterial, Is.SameAs(visual.BodyRenderer.sharedMaterial));
+            Assert.That(visual.transform.Find("Pivot/View/Mouth"), Is.Not.Null);
+            Assert.That(visual.SandFillRenderer, Is.Not.Null);
+            Assert.That(visual.ShadowRenderer, Is.Not.Null);
 
             Object.DestroyImmediate(parent);
         }
@@ -83,17 +84,12 @@ namespace SE001.Tests
                 new CupCreateParameters(domain, parent.transform, runtime.prefabProfile, runtime));
 
             Assert.That(visual.Domain, Is.SameAs(domain));
-            Assert.That(
-                visual.transform.Find("FillView").localPosition,
-                Is.EqualTo((Vector3)domain.Position));
-            Assert.That(CountChildren(visual.transform.Find("View")), Is.EqualTo(6));
-            Assert.That(visual.transform.Find("View/WallL").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
-            Assert.That(visual.transform.Find("View/WallR").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
-            Assert.That(visual.transform.Find("View/WallB").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
-            Assert.That(visual.transform.Find("View/Back").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
-            Assert.That(visual.transform.Find("View/FillLine").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
-            Assert.That(visual.transform.Find("View/Rim").GetComponent<LineRenderer>().positionCount, Is.GreaterThan(0));
-            Assert.That(visual.FillView.GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
+            Assert.That(visual.transform.localPosition, Is.EqualTo((Vector3)domain.Position));
+            Assert.That(CountChildren(visual.transform.Find("View")), Is.EqualTo(4));
+            Assert.That(visual.transform.Find("View/Shadow").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
+            Assert.That(visual.transform.Find("View/Body").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
+            Assert.That(visual.transform.Find("View/CapTop").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
+            Assert.That(visual.transform.Find("View/CapBottom").GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
 
             Object.DestroyImmediate(parent);
         }
@@ -154,7 +150,9 @@ namespace SE001.Tests
             PhaseCCupVisual cup =
                 context.CupRoot.GetComponentInChildren<PhaseCCupVisual>();
             Assert.That(source.transform.Find("Pivot/View/Body"), Is.Not.Null);
-            Assert.That(cup.transform.Find("View/WallL"), Is.Not.Null);
+            Assert.That(cup.transform.Find("View/Body"), Is.Not.Null);
+            Assert.That(cup.transform.Find("View/CapTop"), Is.Not.Null);
+            Assert.That(cup.transform.Find("View/CapBottom"), Is.Not.Null);
             Assert.That(context.DynamicDrawRoot.Find("DrawPreview"), Is.Not.Null);
 
             Assert.That(gameplay.CommitStroke(
@@ -206,7 +204,9 @@ namespace SE001.Tests
             try
             {
                 AssertRequiredComponent<Renderer>(root, "Pivot/View/Body");
-                AssertRequiredComponent<Renderer>(root, "Pivot/View/Nozzle");
+                AssertRequiredComponent<Renderer>(root, "Pivot/View/Shadow");
+                AssertRequiredComponent<Renderer>(root, "Pivot/View/SandFill");
+                AssertRequiredComponent<Renderer>(root, "Pivot/View/Mouth");
                 AssertRequiredTransform(root, "Anchors/EmitPoint");
             }
             finally
@@ -220,14 +220,10 @@ namespace SE001.Tests
             GameObject root = LoadPrefabContents(prefab);
             try
             {
-                AssertRequiredComponent<MeshFilter>(root, "View/WallL");
-                AssertRequiredComponent<MeshFilter>(root, "View/WallR");
-                AssertRequiredComponent<MeshFilter>(root, "View/WallB");
-                AssertRequiredComponent<MeshFilter>(root, "View/Back");
-                AssertRequiredComponent<LineRenderer>(root, "View/Rim");
-                AssertRequiredComponent<MeshFilter>(root, "View/FillLine");
-                AssertRequiredComponent<MeshFilter>(root, "FillView");
-                AssertRequiredComponent<MeshRenderer>(root, "FillView");
+                AssertRequiredComponent<MeshFilter>(root, "View/Shadow");
+                AssertRequiredComponent<MeshFilter>(root, "View/Body");
+                AssertRequiredComponent<MeshFilter>(root, "View/CapTop");
+                AssertRequiredComponent<MeshFilter>(root, "View/CapBottom");
                 AssertRequiredTransform(root, "Anchors/Entry");
                 AssertRequiredTransform(root, "Anchors/Feedback");
             }

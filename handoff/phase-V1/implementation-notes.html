@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Phase V1 — Jar Visual implementation notes</title>
+</head>
+<body>
+  <h1>Phase V1 — Jar Visual</h1>
+  <p><strong>Status:</strong> EXECUTED locally; V1-specific checks pass. Story closure remains conditional on the existing full-suite baseline and missing numeric profiler capture.</p>
+
+  <h2>Approach and decisions</h2>
+  <ul>
+    <li>Used the locked C2C spec. Frontier mode is AUTO; the workspace adapter was unavailable, so the local fallback was used after workspace/branch preflight confirmed <code>SE-001</code>, branch <code>main</code>, dirty worktree.</li>
+    <li>Kept <code>CupProfile.taper = 0</code> as locked. Grep showed <code>fillLine</code> participates in CupDomain capacity/Required accounting, so <code>fillLine = 0.85</code> is retained; only the visual FillLine was removed.</li>
+    <li>Kept old <code>MAT_Source</code>, <code>MAT_Cup</code>, and <code>MAT_CupBack</code> as deletion candidates; no destructive cleanup was performed.</li>
+  </ul>
+
+  <h2>Implemented</h2>
+  <ul>
+    <li>Added <code>JarVisualProfile</code> with measured composition constants, baked silhouettes, Source fill mask, area LUT, and sparkle noise.</li>
+    <li>Added <code>SE001_JarTint</code>, <code>SE001_JarSandFill</code>, and <code>SE001_JarShadow</code>; tint math is shared with the Editor CPU mirror.</li>
+    <li>Generated 14 color materials and wired them through <code>ColorProfile</code>; ids 1–7 remain backward-compatible.</li>
+    <li>Rebuilt authored quad mesh assets and prefabs. Source hierarchy is <code>Pivot/View/{Shadow,SandFill,Body,Mouth}</code>; Cup hierarchy is <code>View/{Shadow,Body,CapTop,CapBottom}</code>.</li>
+    <li>Corrected Source orientation: authored mouth-down art is idle at <code>180°</code> (mouth up) and transitions to <code>0°</code> while pouring; <code>BodyOffset</code> and Editor preview now match this pose.</li>
+    <li>Source fill uses one reusable MPB, area-correct LUT, world-down object-space direction, and no per-frame material/mesh allocation. Source shadow offset is kept in world space while the pivot rotates.</li>
+    <li>Cup uses fixed-thickness 9-slice caps and body height stretch. Foreign feedback is applied to cap renderers through one reusable MPB.</li>
+    <li>Added deterministic Editor generator, mask baker, prefab rebuild, cached preview utility, and preview grid generation.</li>
+  </ul>
+
+  <h2>Evidence</h2>
+  <ul>
+    <li><a href="evidence/JarPreviewGrid.png">JarPreviewGrid.png</a>: seven colors, Cup row, Source row with fill.</li>
+    <li><a href="evidence/GameScene_JarVisualSmoke.png">GameScene_JarVisualSmoke.png</a>: Play Mode smoke screenshot from <code>GameScene</code>; real Source/Cup prefabs visible.</li>
+    <li><a href="evidence/GameScene_SourceOrientationFix.png">GameScene_SourceOrientationFix.png</a>: Play Mode verification after Source orientation fix; idle mouth is above the jar body.</li>
+    <li>Generator log: <code>[SE001] Jar visual assets rebuilt: profile, masks, 14 color materials, meshes and prefabs.</code></li>
+    <li>Rendering stats resource returned all zero draw/batch counters in this Editor session, therefore draw-call delta is not claimed as measured. The code path was audited for steady-state allocation: MPBs are reused; authored meshes/materials are shared.</li>
+  </ul>
+
+  <h2>Verification</h2>
+  <table>
+    <thead><tr><th>Gate</th><th>Result</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>V1 targeted EditMode</td><td>PASS</td><td><code>JarVisualTests</code>: 11/11 passed, including closed Source mouth-up pose.</td></tr>
+      <tr><td>C1 visual/lifecycle targeted tests</td><td>PASS</td><td>6/6 passed after hierarchy/material refresh.</td></tr>
+      <tr><td>Play Mode smoke</td><td>PASS</td><td>GameScene entered Play Mode with no new console errors/warnings; screenshot saved.</td></tr>
+      <tr><td>Full EditMode suite</td><td>BASELINE FAILURES</td><td>76 tests completed; 66 passed and 10 failed: 3 Phase D layout fixture expectations, 2 HUD tests cascading from gameplay result, and 5 existing playthrough assertions. The playthrough failure signature reproduced with a temporary <code>taper=0.2</code> probe, so it is not introduced by the V1 visual hierarchy.</td></tr>
+      <tr><td>Draw-call / GC numeric gate</td><td>NOT MEASURED</td><td>MCP rendering stats returned zero counters; no numeric PASS claimed.</td></tr>
+      <tr><td>git diff --check / style gate</td><td>PASS</td><td>Scoped style gate PASS; <code>git diff --check</code> clean after whitespace cleanup.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Performance notes</h2>
+  <p>Runtime Source/Cup binds use shared materials and authored meshes. Per-instance state is limited to MaterialPropertyBlock values for Source fill and Cup feedback. Preview texture creation is Editor-only and cached by profile/material content hash; it is not part of the gameplay loop.</p>
+
+  <h2>Open risks / closure</h2>
+  <ul>
+    <li>The existing level simulation/playthrough baseline needs a separate gameplay calibration story; changing it here would expand V1 scope and violate the locked visual-only boundary.</li>
+    <li>A device/Profiler capture is still required for authoritative mobile draw-call and GC numbers.</li>
+    <li>Story is not marked DONE until the existing baseline failures and performance evidence are resolved or explicitly accepted by the Product Owner.</li>
+  </ul>
+</body>
+</html>

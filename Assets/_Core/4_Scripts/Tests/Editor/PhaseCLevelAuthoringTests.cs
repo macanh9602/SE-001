@@ -12,8 +12,8 @@ namespace SE001.Tests
         {
             ColorProfile profile = Resources.Load<ColorProfile>("Profiles/PhaseCColorProfile");
             Assert.That(profile, Is.Not.Null);
-            Assert.That(profile.GetSandColor(1), Is.EqualTo(new Color32(232, 65, 79, 255)));
-            Assert.That(profile.GetSandColor(2), Is.EqualTo(new Color32(47, 107, 255, 255)));
+            Assert.That(profile.GetSandColor(1), Is.EqualTo(new Color32(251, 46, 43, 255)));
+            Assert.That(profile.GetSandColor(2), Is.EqualTo(new Color32(58, 108, 255, 255)));
             Assert.That(profile.GetUiColor(1), Is.EqualTo(profile.GetSandColor(1)));
             Assert.That(profile.BuildSandLookup()[2], Is.EqualTo(profile.GetSandColor(2)));
         }

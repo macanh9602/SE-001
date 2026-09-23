@@ -19,6 +19,7 @@ MonoBehaviour:
   juiceProfile: {fileID: 11400000, guid: eb48c28a2c5da58449dff97d98822947, type: 2}
   levelSequence: {fileID: 11400000, guid: 327e7a2610a0c604596996985e4f92d5, type: 2}
   visualMaterials: {fileID: 11400000, guid: 65f8410ce7b61154e9e416abcfd28421, type: 2}
+  jarVisualProfile: {fileID: 11400000, guid: 091e3a63c27381b4f87746baefd09174, type: 2}
   sandProfile: {fileID: 11400000, guid: bffe3b555195f2948b2ca0b382d1b105, type: 2}
   prefabProfile: {fileID: 11400000, guid: 21989156fdc2fb344aadeeb526716169, type: 2}
   grainsPerUnit: 12

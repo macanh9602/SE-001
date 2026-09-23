@@ -15,20 +15,20 @@ namespace SE001.Gameplay
         private float openingTimer;
         private float emitAccumulator;
 
-        public SourceDomain(SourceData data, SourceProfile profile, int grainsPerUnit)
+        public SourceDomain(SourceData data, SourceProfile profile, int grainsPerUnit, JarVisualProfile visualProfile = null)
         {
             StableId = data.stableId;
             MaterialId = (byte)data.materialId;
             Initial = Mathf.Max(0, data.logicalAmount) * Mathf.Max(1, grainsPerUnit);
-            Remaining = Initial;
+            remaining = Initial;
             openDelay = profile.valveOpenDelay;
             // emissionRate is grains per 60 Hz step (sand-feel-lab 'rate'); converted to grains/second.
             grainsPerSecond = (data.emissionRate > 0f ? data.emissionRate : profile.emissionRate) * 60f;
             streamWidthCells = Mathf.Max(1, Mathf.RoundToInt(data.streamWidth > 0f ? data.streamWidth : profile.streamWidth));
             Position = data.position;
             Size = data.size.x > 0f && data.size.y > 0f ? data.size : profile.bodySize;
-            BodyOffset = new Vector2(0f, Size.y * 0.5f);
-            State = Remaining == 0 ? SourceValveState.Empty : data.startsOpen ? SourceValveState.Open : SourceValveState.Closed;
+            BodyOffset = new Vector2(0f, JarVisualGeometry.SourceBodyOffsetY(Size.y, profile, visualProfile));
+            state = remaining == 0 ? SourceValveState.Empty : data.startsOpen ? SourceValveState.Open : SourceValveState.Closed;
         }
 
         public string StableId { get; }
@@ -37,8 +37,10 @@ namespace SE001.Gameplay
         public Vector2 Size { get; }
         public Vector2 BodyOffset { get; }
         public int Initial { get; }
-        public int Remaining { get; private set; }
-        public SourceValveState State { get; private set; }
+        private int remaining;
+        private SourceValveState state;
+        public int Remaining => remaining;
+        public SourceValveState State => state;
         public bool IsPouring => State == SourceValveState.Open || State == SourceValveState.Opening;
 
         /// <summary>Tap area: the visible jar body (not the emit point), grown by padding.</summary>
@@ -55,12 +57,12 @@ namespace SE001.Gameplay
                 case SourceValveState.Empty: return;
                 case SourceValveState.Open:
                 case SourceValveState.Opening:
-                    State = SourceValveState.Closed;
+                    state = SourceValveState.Closed;
                     openingTimer = 0f;
                     emitAccumulator = 0f;
                     return;
                 default:
-                    State = SourceValveState.Opening;
+                    state = SourceValveState.Opening;
                     openingTimer = 0f;
                     return;
             }
@@ -74,7 +76,7 @@ namespace SE001.Gameplay
             {
                 openingTimer += dt;
                 if (openingTimer < openDelay) return 0;
-                State = SourceValveState.Open;
+                state = SourceValveState.Open;
             }
 
             emitAccumulator += grainsPerSecond * dt;
@@ -92,8 +94,8 @@ namespace SE001.Gameplay
 
             emitAccumulator -= inserted;
             if (emitAccumulator > grainsPerSecond) emitAccumulator = grainsPerSecond; // do not bank unlimited backlog
-            Remaining -= inserted;
-            if (Remaining == 0) State = SourceValveState.Empty;
+            remaining -= inserted;
+            if (remaining == 0) state = SourceValveState.Empty;
             return inserted;
         }
     }
@@ -130,20 +132,28 @@ namespace SE001.Gameplay
         public Vector2 Position { get; }
         public Vector2 Size { get; }
         public int RequiredLogical { get; }
-        public int Required { get; private set; }
-        public int Capacity { get; private set; }
-        public int Collected { get; private set; }
+        private int required;
+        private int capacity;
+        private int collected;
+        private bool foreignDetected;
+        private byte foreignMaterialId;
+        private float fillLineY;
+        private int minY;
+        private int maxY;
+        public int Required => required;
+        public int Capacity => capacity;
+        public int Collected => collected;
         public bool Full => Collected >= Required;
-        public bool ForeignDetected { get; private set; }
-        public byte ForeignMaterialId { get; private set; }
+        public bool ForeignDetected => foreignDetected;
+        public byte ForeignMaterialId => foreignMaterialId;
         public float FillRatio => Mathf.Clamp01(Collected / (float)Required);
         public int CollectedLogical => Mathf.Min(RequiredLogical, Mathf.FloorToInt(FillRatio * RequiredLogical + 0.0001f));
         /// <summary>Wall thickness actually used (board units), shared by mask and visuals.</summary>
         public float EffectiveWall => wall;
         public float Taper => taper;
-        public float FillLineY { get; private set; }
-        public int MinY { get; private set; }
-        public int MaxY { get; private set; }
+        public float FillLineY => fillLineY;
+        public int MinY => minY;
+        public int MaxY => maxY;
 
         private float OuterHalfWidthAt(float y)
         {
@@ -157,28 +167,28 @@ namespace SE001.Gameplay
             outerMinY = Mathf.FloorToInt(Position.y / cell);
             outerMaxY = Mathf.CeilToInt((Position.y + Size.y) / cell) - 1;
             // First row whose cell center is above the bottom wall (must match RegisterWalls' 'bottom' test exactly).
-            MinY = Mathf.CeilToInt((Position.y + wall) / cell - 0.5f);
-            MaxY = outerMaxY;
-            int rows = Mathf.Max(0, MaxY - MinY + 1);
+            minY = Mathf.CeilToInt((Position.y + wall) / cell - 0.5f);
+            maxY = outerMaxY;
+            int rows = Mathf.Max(0, maxY - minY + 1);
             rowMinX = new int[rows];
             rowMaxX = new int[rows];
             float interiorTop = Position.y + Size.y;
-            FillLineY = Position.y + wall + (interiorTop - Position.y - wall) * fillLine;
-            Capacity = 0;
-            Required = 0;
+            fillLineY = Position.y + wall + (interiorTop - Position.y - wall) * fillLine;
+            capacity = 0;
+            required = 0;
             for (int r = 0; r < rows; r++)
             {
-                int y = MinY + r;
+                int y = minY + r;
                 float yc = (y + 0.5f) * cell;
                 float inner = OuterHalfWidthAt(yc) - wall;
                 rowMinX[r] = Mathf.CeilToInt((Position.x - inner) / cell - 0.5f);
                 rowMaxX[r] = Mathf.FloorToInt((Position.x + inner) / cell - 0.5f);
                 int span = Mathf.Max(0, rowMaxX[r] - rowMinX[r] + 1);
-                Capacity += span;
-                if (yc <= FillLineY) Required += span;
+                capacity += span;
+                if (yc <= fillLineY) required += span;
             }
 
-            Required = Mathf.Max(1, Required);
+            required = Mathf.Max(1, required);
         }
 
         public void RegisterWalls(SandSimulation sim, float cell, float wallThickness)
@@ -205,19 +215,19 @@ namespace SE001.Gameplay
         /// </summary>
         public int Collect(SandSimulation sim)
         {
-            if (Full || ForeignDetected) return 0;
+            if (Full || foreignDetected) return 0;
             int count = 0;
             for (int r = 0; r < rowMinX.Length; r++)
             {
-                int y = MinY + r;
+                int y = minY + r;
                 for (int x = rowMinX[r]; x <= rowMaxX[r]; x++)
                 {
                     if (!sim.IsOccupied(x, y)) continue;
                     byte material = sim.State.Cells[sim.State.Index(x, y)];
                     if (material != AcceptedMaterialId)
                     {
-                        ForeignDetected = true;
-                        ForeignMaterialId = material;
+                        foreignDetected = true;
+                        foreignMaterialId = material;
                         return 0;
                     }
 
@@ -225,8 +235,8 @@ namespace SE001.Gameplay
                 }
             }
 
-            int delta = count - Collected;
-            Collected = Mathf.Min(count, Required);
+            int delta = count - collected;
+            collected = Mathf.Min(count, required);
             if (Full) CloseMouth(sim);
             return delta;
         }
@@ -236,7 +246,7 @@ namespace SE001.Gameplay
         {
             int r = rowMinX.Length - 1;
             if (r < 0) return;
-            for (int x = rowMinX[r]; x <= rowMaxX[r]; x++) sim.SetCupWall(x, MaxY, true);
+            for (int x = rowMinX[r]; x <= rowMaxX[r]; x++) sim.SetCupWall(x, maxY, true);
         }
     }
 }

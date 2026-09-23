@@ -25,7 +25,8 @@ namespace SE001.Creation
             visual.Bind(
                 parameters.Domain,
                 parameters.Runtime != null ? parameters.Runtime.colorProfile : null,
-                parameters.Runtime != null ? parameters.Runtime.visualMaterials : null);
+                parameters.Runtime != null ? parameters.Runtime.visualMaterials : null,
+                parameters.Runtime != null ? parameters.Runtime.jarVisualProfile : null);
             return visual;
         }
     }

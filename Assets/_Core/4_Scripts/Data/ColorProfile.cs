@@ -33,6 +33,25 @@ namespace SE001.Data
             return false;
         }
 
+        public bool TryGetEntry(int colorId, out ColorProfileEntry entry)
+        {
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (entries[i].colorId != colorId) continue;
+                entry = entries[i];
+                return true;
+            }
+
+            entry = default(ColorProfileEntry);
+            return false;
+        }
+
+        public bool HasJarMaterials(int colorId)
+        {
+            ColorProfileEntry entry;
+            return TryGetEntry(colorId, out entry) && entry.cupCapMaterial != null && entry.sourceMouthMaterial != null;
+        }
+
         public Color32[] BuildSandLookup()
         {
             int maxId = 0;
@@ -57,5 +76,7 @@ namespace SE001.Data
         public Color32 sandColor;
         public Color32 uiColor;
         public string displayName;
+        public Material cupCapMaterial;
+        public Material sourceMouthMaterial;
     }
 }

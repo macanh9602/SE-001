@@ -1,5 +1,21 @@
 # Decision Log — SE-001
 
+## D-008 — Phase V1 jar visual contract
+
+Status: Accepted — 2026-09-23
+Story: `handoff/phase-V1/PHASE-V1-JAR-VISUAL.md`
+
+### Chốt
+
+- Source/Cup presentation uses authored shared quad meshes, shared materials, and reusable MPBs; runtime does not generate per-instance meshes or materials.
+- `JarVisualProfile` is the single source for measured art composition, masks, Source fill LUT, and 9-slice constants.
+- `CupProfile.taper = 0` is the locked art-aligned geometry contract. `fillLine` remains `0.85` because it participates in gameplay accounting; the visual FillLine is removed only.
+- Color ids 1–7 use 14 generated cap/mouth materials referenced by `ColorProfile`; the old visual materials remain as non-destructive deletion candidates.
+
+### Hệ quả
+
+Editor preview and runtime presentation share the same measured profile and tint math. The visual change does not authorize recalibration of the existing gameplay simulation or level data; that remains a separate decision/story.
+
 > Append-only. Decision mới đặt ở trên cùng. Project-level decision ghi ở đây; micro-decision ghi trong story implementation notes.
 
 ## D-007 — Baked layout asset is the runtime geometry source

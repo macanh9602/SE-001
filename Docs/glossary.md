@@ -33,6 +33,11 @@
 | LayoutDefinition | Runtime reference to a baked layout prefab and mask asset | `LayoutDefinition` |
 | LayoutMaskAsset | Bit-packed baked valid/static grid consumed by runtime | `LayoutMaskAsset` |
 | layoutId | Stable level reference to a `LayoutDefinition` resource | `SE001LevelJson.layoutId` |
+| Layout (GD) | Baked board geometry (walls + static obstacles) that levels pick by Layout ID; edited only via SVG + Layout Bake | `LayoutDefinition` |
+| Layout ID | GD-facing name of a baked layout; lowercase, digits, `_` | `LayoutDefinition.layoutId` |
+| Bake / Rebake | Turn an SVG into layout prefab + mask; Rebake repeats it for an existing Layout ID and keeps asset identity | `LayoutBaker.TryBakeSvg` |
+| Ready / Needs Rebake / Source Missing / Invalid SVG / Bake Failed | Layout Bake status shown to GD; Needs Rebake may block levels from loading | `LayoutBakeState` |
+| contourHash | Baked geometry identity; definition and mask must match or runtime refuses to load | `LayoutDefinition.contourHash` |
 
 ## Phase B terms
 

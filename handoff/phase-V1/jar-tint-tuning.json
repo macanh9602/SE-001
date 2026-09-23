@@ -1,0 +1,9 @@
+[
+ {"colorId":1,"displayName":"Red",   "sandColor":"#FB2E2B","capTint":"#F0161F","colorize":0,"hue":0,"saturation":1.00,"lightness":1.10,"note":"thay Coral cũ"},
+ {"colorId":2,"displayName":"Cobalt","sandColor":"#3A6CFF","capTint":"#1E4FE6","colorize":0,"hue":0,"saturation":1.00,"lightness":1.10,"note":"thay Blue cũ"},
+ {"colorId":3,"displayName":"Yellow","sandColor":"#FFCE34","capTint":"#FFC014","colorize":0,"hue":0,"saturation":1.00,"lightness":1.08},
+ {"colorId":4,"displayName":"Purple","sandColor":"#9154F6","capTint":"#6330F2","colorize":0,"hue":0,"saturation":1.00,"lightness":1.10},
+ {"colorId":5,"displayName":"Pink",  "sandColor":"#FF7AB8","capTint":"#FF4FA3","colorize":0,"hue":0,"saturation":1.00,"lightness":1.08},
+ {"colorId":6,"displayName":"Green", "sandColor":"#45D46A","capTint":"#1FBF4F","colorize":0,"hue":0,"saturation":1.00,"lightness":1.10},
+ {"colorId":7,"displayName":"White", "sandColor":"#FAF8F2","capTint":"#F2F1EC","colorize":0,"hue":0,"saturation":1.00,"lightness":1.06}
+]

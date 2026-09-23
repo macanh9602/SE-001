@@ -12,7 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c3a076216debff40a4a888cdd660b7d, type: 3}
   m_Name: PhaseCVisualMaterials
   m_EditorClassIdentifier:
-  sourceMaterial: {fileID: 2100000, guid: 224c65da92ca39541a67e168c6c5aa40, type: 2}
-  cupMaterial: {fileID: 2100000, guid: 326e2ec173e72cc48a3fc1d836d9a93c, type: 2}
-  cupBackMaterial: {fileID: 2100000, guid: e8efe6081ae2cbd46bd831771e262e39, type: 2}
+  sourceMaterial: {fileID: 2100000, guid: 6f88c1949fa3f6f4f9867880f6005001, type: 2}
+  cupMaterial: {fileID: 2100000, guid: 3adafba8057296e49beef9037cbb10fb, type: 2}
+  cupBackMaterial: {fileID: 2100000, guid: 3adafba8057296e49beef9037cbb10fb, type: 2}
   drawPathMaterial: {fileID: 2100000, guid: a176dce23f2672741b0769fe4e56594e, type: 2}
+  sourceBodyMaterial: {fileID: 2100000, guid: 6f88c1949fa3f6f4f9867880f6005001, type: 2}
+  cupBodyMaterial: {fileID: 2100000, guid: 3adafba8057296e49beef9037cbb10fb, type: 2}
+  sourceFillMaterial: {fileID: 2100000, guid: f617817f22f1c1a489e1e6ca68142a33, type: 2}
+  sourceShadowMaterial: {fileID: 2100000, guid: 6a1b217b69add8741944a29f4b96b99e, type: 2}
+  cupShadowMaterial: {fileID: 2100000, guid: 6b606960e0cf8ea47a294fa6636cca2f, type: 2}

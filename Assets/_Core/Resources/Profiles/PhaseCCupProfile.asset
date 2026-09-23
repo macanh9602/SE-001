@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: PhaseCCupProfile
   m_EditorClassIdentifier: 
   wallThickness: 0.12
-  taper: 0.2
+  taper: 0
   fillLine: 0.85

@@ -152,8 +152,13 @@ namespace SE001.Data
                     errors.Add($"sources[{i}] has invalid material, amount, position, or is outside board.");
                 if (item != null && !ValidOptionalSize(item.size))
                     errors.Add($"sources[{i}].size must be zero (profile default) or finite and positive.");
-                if (item != null && colorProfile != null && !colorProfile.Contains(item.materialId))
-                    errors.Add($"sources[{i}] references unknown colorId {item.materialId}.");
+                if (item != null && colorProfile != null)
+                {
+                    if (!colorProfile.Contains(item.materialId))
+                        errors.Add($"sources[{i}] references unknown colorId {item.materialId}.");
+                    else if (!colorProfile.HasJarMaterials(item.materialId))
+                        errors.Add($"sources[{i}] colorId {item.materialId} is missing sourceMouthMaterial or cupCapMaterial.");
+                }
             }
             for (int i = 0; i < level.cups.Count; i++)
             {
@@ -167,8 +172,13 @@ namespace SE001.Data
                      !InsideBoard(item.position, level.board.size));
                 if (invalidCup)
                     errors.Add($"cups[{i}] has invalid material, amount, size, or position.");
-                if (item != null && colorProfile != null && !colorProfile.Contains(item.acceptedMaterialId))
-                    errors.Add($"cups[{i}] references unknown colorId {item.acceptedMaterialId}.");
+                if (item != null && colorProfile != null)
+                {
+                    if (!colorProfile.Contains(item.acceptedMaterialId))
+                        errors.Add($"cups[{i}] references unknown colorId {item.acceptedMaterialId}.");
+                    else if (!colorProfile.HasJarMaterials(item.acceptedMaterialId))
+                        errors.Add($"cups[{i}] colorId {item.acceptedMaterialId} is missing sourceMouthMaterial or cupCapMaterial.");
+                }
             }
             ValidateSupply(level, errors);
             if (!usesBakedLayout) ValidateStaticOverlap(level, errors);

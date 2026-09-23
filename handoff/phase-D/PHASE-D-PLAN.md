@@ -137,6 +137,10 @@ Shell chạy được nhưng nhìn như debug panel = **chưa DONE**.
 
 ## D3 — Vertical slice edit đầu tiên (StaticObstacle)
 
+> **SUPERSEDED (2026-09-23, schema 3 ownership correction — see `PHASE-D-PRODUCTION-TOOLING-SPEC.md` §1).**
+> Wall/static obstacle geometry is owned by the SVG + **Layout Bake**; the Level Editor shows it read-only and offers
+> “Open Layout Bake”. Schema-3 level JSON must not gain `staticObstacles`/`wallContours`. The flow below is kept for history only.
+
 Mục tiêu: GD author trọn một StaticObstacle qua editor production.
 
 Flow: tạo → chọn → move → sửa point → insert/remove point → sửa thickness/style nếu có → undo/redo → delete → validation → preview đúng runtime.

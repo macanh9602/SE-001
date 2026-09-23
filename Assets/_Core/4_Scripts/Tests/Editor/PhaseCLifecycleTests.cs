@@ -82,9 +82,11 @@ namespace SE001.Tests
             Assert.That(runtime.visualMaterials.cupMaterial, Is.Not.Null);
             Assert.That(runtime.visualMaterials.cupBackMaterial, Is.Not.Null);
             Assert.That(runtime.visualMaterials.drawPathMaterial, Is.Not.Null);
-            Assert.That(runtime.visualMaterials.sourceMaterial.shader.name, Is.EqualTo("SE001/SpriteSurface"));
-            Assert.That(runtime.visualMaterials.cupMaterial.shader.name, Is.EqualTo("SE001/SpriteSurface"));
-            Assert.That(runtime.visualMaterials.cupBackMaterial.shader.name, Is.EqualTo("SE001/SpriteSurface"));
+            Assert.That(runtime.visualMaterials.sourceBodyMaterial.shader.name, Is.EqualTo("SE001/JarTint"));
+            Assert.That(runtime.visualMaterials.cupBodyMaterial.shader.name, Is.EqualTo("SE001/JarTint"));
+            Assert.That(runtime.visualMaterials.sourceFillMaterial.shader.name, Is.EqualTo("SE001/JarSandFill"));
+            Assert.That(runtime.visualMaterials.sourceShadowMaterial.shader.name, Is.EqualTo("SE001/JarShadow"));
+            Assert.That(runtime.visualMaterials.cupShadowMaterial.shader.name, Is.EqualTo("SE001/JarShadow"));
             Assert.That(runtime.visualMaterials.drawPathMaterial.shader.name, Is.EqualTo("SE001/LayoutSurface"));
         }
 

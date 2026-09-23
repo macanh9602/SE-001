@@ -72,14 +72,13 @@ namespace SE001.Editor
             EditorUtility.SetDirty(juice);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            JarVisualAssetSetup.RebuildAll();
         }
 
         [MenuItem("SE001/Phase C/Rebuild Gameplay Visual Prefabs")]
         public static void RebuildGameplayVisualPrefabs()
         {
-            GetOrCreateVisualPrefab("Assets/_Core/3_Prefabs/Gameplay/Source/SandSource.prefab", "SandSource", typeof(PhaseCSourceVisual), false);
-            GetOrCreateVisualPrefab("Assets/_Core/3_Prefabs/Gameplay/Cup/Cup.prefab", "Cup", typeof(PhaseCCupVisual), false);
-            GetOrCreateVisualPrefab("Assets/_Core/3_Prefabs/Gameplay/Draw/DrawStroke.prefab", "DrawStroke", typeof(PhaseCDrawStrokeVisual), true);
+            JarVisualAssetSetup.RebuildAll();
             PrefabProfile profile = AssetDatabase.LoadAssetAtPath<PrefabProfile>("Assets/_Core/Resources/Profiles/PhaseBPrefabProfile.asset");
             if (profile != null)
             {

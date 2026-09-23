@@ -13,6 +13,7 @@ namespace SE001.Data
         public JuiceProfile juiceProfile;
         public PhaseCLevelSequence levelSequence;
         public PhaseCVisualMaterials visualMaterials;
+        public JarVisualProfile jarVisualProfile;
         public SandSimulationProfile sandProfile;
         public PrefabProfile prefabProfile;
         public int grainsPerUnit = 12;
