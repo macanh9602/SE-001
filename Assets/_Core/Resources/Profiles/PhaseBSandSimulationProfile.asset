@@ -18,3 +18,8 @@ MonoBehaviour:
   maxCells: 262144
   enableLateralSlide: 1
   grainsPerUnit: 115
+  bowlCreepChance: 1
+  bowlCreepReach: 48
+  bowlLevelingCellsPerStep: 3
+  bowlLevelingExtraPasses: 1
+  bowlSettlingHeadroomCells: 4

@@ -43,7 +43,7 @@ namespace SE001.Data
         public bool rimAssist = true;
         [Tooltip("Invisible catch shelf on the lip top, in sand cells beyond the outer lip. A stream that visually "
             + "touches the rim is caught and rolled in instead of falling past the edge. 0 = exact art edge.")]
-        [Range(0, 4)] public int rimCatchCells = 2;
+        [Range(0, 8)] public int rimCatchCells = 2;
         public Vector2 shadowOffsetPixels = new Vector2(-6f, -24f);
         public Vector2 specOffsetPixels = Vector2.zero;
 

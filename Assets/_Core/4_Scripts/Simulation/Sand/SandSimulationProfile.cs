@@ -38,6 +38,18 @@ namespace SE001.Simulation.Sand
         [Tooltip("How far (cells, along a free row) a resting grain looks for a drop when creeping.")]
         [Range(1, 64)] public int creepReach = 24;
 
+        [Header("Bowl settling")]
+        [Tooltip("Chance for a resting grain over a Bowl to seek a lower cell. Applied only within the scaled Bowl opening.")]
+        [Range(0f, 1f)] public float bowlCreepChance = 1f;
+        [Tooltip("Search radius in cells for Bowl-local leveling. The path and target must remain over the Bowl opening.")]
+        [Range(1, 64)] public int bowlCreepReach = 48;
+        [Tooltip("Maximum horizontal cells a Bowl grain advances per step toward a verified lower cell. Higher values settle faster without extra simulation passes.")]
+        [Range(1, 4)] public int bowlLevelingCellsPerStep = 3;
+        [Tooltip("Extra Bowl-only settling passes per simulation step. More passes let newly exposed grains join the flow, at proportional CPU cost. 0 disables extra passes.")]
+        [Range(0, 3)] public int bowlLevelingExtraPasses = 1;
+        [Tooltip("Rows above the Bowl lip where newly landed sand still levels toward the opening.")]
+        [Range(0, 8)] public int bowlSettlingHeadroomCells = 4;
+
         [Header("Stream")]
         [Tooltip("Momentum kept per step while airborne. Airborne grains never move sideways; 0 = drop dead-straight off edges.")]
         [Range(0f, 1f)] public float airDrag = 0.5f;

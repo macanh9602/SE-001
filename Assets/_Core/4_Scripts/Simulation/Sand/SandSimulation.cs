@@ -23,6 +23,10 @@ namespace SE001.Simulation.Sand
         private readonly SandSimulationProfile profile;
         private byte[] stamp;
         private byte frame;
+        private readonly byte[] bowlPassStamp;
+        private byte bowlPassFrame;
+        private int bowlFlowMinX = int.MaxValue, bowlFlowMaxX = -1;
+        private int bowlFlowMinY = int.MaxValue, bowlFlowMaxY = -1;
         private uint rng;
         private bool disposed;
 
@@ -37,11 +41,13 @@ namespace SE001.Simulation.Sand
             State = new SandSimulationState(masks.Width, masks.Height, new byte[count],
                 masks.ValidMask, masks.StaticMask, new bool[count], new bool[count], new bool[count]);
             stamp = new byte[count];
+            bowlPassStamp = new byte[count];
             rng = seed == 0 ? DefaultSeed : seed;
         }
 
         public SandSimulationState State { get; }
         public float CellSize => profile.cellSize;
+        public int BowlSettlingHeadroomCells => profile.bowlSettlingHeadroomCells;
         public bool IsDisposed => disposed;
 
         /// <summary>Stable 32-bit seed from a level id (FNV-1a; independent of runtime string hashing).</summary>
@@ -128,8 +134,12 @@ namespace SE001.Simulation.Sand
 
                     if (fell == 0)
                     {
+                        bool overBowl = State.BowlFlowMask[i];
                         bool movedHere = false;
-                        if (v > 1.5f && splash > 0f)
+                        // Inside the Bowl, landing energy should settle into the pile instead of kicking grains
+                        // across the open lip. Creep below still spreads the surface toward empty sink cells.
+                        if (overBowl) m = 0f;
+                        else if (v > 1.5f && splash > 0f)
                         {
                             if (Math.Abs(m) < 0.2f) m = NextFloat() < 0.5f ? -0.2f : 0.2f;
                             m += Math.Sign(m) * (v - 1f) * splash * 0.5f;
@@ -150,7 +160,8 @@ namespace SE001.Simulation.Sand
                             for (int q = 0; q < tries && !movedHere; q++)
                             {
                                 int dd = q == 0 ? d : -d;
-                                if (IsFree(cx + dd, cy - 1) && IsFree(cx + dd, cy))
+                                if (IsFree(cx + dd, cy - 1) && IsFree(cx + dd, cy) &&
+                                    (!overBowl || IsBowlFlowCell(cx + dd, cy - 1)))
                                 {
                                     cx += dd;
                                     cy--;
@@ -165,7 +176,7 @@ namespace SE001.Simulation.Sand
                         if (!movedHere && Math.Abs(m) > 0.3f)
                         {
                             int dd = Math.Sign(m);
-                            if (IsFree(cx + dd, cy))
+                            if (IsFree(cx + dd, cy) && (!overBowl || IsBowlFlowCell(cx + dd, cy)))
                             {
                                 cx += dd;
                                 m *= slide;
@@ -176,7 +187,8 @@ namespace SE001.Simulation.Sand
                         }
 
                         // Avalanche toward the nearest drop (levels the pile, never oscillates on flat ground).
-                        if (!movedHere && profile.dispersion > 1 && TryDisperse(cx, cy, d, bias != 0, out int step))
+                        if (!movedHere && profile.dispersion > 1 &&
+                            TryDisperse(cx, cy, d, bias != 0, overBowl, out int step))
                         {
                             cx += step;
                             movedHere = true;
@@ -186,7 +198,10 @@ namespace SE001.Simulation.Sand
                         // Creep: rarely walk toward a far drop so piles keep flattening and nothing parks on a
                         // wide flat obstacle / stroke. Always heads to a lower cell, so the grid still reaches a
                         // stable state (grains on open floor with no drop in reach never creep).
-                        if (!movedHere && creepChance > 0f && NextFloat() < creepChance && TryCreep(cx, cy, d, bias != 0, out int creepStep))
+                        float localCreepChance = overBowl ? profile.bowlCreepChance : creepChance;
+                        int localCreepReach = overBowl ? profile.bowlCreepReach : profile.creepReach;
+                        if (!movedHere && localCreepChance > 0f && NextFloat() < localCreepChance &&
+                            TryCreep(cx, cy, d, bias != 0, localCreepReach, overBowl, out int creepStep))
                         {
                             cx += creepStep;
                             movedHere = true;
@@ -229,6 +244,63 @@ namespace SE001.Simulation.Sand
                 }
             }
 
+            for (int pass = 0; pass < profile.bowlLevelingExtraPasses; pass++)
+                moved += SettleBowlPass();
+            return moved;
+        }
+
+        /// <summary>Additional Bowl-only relaxation. Each marked grain moves at most once per pass.</summary>
+        private int SettleBowlPass()
+        {
+            if (bowlFlowMaxY < bowlFlowMinY) return 0;
+            if (++bowlPassFrame == 0)
+            {
+                Array.Clear(bowlPassStamp, 0, bowlPassStamp.Length);
+                bowlPassFrame = 1;
+            }
+
+            SandSimulationState state = State;
+            int width = state.Width;
+            int moved = 0;
+            for (int y = bowlFlowMinY; y <= bowlFlowMaxY; y++)
+            {
+                if (state.RowCount[y] == 0) continue;
+                bool leftToRight = (NextUInt() & 1u) == 0u;
+                int span = bowlFlowMaxX - bowlFlowMinX + 1;
+                for (int k = 0; k < span; k++)
+                {
+                    int x = leftToRight ? bowlFlowMinX + k : bowlFlowMaxX - k;
+                    int i = y * width + x;
+                    if (!state.BowlFlowMask[i] || state.Cells[i] == 0 || bowlPassStamp[i] == bowlPassFrame ||
+                        IsFree(x, y - 1)) continue;
+
+                    int bias = y > 0 ? state.SurfaceBias[i - width] : 0;
+                    int preferred = bias != 0 ? bias : (NextUInt() & 1u) == 0u ? -1 : 1;
+                    int step;
+                    int rule;
+                    if (profile.dispersion > 1 && TryDisperse(x, y, preferred, bias != 0, true, out step))
+                        rule = 4;
+                    else if (profile.bowlCreepChance > 0f && NextFloat() < profile.bowlCreepChance &&
+                             TryCreep(x, y, preferred, bias != 0, profile.bowlCreepReach, true, out step))
+                        rule = 5;
+                    else
+                    {
+                        bowlPassStamp[i] = bowlPassFrame;
+                        continue;
+                    }
+
+                    int target = i + step;
+                    state.Cells[target] = state.Cells[i];
+                    state.Shade[target] = state.Shade[i];
+                    state.Velocity[target] = 0f;
+                    state.Momentum[target] = 0f;
+                    state.Cells[i] = 0;
+                    bowlPassStamp[target] = bowlPassFrame;
+                    moved++;
+                    CountMove(rule, x, y, x + step, y);
+                }
+            }
+
             return moved;
         }
 
@@ -236,7 +308,7 @@ namespace SE001.Simulation.Sand
         /// Resting grain with blocked diagonals: find the nearest drop within 'dispersion' cells along the row
         /// (path must be free) and return a single-cell step toward it.
         /// </summary>
-        private bool TryDisperse(int x, int y, int preferred, bool oneSided, out int step)
+        private bool TryDisperse(int x, int y, int preferred, bool oneSided, bool bowlOnly, out int step)
         {
             int reach = profile.dispersion;
             int sides = oneSided ? 1 : 2;
@@ -246,7 +318,12 @@ namespace SE001.Simulation.Sand
                 {
                     int dir = k == 0 ? preferred : -preferred;
                     if (!PathFree(x, y, dir, distance)) continue;
-                    if (IsFree(x + dir * distance, y - 1)) { step = dir; return true; }
+                    if (bowlOnly && !IsBowlFlowCell(x + dir * distance, y)) continue;
+                    if (IsFree(x + dir * distance, y - 1))
+                    {
+                        step = dir * (bowlOnly ? Math.Min(distance, Math.Max(1, profile.bowlLevelingCellsPerStep)) : 1);
+                        return true;
+                    }
                 }
             }
 
@@ -258,9 +335,8 @@ namespace SE001.Simulation.Sand
         /// Walks each direction once along the free row (up to creepReach) and returns a single-cell step toward the
         /// nearest cell with a free drop below. O(reach) per direction.
         /// </summary>
-        private bool TryCreep(int x, int y, int preferred, bool oneSided, out int step)
+        private bool TryCreep(int x, int y, int preferred, bool oneSided, int reach, bool bowlOnly, out int step)
         {
-            int reach = profile.creepReach;
             int best = int.MaxValue;
             int sides = oneSided ? 1 : 2;
             step = 0;
@@ -271,10 +347,11 @@ namespace SE001.Simulation.Sand
                 {
                     int nx = x + dir * distance;
                     if (!IsFree(nx, y)) break;
+                    if (bowlOnly && !IsBowlFlowCell(nx, y)) break;
                     if (distance >= 2 && IsFree(nx, y - 1))
                     {
                         best = distance;
-                        step = dir;
+                        step = dir * (bowlOnly ? Math.Min(distance, Math.Max(1, profile.bowlLevelingCellsPerStep)) : 1);
                         break;
                     }
                 }
@@ -315,6 +392,9 @@ namespace SE001.Simulation.Sand
 
         private bool IsFree(int x, int y) => CanOccupy(x, y) && State.Cells[y * State.Width + x] == 0;
 
+        private bool IsBowlFlowCell(int x, int y) => x >= 0 && y >= 0 && x < State.Width &&
+            y < State.Height && State.BowlFlowMask[y * State.Width + x];
+
         public void Dispose()
         {
             disposed = true;
@@ -332,6 +412,18 @@ namespace SE001.Simulation.Sand
         public void SetSurfaceBias(int x, int y, sbyte value)
         {
             if (x >= 0 && y >= 0 && x < State.Width && y < State.Height) State.SurfaceBias[State.Index(x, y)] = value;
+        }
+
+        public void SetBowlFlowCell(int x, int y)
+        {
+            if (x >= 0 && y >= 0 && x < State.Width && y < State.Height)
+            {
+                State.BowlFlowMask[State.Index(x, y)] = true;
+                if (x < bowlFlowMinX) bowlFlowMinX = x;
+                if (x > bowlFlowMaxX) bowlFlowMaxX = x;
+                if (y < bowlFlowMinY) bowlFlowMinY = y;
+                if (y > bowlFlowMaxY) bowlFlowMaxY = y;
+            }
         }
 
         public void SetDynamic(int x, int y, bool value)

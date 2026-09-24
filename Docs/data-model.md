@@ -108,7 +108,7 @@ Không giữ hai nguồn cho cùng một sự thật. Optional override phải p
 - Schema 3 có `layoutId`, không chứa `board.wallContours` hoặc `staticObstacles`.
 - Schema 4 adds `rotatingObstacles` and removes Source/Cup size plus Source emission/stream overrides. The runtime can load schema 3 with current global Profile values; the Level Editor upgrades schema 3 in memory and saves schema 4.
 - Schema 5 adds shared Source/Bowl scales plus Source emission rate and stream width. Runtime loads schema 3/4 with scale 1 and SourceProfile stream values; Level Editor upgrades them in memory and saves schema 5. Bowl scale changes physical capacity while grains per logical unit remain based on the global Bowl profile.
-- Bowl targets must fit within the scaled sink capacity multiplied by `BowlVisualProfile.fullFillFraction`; the Level Editor blocks larger targets and runtime load rejects them. This is an authoring guard, not a guarantee that every pour path retains every grain.
+- Bowl targets must fit within the scaled sink's physical cell capacity; the Level Editor blocks larger targets and runtime load rejects them. `fullFillFraction` is used for global grains-per-unit calibration, not as an additional per-level capacity limit. A capacity-valid target still needs a pour replay because a stream can miss the Bowl.
 - Runtime load đọc bit-packed `LayoutMaskAsset`; cell size/hash lệch phải block với lỗi rõ ràng.
 - Static mask seed trước dynamic mask và trước Source emission.
 - Runtime và Editor preview dùng cùng board mapper/rasterizer, có parity tests.

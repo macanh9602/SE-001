@@ -14,7 +14,7 @@ namespace SE001.Tests
     public sealed class BowlOverflowProbeTests
     {
         [Test]
-        public void Level01_TwelveUnits_FullGameplay_ReachesWin()
+        public void Level01_AuthoredAmounts_FullGameplay_ReachesWin()
         {
             GameObject owner = new GameObject("BowlOverflowRegression");
             LevelManager manager = owner.AddComponent<LevelManager>();
@@ -34,7 +34,7 @@ namespace SE001.Tests
                 }
 
                 Assert.That(game.State, Is.EqualTo(GameState.Won),
-                    "Both 12-unit Bowls must fill before sand settles or spills.");
+                    "Both authored Bowls must fill before sand settles or spills.");
                 Assert.That(game.Cups.All(cup => cup.Full), Is.True);
             }
             finally
@@ -45,7 +45,7 @@ namespace SE001.Tests
         }
 
         [Test]
-        public void LevelEditor_BlocksTwelveUnits_WhenBowlIsTooSmall()
+        public void LevelEditor_UsesPhysicalCapacityAtCurrentScale()
         {
             SE001LevelJson level = LevelDataLoader.Load("Level_01");
             SandSimulationProfile sand = Resources.Load<SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile");
@@ -56,17 +56,19 @@ namespace SE001.Tests
             Assert.That(layout.TryBuildMaskSet(sand.cellSize, sand.maxCells, out masks, out error), Is.True, error);
             var issues = new List<LevelEditorIssue>();
 
+            foreach (var cup in level.cups) cup.requiredAmount = 12;
+
+            level.bowlScale = 1.4f;
+            LevelEditorValidation.Rebuild(level, layout, masks, colors, sand.cellSize, issues);
+            Assert.That(issues.Count(issue => issue.What.Contains("physical capacity")), Is.EqualTo(2));
+
             level.bowlScale = 1.5f;
             LevelEditorValidation.Rebuild(level, layout, masks, colors, sand.cellSize, issues);
-            Assert.That(issues.Count(issue => issue.What.Contains("safe fill capacity")), Is.EqualTo(2));
-
-            level.bowlScale = 1.7f;
-            LevelEditorValidation.Rebuild(level, layout, masks, colors, sand.cellSize, issues);
-            Assert.That(issues.Any(issue => issue.What.Contains("safe fill capacity")), Is.False);
+            Assert.That(issues.Any(issue => issue.What.Contains("physical capacity")), Is.False);
         }
 
         [Test]
-        public void Level01_TwelveUnits_RejectsUnsafeScale_AndFillsAtAuthoredScale()
+        public void Level01_TwelveUnits_FillsAtSeveralBowlScales()
         {
             SE001LevelJson level = LevelDataLoader.Load("Level_01");
             SandSimulationProfile sand = Resources.Load<SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile");
@@ -74,9 +76,9 @@ namespace SE001.Tests
             CupProfile cupProfile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
             BowlVisualProfile bowlProfile = Resources.Load<BowlVisualProfile>("Profiles/BowlVisualProfile");
             LayoutDefinition layout = LevelDataLoader.LoadLayout(level.layoutId);
-            float authoredScale = level.bowlScale;
-            Assert.That(authoredScale, Is.GreaterThan(1.5f));
-            foreach (float scale in new[] { 1.5f, authoredScale })
+            foreach (var source in level.sources) source.logicalAmount = 12;
+            foreach (var cup in level.cups) cup.requiredAmount = 12;
+            foreach (float scale in new[] { 1.5f, 1.6f, 1.7f })
             {
                 level.bowlScale = scale;
                 LayoutMaskSet masks;
@@ -107,20 +109,11 @@ namespace SE001.Tests
                     }
                     Assert.That(sources[0].Remaining, Is.Zero);
                     Assert.That(sources[1].Remaining, Is.Zero);
-                    if (scale == 1.5f)
-                    {
-                        Assert.That(cups[0].Required, Is.GreaterThan(cups[0].SafeCapacity));
-                        Assert.That(cups[1].Required, Is.GreaterThan(cups[1].SafeCapacity));
-                        Assert.That(cups[0].Full && cups[1].Full, Is.False,
-                            "Unsafe Bowl Scale must reproduce an unwinnable 12-unit level.");
-                    }
-                    else
-                    {
-                        Assert.That(cups[0].Required, Is.LessThanOrEqualTo(cups[0].SafeCapacity));
-                        Assert.That(cups[1].Required, Is.LessThanOrEqualTo(cups[1].SafeCapacity));
-                        Assert.That(cups[0].Full && cups[1].Full, Is.True,
-                            "Both authored 12-unit receivers must fill without spilled grains blocking win.");
-                    }
+                    Assert.That(cups[0].Required, Is.LessThanOrEqualTo(cups[0].Capacity));
+                    Assert.That(cups[1].Required, Is.LessThanOrEqualTo(cups[1].Capacity));
+                    Assert.That(cups[0].Full && cups[1].Full, Is.True,
+                        "At scale " + scale + " red=" + cups[0].Collected + "/" + cups[0].Required +
+                        " blue=" + cups[1].Collected + "/" + cups[1].Required);
                 }
                 finally { simulation.Dispose(); }
             }

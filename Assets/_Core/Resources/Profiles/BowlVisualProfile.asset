@@ -24,6 +24,8 @@ MonoBehaviour:
   defaultWorldWidth: 2
   unitsPerFullBowl: 5
   fullFillFraction: 0.9
+  rimAssist: 1
+  rimCatchCells: 6
   shadowOffsetPixels: {x: -6, y: -24}
   specOffsetPixels: {x: 20, y: 10}
   outerContour:

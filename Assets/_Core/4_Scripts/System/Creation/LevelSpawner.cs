@@ -141,11 +141,10 @@ namespace SE001.System.Creation
                     levelData));
             for (int i = 0; i < cups.Count; i++)
             {
-                if (cups[i].Required <= cups[i].SafeCapacity) continue;
+                if (cups[i].Required <= cups[i].Capacity) continue;
                 throw new InvalidOperationException(
                     "Cup '" + cups[i].StableId + "' requires " + cups[i].Required +
-                    " grains but its safe capacity is " + cups[i].SafeCapacity +
-                    " (physical capacity " + cups[i].Capacity + "). Lower Required Amount or " +
+                    " grains but its physical capacity is " + cups[i].Capacity + ". Lower Required Amount or " +
                     (cups[i].Style == ReceiverStyle.Bowl ? "increase Bowl Scale." : "adjust the Cup profile."));
             }
             gameplay.Configure(sources, cups, profile.cellSize, cupProfile.wallThickness);

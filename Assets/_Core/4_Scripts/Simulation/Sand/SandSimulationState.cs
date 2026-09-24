@@ -22,6 +22,7 @@ namespace SE001.Simulation.Sand
             Velocity = new float[count];
             Momentum = new float[count];
             SurfaceBias = new sbyte[count];
+            BowlFlowMask = new bool[count];
             RowCount = new int[height];
         }
 
@@ -38,6 +39,8 @@ namespace SE001.Simulation.Sand
         /// Per solid cell: -1/+1 pushes a grain resting ON this cell left/right (Bowl rim assist), 0 = neutral.
         /// </summary>
         public sbyte[] SurfaceBias { get; }
+        /// <summary>Cells inside or directly above an open Bowl, authored once when its walls are registered.</summary>
+        public bool[] BowlFlowMask { get; }
         /// <summary>Occupied cells per row; rows with 0 are skipped by Step.</summary>
         public int[] RowCount { get; }
         public bool[] ValidMask { get; }

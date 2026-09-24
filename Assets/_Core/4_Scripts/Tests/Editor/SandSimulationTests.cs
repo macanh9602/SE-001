@@ -9,6 +9,50 @@ namespace SE001.Tests
     public sealed class SandSimulationTests
     {
         [Test]
+        public void BowlLevelingStride_ReachesLowPocketSooner_WithoutCrossingWalls()
+        {
+            int slowX = RunBowlLevelingStride(1, 0);
+            int fastX = RunBowlLevelingStride(3, 0);
+            Assert.That(slowX, Is.InRange(11, 16));
+            Assert.That(fastX, Is.GreaterThanOrEqualTo(slowX + 5));
+            Assert.That(fastX, Is.LessThanOrEqualTo(30));
+        }
+
+        [Test]
+        public void BowlExtraPass_AdvancesSettlingSandWithoutGlobalExtraStep()
+        {
+            int onePass = RunBowlLevelingStride(1, 0);
+            int twoPasses = RunBowlLevelingStride(1, 1);
+            Assert.That(twoPasses, Is.GreaterThan(onePass));
+            Assert.That(twoPasses, Is.LessThanOrEqualTo(30));
+        }
+
+        private static int RunBowlLevelingStride(int cellsPerStep, int extraPasses)
+        {
+            LayoutMaskSet masks = OpenMasks(40, 10);
+            for (int x = 0; x < 40; x++)
+                if (x != 30) masks.StaticMask[masks.Index(x, 5)] = true;
+            SandSimulationProfile profile = ScriptableObject.CreateInstance<SandSimulationProfile>();
+            profile.maxCells = 400;
+            profile.bowlCreepChance = 1f;
+            profile.bowlCreepReach = 32;
+            profile.bowlLevelingCellsPerStep = cellsPerStep;
+            profile.bowlLevelingExtraPasses = extraPasses;
+            SandSimulation simulation = new SandSimulation(profile, masks, 123u);
+            try
+            {
+                for (int x = 8; x <= 30; x++) simulation.SetBowlFlowCell(x, 6);
+                Assert.That(simulation.TryEmit(10, 6, 1), Is.True);
+                for (int step = 0; step < 5; step++) simulation.Step();
+                for (int x = 0; x < 40; x++)
+                    if (simulation.IsOccupied(x, 6)) return x;
+                Assert.Fail("Grain unexpectedly left the settling row.");
+                return -1;
+            }
+            finally { simulation.Dispose(); Object.DestroyImmediate(profile); }
+        }
+
+        [Test]
         public void SandFallsWithoutEnteringInvalidOrStaticCells()
         {
             LayoutMaskSet masks = new LayoutMaskSet(4, 4);

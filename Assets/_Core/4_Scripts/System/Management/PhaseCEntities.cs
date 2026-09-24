@@ -177,9 +177,6 @@ namespace SE001.Gameplay
         private int maxY;
         public int Required => required;
         public int Capacity => capacity;
-        public int SafeCapacity => receiverStyle == ReceiverStyle.Bowl && bowlProfile != null
-            ? Mathf.FloorToInt(capacity * Mathf.Clamp01(bowlProfile.fullFillFraction))
-            : capacity;
         public int Collected => collected;
         public bool Full => Collected >= Required;
         public bool ForeignDetected => foreignDetected;
@@ -367,6 +364,28 @@ namespace SE001.Gameplay
 
             SealBowlInterior(sim);
             if (bowlProfile.rimAssist) MarkRimAssist(sim, cell);
+            MarkBowlFlow(sim);
+        }
+
+        private void MarkBowlFlow(SandSimulation sim)
+        {
+            SandSimulationState state = sim.State;
+            for (int r = 0; r < rowMinX.Length; r++)
+            {
+                int y = minY + r;
+                for (int x = rowMinX[r]; x <= rowMaxX[r]; x++)
+                    if (x >= 0 && x < state.Width && y >= 0 && y < state.Height &&
+                        !state.CupWallMask[state.Index(x, y)]) sim.SetBowlFlowCell(x, y);
+            }
+
+            int top = maxY;
+            int topRow = rowMinX.Length - 1;
+            if (topRow < 0) return;
+            int headroom = sim.BowlSettlingHeadroomCells;
+            for (int y = top + 1; y <= top + headroom && y < state.Height; y++)
+                for (int x = rowMinX[topRow]; x <= rowMaxX[topRow]; x++)
+                    if (x >= 0 && x < state.Width && !state.CupWallMask[state.Index(x, y)])
+                        sim.SetBowlFlowCell(x, y);
         }
 
         /// <summary>
