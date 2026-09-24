@@ -1,0 +1,53 @@
+{
+    "schemaVersion": 5,
+    "levelId": "Level_02",
+    "layoutId": "test_1",
+    "board": {
+        "size": {
+            "x": 10.800000190734864,
+            "y": 19.19999885559082
+        }
+    },
+    "sources": [
+        {
+            "stableId": "source_ba10050ba9a9",
+            "materialId": 1,
+            "position": {
+                "x": 3.1668450832366945,
+                "y": 14.818915367126465
+            },
+            "logicalAmount": 10,
+            "startsOpen": false
+        }
+    ],
+    "cups": [
+        {
+            "stableId": "cup_b4fba41f85f4",
+            "acceptedMaterialId": 1,
+            "position": {
+                "x": 4.912300109863281,
+                "y": 4.693449020385742
+            },
+            "requiredAmount": 5
+        }
+    ],
+    "rotatingObstacles": [
+        {
+            "stableId": "rotating_obstacle_eb03786eec78",
+            "position": {
+                "x": 6.815615177154541,
+                "y": 8.280641555786133
+            },
+            "scale": 1.0,
+            "barLength": 4.0,
+            "initialAngle": 0.0,
+            "degreesPerSecond": 60.0
+        }
+    ],
+    "sourceScale": 1.0,
+    "bowlScale": 1.0,
+    "sourceEmissionRate": 16.0,
+    "sourceStreamWidth": 6,
+    "drawInkBudget": 20.0,
+    "requiresDrawing": false
+}
