@@ -17,7 +17,7 @@ MonoBehaviour:
   bevelRadius: 1
   bevelSegments: 8
   wallMaterial: {fileID: 2100000, guid: 7bf939560bf747e8b522496612e0a26c, type: 2}
-  obstacleMaterial: {fileID: 2100000, guid: 59550197d5df43159a86905c50cb41a1, type: 2}
+  obstacleMaterial: {fileID: 2100000, guid: dfc7f8acb69cc7749a88edd74a1e6af0, type: 2}
   uvScale: 1
   castShadows: 1
   receiveShadows: 1
