@@ -192,6 +192,7 @@ namespace SE001.System.Management
             {
                 // Result is final; keep stepping sand only so in-flight grains settle visually (no emission, no rules).
                 rotatingObstacles?.Advance(Time.deltaTime);
+                if (rotatingObstacles != null) rotatingObstacles.RenderAlpha = 1f;
                 if (!settled) settled = context.SandSimulation.Step() == 0;
                 return;
             }
@@ -207,6 +208,7 @@ namespace SE001.System.Management
             }
 
             if (steps == maxStepsPerFrame) stepAccumulator = 0f; // drop backlog after a hitch
+            if (rotatingObstacles != null) rotatingObstacles.RenderAlpha = Mathf.Clamp01(stepAccumulator / dt);
         }
 
         /// <summary>

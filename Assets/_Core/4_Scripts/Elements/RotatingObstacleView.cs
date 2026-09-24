@@ -36,7 +36,10 @@ namespace SE001.Elements.Layout
 
         private void RenderAngle()
         {
-            pivot.localRotation = Quaternion.Euler(0f, 0f, system.GetState(index).Angle);
+            // Interpolate between the last two fixed steps: sim runs at a fixed 60 Hz, frames do not (Movie_006 stutter).
+            RotatingObstacleState state = system.GetState(index);
+            float angle = Mathf.LerpAngle(state.PreviousAngle, state.Angle, Mathf.Clamp01(system.RenderAlpha));
+            pivot.localRotation = Quaternion.Euler(0f, 0f, angle);
         }
     }
 }

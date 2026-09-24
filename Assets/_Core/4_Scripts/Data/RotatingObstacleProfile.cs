@@ -17,6 +17,8 @@ namespace SE001.Data
         [Min(0f)] public float angularDamping = 0.8f;
         [Tooltip("Absolute passive angular-speed cap in degrees/second.")]
         [Min(1f)] public float maxAngularSpeed = 360f;
+        [Tooltip("Max change of angular speed in degrees/second^2. Smooths 0 -> full-speed jumps when a stream hits. 0 = unlimited.")]
+        [Min(0f)] public float maxAngularAcceleration = 0f;
         [Tooltip("Angular speed at/below which damping snaps the rotor to rest.")]
         [Min(0f)] public float restAngularSpeed = 0.2f;
         [Tooltip("Velocity retained when sand is too densely packed to yield this simulation step. DrawStroke still hard-stops.")]

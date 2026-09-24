@@ -111,6 +111,43 @@ namespace SE001.Tests
         }
 
         [Test]
+        public void PassiveRotor_AccelerationCap_SpinsUpSmoothly()
+        {
+            // Movie_006: a stream hit took the rotor from 0 to the 360 deg/s cap within one frame.
+            RotatingObstacleProfile profile = ScriptableObject.CreateInstance<RotatingObstacleProfile>();
+            RotatingObstacleState state = new RotatingObstacleState(new RotatingObstacleData
+            {
+                stableId = "cross", position = new Vector2(5f, 5f), scale = 1f, barLength = 4f, initialAngle = 0f
+            });
+            try
+            {
+                profile.angularDamping = 0f;
+                profile.restAngularSpeed = 0f;
+                profile.maxAngularSpeed = 150f;
+                profile.maxAngularAcceleration = 600f;
+                state.Integrate(10000f, 1f / 60f, profile);
+                Assert.That(state.AngularVelocity, Is.EqualTo(10f).Within(0.01f), "600 deg/s^2 x 1/60 s");
+                for (int i = 0; i < 60; i++) state.Integrate(10000f, 1f / 60f, profile);
+                Assert.That(state.AngularVelocity, Is.EqualTo(150f).Within(0.01f));
+            }
+            finally { Object.DestroyImmediate(profile); }
+        }
+
+        [Test]
+        public void RotorState_TracksPreviousAngleForRenderInterpolation()
+        {
+            RotatingObstacleState state = new RotatingObstacleState(new RotatingObstacleData
+            {
+                stableId = "cross", position = new Vector2(5f, 5f), scale = 1f, barLength = 4f, initialAngle = 30f
+            });
+            Assert.That(state.PreviousAngle, Is.EqualTo(30f));
+            state.MarkStepStart();
+            state.SetAngle(36f);
+            Assert.That(state.PreviousAngle, Is.EqualTo(30f));
+            Assert.That(Mathf.LerpAngle(state.PreviousAngle, state.Angle, 0.5f), Is.EqualTo(33f).Within(0.001f));
+        }
+
+        [Test]
         public void Sweep_PreservesGrainAccountingAndFeelData_AndDoesNotAlterStrokeMask()
         {
             CreatePassiveSetup(out SandSimulationProfile sandProfile, out SandSimulation simulation,

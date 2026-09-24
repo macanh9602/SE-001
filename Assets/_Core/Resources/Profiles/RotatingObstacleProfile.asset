@@ -17,7 +17,8 @@ MonoBehaviour:
   sandTorqueScale: 36
   momentOfInertiaScale: 0.25
   angularDamping: 0.8
-  maxAngularSpeed: 360
+  maxAngularSpeed: 150
+  maxAngularAcceleration: 600
   restAngularSpeed: 0.2
   sandBlockVelocityRetention: 0.85
   collisionSweepStepDegrees: 2

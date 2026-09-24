@@ -39,6 +39,10 @@ namespace SE001.Simulation.Sand
 
         private readonly float[] contactTorques;
         private readonly float[] previousAngles;
+        private readonly float[] stepDeltas;
+
+        /// <summary>Render interpolation 0..1 between the last two fixed steps (set by the gameplay loop).</summary>
+        public float RenderAlpha { get; set; } = 1f;
 
         public RotatingObstacleSystem(
             SandSimulation simulation,
@@ -52,6 +56,7 @@ namespace SE001.Simulation.Sand
             obstacles = new RotatingObstacleState[data.Count];
             contactTorques = new float[data.Count];
             previousAngles = new float[data.Count];
+            stepDeltas = new float[data.Count];
 
             int cellCount = simulation.State.Cells.Length;
             int maxSweptCapacity = 0;
@@ -111,25 +116,62 @@ namespace SE001.Simulation.Sand
             CollectContactTorques();
 
             bool anyMotion = false;
-
             for (int i = 0; i < obstacles.Length; i++)
             {
                 RotatingObstacleState obstacle = obstacles[i];
+                obstacle.MarkStepStart();
                 previousAngles[i] = obstacle.Angle;
-
-                float delta = obstacle.Integrate(contactTorques[i], dt, profile);
-                if (Mathf.Abs(delta) <= Mathf.Epsilon) continue;
-
-                anyMotion = true;
-                SweepObstacle(i, delta);
+                stepDeltas[i] = obstacle.Integrate(contactTorques[i], dt, profile);
+                if (Mathf.Abs(stepDeltas[i]) > Mathf.Epsilon) anyMotion = true;
             }
 
             if (!anyMotion) return 0;
 
-            BuildNextMask();
-
+            // Movie_006 (2026-09-24): an all-or-nothing step froze the rotor for a whole step whenever one swept grain
+            // could not yield, so it stuttered (full speed / zero / full speed). Try the full step, then 1/2 and 1/4:
+            // congestion now slows the rotor instead of freezing it.
             int pushed = 0;
-            bool blockedBySand = false;
+            float fraction = 1f;
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                if (TryApplyMotion(fraction, ref pushed))
+                {
+                    if (fraction < 1f) RetainAllVelocities();
+                    return pushed;
+                }
+
+                fraction *= 0.5f;
+            }
+
+            // Fully congested: keep the last safe angle and part of the inertia (sand pressure, not a rigid brake).
+            for (int i = 0; i < obstacles.Length; i++) obstacles[i].SetAngle(previousAngles[i]);
+            RetainAllVelocities();
+            BuildNextMask();
+            CommitMask();
+            ClearSweepMarks();
+            return pushed;
+        }
+
+        private bool TryApplyMotion(float fraction, ref int pushed)
+        {
+            ClearSweepMarks();
+            bool anyMotion = false;
+            for (int i = 0; i < obstacles.Length; i++)
+            {
+                obstacles[i].SetAngle(previousAngles[i]);
+                float delta = stepDeltas[i] * fraction;
+                if (Mathf.Abs(delta) <= Mathf.Epsilon) continue;
+                anyMotion = true;
+                SweepObstacle(i, delta);
+            }
+
+            if (!anyMotion)
+            {
+                ClearSweepMarks();
+                return true;
+            }
+
+            BuildNextMask();
 
             // Process swept grains deterministically. A dense pile can yield through a chain of adjacent grains
             // until the bounded search reaches a real empty cell. No grain teleports.
@@ -137,35 +179,19 @@ namespace SE001.Simulation.Sand
             {
                 int source = sweptCells[i];
                 if (simulation.State.Cells[source] == 0) continue;
-
-                if (!TryDisplaceGrainChain(source, out int moved))
-                {
-                    blockedBySand = true;
-                    break;
-                }
-
+                if (!TryDisplaceGrainChain(source, out int moved)) return false;
                 pushed += moved;
-            }
-
-            if (blockedBySand)
-            {
-                // Sand congestion behaves like friction/pressure, not a rigid brake.
-                // Keep the rotor at the last safe angle for this step and retain part of its inertia.
-                for (int i = 0; i < obstacles.Length; i++)
-                {
-                    obstacles[i].SetAngle(previousAngles[i]);
-                    obstacles[i].RetainVelocity(profile.sandBlockVelocityRetention, profile.restAngularSpeed);
-                }
-
-                BuildNextMask();
-                CommitMask();
-                ClearSweepMarks();
-                return pushed;
             }
 
             CommitMask();
             ClearSweepMarks();
-            return pushed;
+            return true;
+        }
+
+        private void RetainAllVelocities()
+        {
+            for (int i = 0; i < obstacles.Length; i++)
+                obstacles[i].RetainVelocity(profile.sandBlockVelocityRetention, profile.restAngularSpeed);
         }
 
         private void SweepObstacle(int owner, float delta)
@@ -577,6 +603,7 @@ namespace SE001.Simulation.Sand
             Scale = data.scale;
             BarLength = data.barLength;
             angle = Mathf.Repeat(data.initialAngle, 360f);
+            PreviousAngle = angle;
 
             // Legacy degreesPerSecond is intentionally not used as startup velocity.
             AngularVelocity = 0f;
@@ -590,6 +617,14 @@ namespace SE001.Simulation.Sand
         private float angle;
 
         public float Angle => angle;
+
+        /// <summary>Angle at the start of the last fixed step; the view interpolates PreviousAngle -> Angle.</summary>
+        public float PreviousAngle { get; private set; }
+
+        public void MarkStepStart()
+        {
+            PreviousAngle = angle;
+        }
         public float AngularVelocity { get; private set; }
 
         public float Integrate(
@@ -615,6 +650,12 @@ namespace SE001.Simulation.Sand
 
             float angularAccelerationDegrees =
                 torque / inertia * Mathf.Rad2Deg;
+
+            if (profile.maxAngularAcceleration > 0f)
+            {
+                float limit = profile.maxAngularAcceleration;
+                angularAccelerationDegrees = Mathf.Clamp(angularAccelerationDegrees, -limit, limit);
+            }
 
             float nextVelocity =
                 AngularVelocity + angularAccelerationDegrees * dt;
