@@ -299,6 +299,7 @@ namespace SE001.Editor.Level
             LayoutDefinition definition;
             bool success = LayoutBaker.TryBakeSvg(ToAbsolute(projectPath), id, new PhaseBSvgImportSettings(), out definition, out error);
             library.RecordBakeResult(id, success ? null : error);
+            if (success) LayoutBaked?.Invoke();
             if (!success) Debug.LogWarning("[LayoutBake] " + id + ": " + error);
             return success;
         }

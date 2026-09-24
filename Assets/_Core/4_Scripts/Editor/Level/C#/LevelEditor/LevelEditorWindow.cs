@@ -47,6 +47,8 @@ namespace SE001.Editor.Level
         private void OnEnable()
         {
             layoutLibrary = new LayoutBakeLibrary();
+            LayoutBakeWindow.LayoutBaked -= RefreshLayoutLibrary;
+            LayoutBakeWindow.LayoutBaked += RefreshLayoutLibrary;
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
@@ -54,6 +56,7 @@ namespace SE001.Editor.Level
         private void OnDisable()
         {
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            LayoutBakeWindow.LayoutBaked -= RefreshLayoutLibrary;
             if (boardCanvas != null) boardCanvas.DisposeDerivedTextures();
         }
 
@@ -241,6 +244,7 @@ namespace SE001.Editor.Level
 
         private void RefreshLayoutLibrary()
         {
+            if (layoutLibrary == null) return;
             layoutLibrary.Refresh();
             derivedState.Clear();
             RefreshAll();

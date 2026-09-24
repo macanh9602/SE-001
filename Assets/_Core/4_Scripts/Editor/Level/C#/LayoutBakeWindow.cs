@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -13,6 +14,8 @@ namespace SE001.Editor.Level
     /// </summary>
     public sealed partial class LayoutBakeWindow : EditorWindow
     {
+        internal static event Action LayoutBaked;
+
         private const string StyleSheetPath = "Assets/_Core/4_Scripts/Editor/Level/USS/LayoutBakeWindow.uss";
 
         // ViewState — persisted by Unity across domain reload (EditorWindow serialization). Never baked.
