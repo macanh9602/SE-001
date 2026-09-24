@@ -21,7 +21,7 @@ GD can adjust Source and Bowl scale plus Source stream rate and width in the Lev
 
 - [ ] Schema 3/4 load unchanged, and Editor save/reopen persists four schema-5 values.
 - [ ] Source visual/tap area and Bowl visual/sink/capacity agree with Editor preview.
-- [ ] Source stream rate/width are independent of scale; larger Bowl needs the same grains for a fixed Required Amount.
+- [ ] Source stream rate/width are independent of scale; runtime keeps the same grains for a fixed Required Amount, while an explicit Editor Bowl Scale edit recalculates Required by flooring physical capacity in logical units.
 - [ ] Editor shows four controls with GD tooltips and blocks invalid values/bounds/capacity.
 - [ ] A 12-unit `Level_01` pour fills both Bowls at authored scale; Editor blocks the proven overflow scale.
 - [ ] Unity compile, relevant EditMode tests, Play Test and console smoke pass.

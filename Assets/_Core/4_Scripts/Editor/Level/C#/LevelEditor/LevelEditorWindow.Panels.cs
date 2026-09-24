@@ -83,8 +83,8 @@ namespace SE001.Editor.Level
             AddInspectorSectionHeader("Source and Bowl");
             AddFloatField("Source Scale", Document.sourceScale, "sourceScale", value => ApplyEdit(
                 level => level.sourceScale = value, "Edit Source Scale"), LevelTuningEditorText.SourceScale);
-            AddFloatField("Bowl Scale", Document.bowlScale, "bowlScale", value => ApplyEdit(
-                level => level.bowlScale = value, "Edit Bowl Scale"), LevelTuningEditorText.BowlScale);
+            AddFloatField("Bowl Scale", Document.bowlScale, "bowlScale", EditBowlScale,
+                LevelTuningEditorText.BowlScale);
             AddFloatField("Emission Rate", Document.sourceEmissionRate, "sourceEmissionRate", value => ApplyEdit(
                 level => level.sourceEmissionRate = value, "Edit Emission Rate"), LevelTuningEditorText.EmissionRate);
             AddIntField("Stream Width", Document.sourceStreamWidth, "sourceStreamWidth", value => ApplyEdit(
@@ -125,6 +125,25 @@ namespace SE001.Editor.Level
             }
             else inspectorPane.Add(new Label("No Ready layout is available. Open Layout Bake to create one.") { name = "layout-empty" });
             inspectorPane.Add(MakeButton("Open Layout Bake", OpenLayoutBake, "le-button-secondary"));
+        }
+
+        private void EditBowlScale(float value)
+        {
+            ApplyEdit(level =>
+            {
+                GameplayRuntimeProfile runtime = Resources.Load<GameplayRuntimeProfile>(
+                    "Profiles/PhaseCGameplayRuntimeProfile");
+                if (runtime == null || runtime.receiverStyle != ReceiverStyle.Bowl)
+                {
+                    level.bowlScale = value;
+                    return;
+                }
+
+                BowlScaleRequiredAmount.Apply(level, value,
+                    Resources.Load<CupProfile>("Profiles/PhaseCCupProfile"),
+                    Resources.Load<BowlVisualProfile>("Profiles/BowlVisualProfile"),
+                    Resources.Load<SE001.Simulation.Sand.SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile"));
+            }, "Edit Bowl Scale");
         }
 
         private void BuildSourceInspector(SourceData source)

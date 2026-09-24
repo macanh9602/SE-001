@@ -1,4 +1,6 @@
 using NUnit.Framework;
+using System.Linq;
+using System.Collections.Generic;
 using SE001.Data;
 using SE001.Editor.Level;
 using SE001.Gameplay;
@@ -10,6 +12,52 @@ namespace SE001.Tests
 {
     public sealed class LevelTuningTests
     {
+        [Test]
+        public void BowlScaleEdit_FloorsEachCupCapacity_WithoutChangingSourceAmount()
+        {
+            SE001LevelJson level = LevelDataLoader.Load("Level_01");
+            CupProfile cupProfile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
+            BowlVisualProfile bowlProfile = Resources.Load<BowlVisualProfile>("Profiles/BowlVisualProfile");
+            SandSimulationProfile sandProfile = Resources.Load<SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile");
+            foreach (CupData cup in level.cups) cup.requiredAmount = 6;
+            foreach (SourceData source in level.sources) source.logicalAmount = 12;
+
+            BowlScaleRequiredAmount.Apply(level, 1f, cupProfile, bowlProfile, sandProfile);
+            Assert.That(level.cups.All(cup => cup.requiredAmount == 5), Is.True,
+                "A Bowl with capacity between 5 and 6 units must receive Required Amount 5.");
+            BowlScaleRequiredAmount.Apply(level, 1.5f, cupProfile, bowlProfile, sandProfile);
+            Assert.That(level.cups.All(cup => cup.requiredAmount == 12), Is.True,
+                "706 physical cells / 57 grains per unit floors to 12 units.");
+            BowlScaleRequiredAmount.Apply(level, 1.7f, cupProfile, bowlProfile, sandProfile);
+            Assert.That(level.cups.All(cup => cup.requiredAmount == 15), Is.True,
+                "Capacity at the new scale sets the target independently of its previous value.");
+            Assert.That(level.sources.All(source => source.logicalAmount == 12), Is.True);
+            SE001LevelJson reopened = SE001LevelJson.FromJson(level.ToJson());
+            Assert.That(reopened.bowlScale, Is.EqualTo(1.7f));
+            Assert.That(reopened.cups.All(cup => cup.requiredAmount == 15), Is.True);
+            Assert.That(reopened.sources.All(source => source.logicalAmount == 12), Is.True);
+
+            LayoutDefinition layout = LevelDataLoader.LoadLayout(level.layoutId);
+            Assert.That(layout.TryBuildMaskSet(sandProfile.cellSize, sandProfile.maxCells,
+                out LayoutMaskSet masks, out string error), Is.True, error);
+            var issues = new List<LevelEditorIssue>();
+            LevelEditorValidation.Rebuild(level, layout, masks,
+                Resources.Load<ColorProfile>("Profiles/PhaseCColorProfile"), sandProfile.cellSize, issues);
+            Assert.That(issues.Count(issue => issue.What.Contains("Available sand")), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void BowlScaleEdit_InvalidScale_DoesNotOverwriteRequired()
+        {
+            SE001LevelJson level = LevelDataLoader.Load("Level_01");
+            foreach (CupData cup in level.cups) cup.requiredAmount = 5;
+            BowlScaleRequiredAmount.Apply(level, float.NaN,
+                Resources.Load<CupProfile>("Profiles/PhaseCCupProfile"),
+                Resources.Load<BowlVisualProfile>("Profiles/BowlVisualProfile"),
+                Resources.Load<SandSimulationProfile>("Profiles/PhaseBSandSimulationProfile"));
+            Assert.That(level.cups.All(cup => cup.requiredAmount == 5), Is.True);
+        }
+
         [TestCase(3)]
         [TestCase(4)]
         public void LegacyLevel_UpgradesWithProfileValues_AndRoundTrips(int schema)

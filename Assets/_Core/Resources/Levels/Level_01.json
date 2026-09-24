@@ -16,7 +16,7 @@
                 "x": 2.8331551551818849,
                 "y": 15.434959411621094
             },
-            "logicalAmount": 12,
+            "logicalAmount": 13,
             "startsOpen": false
         },
         {
@@ -26,7 +26,7 @@
                 "x": 7.710160255432129,
                 "y": 15.460628509521485
             },
-            "logicalAmount": 5,
+            "logicalAmount": 13,
             "startsOpen": false
         }
     ],
@@ -35,19 +35,19 @@
             "stableId": "cup_6e1ebc0740b6",
             "acceptedMaterialId": 1,
             "position": {
-                "x": 2.9101600646972658,
+                "x": 3.2695183753967287,
                 "y": 12.676335334777832
             },
-            "requiredAmount": 5
+            "requiredAmount": 13
         },
         {
             "stableId": "cup_d53deb4d0bf0",
             "acceptedMaterialId": 2,
             "position": {
-                "x": 7.658823013305664,
-                "y": 12.624998092651368
+                "x": 7.325133323669434,
+                "y": 12.72767162322998
             },
-            "requiredAmount": 5
+            "requiredAmount": 13
         }
     ],
     "rotatingObstacles": [
@@ -64,7 +64,7 @@
         }
     ],
     "sourceScale": 1.0,
-    "bowlScale": 1.0,
+    "bowlScale": 1.600000023841858,
     "sourceEmissionRate": 16.0,
     "sourceStreamWidth": 6,
     "drawInkBudget": 20.0,
