@@ -17,9 +17,19 @@ MonoBehaviour:
   maxStepsPerFrame: 4
   maxCells: 262144
   enableLateralSlide: 1
-  grainsPerUnit: 115
+  gravityCellsPerStep2: 0.17
+  maxFallCellsPerStep: 4
+  repose: 1
+  slide: 0.95
+  splash: 0.5
+  dispersion: 5
+  creepChance: 0.14
+  creepReach: 24
   bowlCreepChance: 1
   bowlCreepReach: 48
   bowlLevelingCellsPerStep: 3
   bowlLevelingExtraPasses: 1
   bowlSettlingHeadroomCells: 4
+  airDrag: 0.5
+  grainsPerUnit: 115
+  stableStepsForLose: 30
