@@ -2,6 +2,7 @@
 <h1>Story 015 — Source/Bowl level tuning</h1>
 <h2>Decisions</h2><p>D-013. One scale per type per level; rate and width independent; Bowl logical unit size remains global.</p>
 <h2>Progress</h2><p>Schema 5 model and resolver, runtime geometry, Editor preview/validation/controls, and regression tests are being implemented.</p>
+<h2>Movie_003 overflow investigation</h2><p>Video shows grains crossing both Bowl lips near full. Repro audit recorded Required 684, physical Capacity 706, and only 666 collected in each Bowl at step 1020 after both Sources emptied. A deterministic direct-simulation sweep in <code>AgentAudit/bowl-overflow-probe.md</code> measured Scale 1.5: red 678/684, blue 683/684; Scale 1.6: both 684/684; Scale 1.7: both 684/684. Authored Level_01 now uses Scale 1.7. Editor and runtime compare Required to physical Capacity × BowlVisualProfile.fullFillFraction to block near-rim targets.</p>
 <h2>Frontier Preflight</h2><p>Mode AUTO; provider codex-with-chatgpt. Local workspace D:\UnityProject\SE-001, branch main, HEAD 49e995bfe570fdbb9619cd740c1b961d020a5823. c2c status: bridge and tunnel running. Provider mapped connector tools and PLAN invocation were not exposed by the installed CLI in this session; connector identity preflight and frontier PLAN remain pending. Do not claim frontier PASS.</p>
 <h2>Verification</h2><table border="1"><tr><th>Check</th><th>Status</th><th>Evidence</th></tr>
 <tr><td>Compile</td><td>PENDING RERUN</td><td>Unity compile passed before latest test/doc edits; rerun required.</td></tr>

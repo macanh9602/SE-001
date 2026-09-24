@@ -23,6 +23,7 @@ GD can adjust Source and Bowl scale plus Source stream rate and width in the Lev
 - [ ] Source visual/tap area and Bowl visual/sink/capacity agree with Editor preview.
 - [ ] Source stream rate/width are independent of scale; larger Bowl needs the same grains for a fixed Required Amount.
 - [ ] Editor shows four controls with GD tooltips and blocks invalid values/bounds/capacity.
+- [ ] A 12-unit `Level_01` pour fills both Bowls at authored scale; Editor blocks the proven overflow scale.
 - [ ] Unity compile, relevant EditMode tests, Play Test and console smoke pass.
 - [ ] Redmi 9A CPU/GC/draw-call/memory impact measured or reported PENDING with manual step.
 

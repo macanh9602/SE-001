@@ -177,6 +177,9 @@ namespace SE001.Gameplay
         private int maxY;
         public int Required => required;
         public int Capacity => capacity;
+        public int SafeCapacity => receiverStyle == ReceiverStyle.Bowl && bowlProfile != null
+            ? Mathf.FloorToInt(capacity * Mathf.Clamp01(bowlProfile.fullFillFraction))
+            : capacity;
         public int Collected => collected;
         public bool Full => Collected >= Required;
         public bool ForeignDetected => foreignDetected;

@@ -16,17 +16,17 @@
                 "x": 2.9614975452423097,
                 "y": 15.30661678314209
             },
-            "logicalAmount": 12,
+            "logicalAmount": 11,
             "startsOpen": false
         },
         {
             "stableId": "source_a43b13710b84",
             "materialId": 2,
             "position": {
-                "x": 7.941175937652588,
-                "y": 15.383622169494629
+                "x": 7.992513179779053,
+                "y": 15.409290313720704
             },
-            "logicalAmount": 5,
+            "logicalAmount": 11,
             "startsOpen": false
         }
     ],
@@ -38,7 +38,7 @@
                 "x": 3.3721923828125,
                 "y": 12.624998092651368
             },
-            "requiredAmount": 12
+            "requiredAmount": 11
         },
         {
             "stableId": "cup_d53deb4d0bf0",
@@ -47,7 +47,7 @@
                 "x": 7.658823013305664,
                 "y": 12.624998092651368
             },
-            "requiredAmount": 5
+            "requiredAmount": 11
         }
     ],
     "rotatingObstacles": [

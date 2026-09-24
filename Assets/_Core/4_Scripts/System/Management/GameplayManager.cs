@@ -20,7 +20,7 @@ namespace SE001.System.Management
         [SerializeField, Min(1)] private int maxStrokes = 16;
         [SerializeField, Min(1)] private int noProgressStepsForLose = 480;
         [Tooltip("Debug-audit (2026-09-24): writes AgentAudit/sand-lose-stability.md — why NotFilled lose does not fire.")]
-        [SerializeField] private bool auditLoseStability = true;
+        [SerializeField] private bool auditLoseStability;
 
         private const string LoseAuditChannel = "sand-lose-stability";
         private bool auditAllEmptySeen;

@@ -118,14 +118,16 @@ namespace SE001.Editor.Level
                     int grainsPerUnit = CupDomain.GrainsPerUnitFor(sandProfile.grainsPerUnit, style, bowlProfile, cellSize);
                     CupDomain capacityProbe = new CupDomain(cup, cupProfile, grainsPerUnit, cellSize, jarProfile, style,
                         bowlProfile, level);
-                    if (capacityProbe.Required > capacityProbe.Capacity)
+                    if (capacityProbe.Required > capacityProbe.SafeCapacity)
                     {
                         float logicalCapacity =
-                            capacityProbe.Capacity / (float)grainsPerUnit;
+                            capacityProbe.SafeCapacity / (float)grainsPerUnit;
                         Add(issues, LevelEditorIssueSeverity.Blocking, cup.stableId, "requiredAmount",
-                            "Required Amount " + cup.requiredAmount + " is larger than this receiver can hold.",
-                            "Receiver capacity is about " + logicalCapacity.ToString("0.0") + " units.",
-                            "Lower Required Amount or adjust the active receiver profile.");
+                            "Required Amount " + cup.requiredAmount + " exceeds this receiver's safe fill capacity.",
+                            "Safe capacity is about " + logicalCapacity.ToString("0.0") + " units.",
+                            style == ReceiverStyle.Bowl
+                                ? "Lower Required Amount or increase Bowl Scale."
+                                : "Lower Required Amount or adjust the Cup profile.");
                     }
                 }
                 int amount;
