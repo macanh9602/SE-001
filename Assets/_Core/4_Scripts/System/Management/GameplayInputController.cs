@@ -23,12 +23,14 @@ namespace SE001.System.Management
         private Vector2 downScreen;
         private bool held;
         private bool drawing;
+        private bool strokeStopped;
+        private float strokeLength;
         private Rect blockedGuiRect;
 
         /// <summary>Live preview points (board space) while dragging; for visuals only.</summary>
         public IReadOnlyList<Vector2> PreviewStroke => stroke;
         public bool IsDrawing => drawing;
-        public float DrawThickness => drawThickness;
+        public float DrawThickness => manager != null ? manager.EffectiveDrawThickness(drawThickness) : drawThickness;
         /// <summary>Screen rect (GUI coords, y down) that should not start input, e.g. a dev overlay.</summary>
         public Rect BlockedGuiRect
         {
@@ -64,6 +66,8 @@ namespace SE001.System.Management
             {
                 held = false;
                 drawing = false;
+                strokeStopped = false;
+                strokeLength = 0f;
                 stroke.Clear();
                 return;
             }
@@ -71,6 +75,8 @@ namespace SE001.System.Management
             {
                 held = false;
                 drawing = false;
+                strokeStopped = false;
+                strokeLength = 0f;
                 stroke.Clear();
                 return;
             }
@@ -83,6 +89,8 @@ namespace SE001.System.Management
                 downScreen = screen;
                 held = true;
                 drawing = false;
+                strokeStopped = false;
+                strokeLength = 0f;
                 stroke.Clear();
             }
 
@@ -93,13 +101,27 @@ namespace SE001.System.Management
                 if (!drawing && (screen - downScreen).sqrMagnitude >= drawStartDeadZonePixels * drawStartDeadZonePixels)
                 {
                     drawing = true;
-                    stroke.Add(ToBoard(downScreen));
+                    Vector2 start = ToBoard(downScreen);
+                    if (manager.CanBeginDraw(start, drawThickness)) stroke.Add(start);
+                    else strokeStopped = true;
                 }
 
-                if (drawing && stroke.Count < maxPointsPerStroke)
+                if (drawing && !strokeStopped && stroke.Count < maxPointsPerStroke)
                 {
                     Vector2 p = ToBoard(screen);
-                    if (Vector2.Distance(stroke[stroke.Count - 1], p) >= minPointDistance) stroke.Add(p);
+                    Vector2 last = stroke[stroke.Count - 1];
+                    if (Vector2.Distance(last, p) >= minPointDistance)
+                    {
+                        bool fullyAccepted = manager.TryAcceptDrawSegment(last, p, strokeLength, drawThickness,
+                            out Vector2 accepted);
+                        float acceptedDistance = Vector2.Distance(last, accepted);
+                        if (acceptedDistance > Mathf.Epsilon)
+                        {
+                            stroke.Add(accepted);
+                            strokeLength += acceptedDistance;
+                        }
+                        if (!fullyAccepted) strokeStopped = true;
+                    }
                 }
             }
 
@@ -111,6 +133,8 @@ namespace SE001.System.Management
                     drawing = false;
                     if (stroke.Count >= 2) manager.CommitStroke(stroke, drawThickness);
                     stroke.Clear();
+                    strokeLength = 0f;
+                    strokeStopped = false;
                     return;
                 }
 
@@ -190,6 +214,8 @@ namespace SE001.System.Management
             inputCamera = null;
             held = false;
             drawing = false;
+            strokeStopped = false;
+            strokeLength = 0f;
             stroke.Clear();
         }
     }

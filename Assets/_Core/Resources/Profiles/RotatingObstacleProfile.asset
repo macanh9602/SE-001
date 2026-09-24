@@ -14,3 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   barWidth: 0.6
   pushSearchCells: 12
+  sandTorqueScale: 18
+  momentOfInertiaScale: 1
+  angularDamping: 5
+  maxAngularSpeed: 240
+  restAngularSpeed: 1
+  collisionSweepStepDegrees: 2

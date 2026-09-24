@@ -5,16 +5,30 @@ using UnityEngine;
 
 namespace SE001.Simulation.Sand
 {
-    /// <summary>Owns moving Cross occupancy and conservative sand displacement on the simulation grid.</summary>
+    /// <summary>Owns passive rotor motion, grid occupancy, and conservative sand displacement.</summary>
     public sealed class RotatingObstacleSystem
     {
         private readonly SandSimulation simulation;
         private readonly RotatingObstacleProfile profile;
         private readonly RotatingObstacleState[] obstacles;
         private readonly bool[] nextMask;
+        private readonly bool[] candidateMask;
+        private readonly bool[] sweptMask;
+        private readonly bool[] reservedTargets;
         private readonly List<int> previousCells;
         private readonly List<int> nextCells;
         private readonly List<int> owners;
+        private readonly List<int> nextOwners;
+        private readonly List<int> candidateCells;
+        private readonly List<int> sweptCells;
+        private readonly List<int> reservedTargetCells;
+        private readonly List<GrainMove> grainMoves;
+        private readonly int[] searchQueue;
+        private readonly int[] searchStamps;
+        private readonly float[] contactTorques;
+        private readonly float[] previousAngles;
+        private readonly int searchWidth;
+        private int searchStamp;
 
         public RotatingObstacleSystem(SandSimulation simulation, RotatingObstacleProfile profile,
             IList<RotatingObstacleData> data)
@@ -23,53 +37,300 @@ namespace SE001.Simulation.Sand
             this.profile = profile ?? throw new ArgumentNullException(nameof(profile));
             if (data == null) throw new ArgumentNullException(nameof(data));
             obstacles = new RotatingObstacleState[data.Count];
-            int estimatedCells = 0;
+            contactTorques = new float[data.Count];
+            previousAngles = new float[data.Count];
+
+            int cellCount = simulation.State.Cells.Length;
+            int maxSweptCapacity = 0;
+            int maxRasterCapacity = 16;
             for (int i = 0; i < data.Count; i++)
             {
                 RotatingObstacleData item = data[i];
                 obstacles[i] = new RotatingObstacleState(item);
-                float length = item.barLength * item.scale;
-                float width = profile.barWidth * item.scale;
-                estimatedCells += Mathf.CeilToInt(2f * (length + simulation.CellSize) *
-                    (width + simulation.CellSize) / (simulation.CellSize * simulation.CellSize));
+                int boundsCapacity = EstimateBoundsCapacity(item, profile.barWidth, simulation.CellSize, cellCount);
+                maxRasterCapacity = Mathf.Max(maxRasterCapacity, boundsCapacity);
+                maxSweptCapacity = Mathf.Min(cellCount, maxSweptCapacity + boundsCapacity);
             }
-            int capacity = Mathf.Min(simulation.State.Cells.Length, Mathf.Max(16, estimatedCells));
-            previousCells = new List<int>(capacity);
-            nextCells = new List<int>(capacity);
-            owners = new List<int>(capacity);
-            nextMask = new bool[simulation.State.Cells.Length];
-            Advance(0f);
+
+            maxSweptCapacity = Mathf.Max(16, maxSweptCapacity);
+            previousCells = new List<int>(maxSweptCapacity);
+            nextCells = new List<int>(maxSweptCapacity);
+            owners = new List<int>(maxSweptCapacity);
+            nextOwners = new List<int>(maxSweptCapacity);
+            candidateCells = new List<int>(maxRasterCapacity);
+            sweptCells = new List<int>(maxSweptCapacity);
+            reservedTargetCells = new List<int>(maxSweptCapacity);
+            grainMoves = new List<GrainMove>(maxSweptCapacity);
+            nextMask = new bool[cellCount];
+            candidateMask = new bool[cellCount];
+            sweptMask = new bool[cellCount];
+            reservedTargets = new bool[cellCount];
+
+            int reach = Mathf.Clamp(profile.pushSearchCells, 1, 64);
+            searchWidth = Mathf.Min(simulation.State.Width, reach * 2 + 1);
+            int searchHeight = Mathf.Min(simulation.State.Height, reach * 2 + 1);
+            int searchCapacity = Mathf.Max(1, searchWidth * searchHeight);
+            searchQueue = new int[searchCapacity];
+            searchStamps = new int[searchCapacity];
+
+            BuildNextMask();
+            CommitMask();
         }
 
         public int Count => obstacles.Length;
         public RotatingObstacleState GetState(int index) => obstacles[index];
 
+        /// <summary>
+        /// Advances one fixed simulation step. Contact is sampled against the current raster before movement;
+        /// newly emitted/falling grains can affect rotor motion from the next step onward.
+        /// </summary>
         public int Advance(float dt)
         {
-            SandSimulationState state = simulation.State;
-            for (int i = 0; i < previousCells.Count; i++) nextMask[previousCells[i]] = false;
-            nextCells.Clear();
-            owners.Clear();
+            if (dt <= 0f || obstacles.Length == 0) return 0;
+            ClearScratch();
+            CollectContactTorques();
+
+            bool anyMotion = false;
             for (int i = 0; i < obstacles.Length; i++)
             {
-                obstacles[i].Advance(dt);
-                Raster(i);
+                RotatingObstacleState obstacle = obstacles[i];
+                previousAngles[i] = obstacle.Angle;
+                float delta = obstacle.Integrate(contactTorques[i], dt, profile);
+                if (Mathf.Abs(delta) <= Mathf.Epsilon) continue;
+                anyMotion = true;
+                SweepObstacle(i, delta);
             }
 
-            int pushed = 0;
-            for (int i = 0; i < nextCells.Count; i++)
+            if (!anyMotion) return 0;
+
+            BuildNextMask();
+            if (!TryPlanGrainMoves())
             {
-                int index = nextCells[i];
-                if (state.Cells[index] != 0 && Push(index, obstacles[owners[i]])) pushed++;
+                // A failed all-or-nothing push leaves sand and rotor geometry unchanged.
+                for (int i = 0; i < obstacles.Length; i++)
+                {
+                    obstacles[i].SetAngle(previousAngles[i]);
+                    obstacles[i].Stop();
+                }
+                BuildNextMask();
+                ClearSweepMarks();
+                CommitMask();
+                return 0;
             }
+
+            int pushed = ApplyGrainMoves();
+            CommitMask();
+            ClearSweepMarks();
+            return pushed;
+        }
+
+        private void SweepObstacle(int owner, float delta)
+        {
+            RotatingObstacleState obstacle = obstacles[owner];
+            float radius = (obstacle.BarLength + profile.barWidth) * obstacle.Scale * 0.5f;
+            float arcLimitedDegrees = radius > 0f
+                ? simulation.CellSize * 0.5f / radius * Mathf.Rad2Deg
+                : profile.collisionSweepStepDegrees;
+            float maxStep = Mathf.Max(0.01f, Mathf.Min(profile.collisionSweepStepDegrees, arcLimitedDegrees));
+            int steps = Mathf.Max(1, Mathf.CeilToInt(Mathf.Abs(delta) / maxStep));
+            float start = previousAngles[owner];
+            float lastValid = start;
+            bool blocked = false;
+
+            for (int step = 1; step <= steps; step++)
+            {
+                float angle = start + delta * (step / (float)steps);
+                RasterCandidate(owner, angle);
+                if (CandidateHitsDrawStroke())
+                {
+                    blocked = true;
+                    break;
+                }
+
+                AddCandidateToSweep();
+                lastValid = angle;
+            }
+
+            obstacle.SetAngle(blocked ? lastValid : start + delta);
+            if (blocked) obstacle.Stop();
+        }
+
+        private void CollectContactTorques()
+        {
+            SandSimulationState state = simulation.State;
+            float cell = simulation.CellSize;
+            for (int i = 0; i < previousCells.Count; i++)
+            {
+                int rotorIndex = previousCells[i];
+                int owner = owners[i];
+                int rotorX = rotorIndex % state.Width;
+                int rotorY = rotorIndex / state.Width;
+                float rotorCenterX = (rotorX + 0.5f) * cell;
+                float rotorCenterY = (rotorY + 0.5f) * cell;
+
+                for (int side = 0; side < 4; side++)
+                {
+                    int dx = side == 0 ? -1 : side == 1 ? 1 : 0;
+                    int dy = side == 2 ? -1 : side == 3 ? 1 : 0;
+                    int grainX = rotorX + dx;
+                    int grainY = rotorY + dy;
+                    if (grainX < 0 || grainY < 0 || grainX >= state.Width || grainY >= state.Height) continue;
+                    int grainIndex = grainY * state.Width + grainX;
+                    if (state.Cells[grainIndex] == 0) continue;
+
+                    Vector2 lever = new Vector2((grainX + 0.5f) * cell - obstacles[owner].Position.x,
+                        (grainY + 0.5f) * cell - obstacles[owner].Position.y);
+                    // Contact normal points from rotor surface toward grain. The reaction force acts into the rotor.
+                    Vector2 force = new Vector2(-dx, -dy) * profile.sandTorqueScale;
+                    contactTorques[owner] += lever.x * force.y - lever.y * force.x;
+                }
+            }
+        }
+
+        private void RasterCandidate(int owner, float angle)
+        {
+            for (int i = 0; i < candidateCells.Count; i++) candidateMask[candidateCells[i]] = false;
+            candidateCells.Clear();
+            RasterObstacle(owner, angle, candidateMask, candidateCells, null);
+        }
+
+        private bool CandidateHitsDrawStroke()
+        {
+            SandSimulationState state = simulation.State;
+            for (int i = 0; i < candidateCells.Count; i++)
+                if (state.DynamicMask[candidateCells[i]]) return true;
+            return false;
+        }
+
+        private void AddCandidateToSweep()
+        {
+            for (int i = 0; i < candidateCells.Count; i++)
+            {
+                int index = candidateCells[i];
+                if (sweptMask[index]) continue;
+                sweptMask[index] = true;
+                sweptCells.Add(index);
+            }
+        }
+
+        private bool TryPlanGrainMoves()
+        {
+            SandSimulationState state = simulation.State;
+            grainMoves.Clear();
+            for (int i = 0; i < sweptCells.Count; i++)
+            {
+                int source = sweptCells[i];
+                if (state.Cells[source] == 0) continue;
+                if (grainMoves.Count >= grainMoves.Capacity || !TryFindSafeDestination(source, out int target))
+                {
+                    ClearReservedTargets();
+                    grainMoves.Clear();
+                    return false;
+                }
+
+                grainMoves.Add(new GrainMove(source, target));
+                reservedTargets[target] = true;
+                reservedTargetCells.Add(target);
+            }
+
+            ClearReservedTargets();
+            return true;
+        }
+
+        private bool TryFindSafeDestination(int source, out int destination)
+        {
+            SandSimulationState state = simulation.State;
+            int sourceX = source % state.Width;
+            int sourceY = source / state.Width;
+            int reach = Mathf.Clamp(profile.pushSearchCells, 1, 64);
+            int minX = Mathf.Max(0, sourceX - reach);
+            int maxX = Mathf.Min(state.Width - 1, sourceX + reach);
+            int minY = Mathf.Max(0, sourceY - reach);
+            int maxY = Mathf.Min(state.Height - 1, sourceY + reach);
+            int windowWidth = maxX - minX + 1;
+            int stamp = NextSearchStamp();
+            int head = 0;
+            int tail = 0;
+            int rootLocal = (sourceY - minY) * windowWidth + sourceX - minX;
+            searchStamps[rootLocal] = stamp;
+            searchQueue[tail++] = source;
+            destination = -1;
+
+            while (head < tail)
+            {
+                int current = searchQueue[head++];
+                int x = current % state.Width;
+                int y = current / state.Width;
+                for (int side = 0; side < 4; side++)
+                {
+                    int nx = x + (side == 0 ? -1 : side == 1 ? 1 : 0);
+                    int ny = y + (side == 2 ? -1 : side == 3 ? 1 : 0);
+                    if (nx < minX || nx > maxX || ny < minY || ny > maxY) continue;
+                    int local = (ny - minY) * windowWidth + nx - minX;
+                    if (searchStamps[local] == stamp) continue;
+                    searchStamps[local] = stamp;
+                    int index = ny * state.Width + nx;
+                    if (!CanTraverseDisplacement(index)) continue;
+                    if (state.Cells[index] == 0)
+                    {
+                        destination = index;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool CanTraverseDisplacement(int index)
+        {
+            SandSimulationState state = simulation.State;
+            return state.ValidMask[index] && !state.StaticMask[index] && !state.CupWallMask[index] &&
+                !state.DynamicMask[index] && !state.RotatingMask[index] && !nextMask[index] &&
+                !sweptMask[index] && !reservedTargets[index];
+        }
+
+        private int NextSearchStamp()
+        {
+            searchStamp++;
+            if (searchStamp != int.MaxValue) return searchStamp;
+            Array.Clear(searchStamps, 0, searchStamps.Length);
+            searchStamp = 1;
+            return searchStamp;
+        }
+
+        private int ApplyGrainMoves()
+        {
+            int moved = 0;
+            for (int i = 0; i < grainMoves.Count; i++)
+            {
+                GrainMove move = grainMoves[i];
+                if (simulation.TryRelocateGrain(move.Source, move.Target, nextMask)) moved++;
+            }
+            return moved;
+        }
+
+        private void BuildNextMask()
+        {
+            for (int i = 0; i < nextCells.Count; i++) nextMask[nextCells[i]] = false;
+            nextCells.Clear();
+            nextOwners.Clear();
+            for (int i = 0; i < obstacles.Length; i++)
+                RasterObstacle(i, obstacles[i].Angle, nextMask, nextCells, nextOwners);
+        }
+
+        private void CommitMask()
+        {
+            SandSimulationState state = simulation.State;
             for (int i = 0; i < previousCells.Count; i++) state.RotatingMask[previousCells[i]] = false;
             for (int i = 0; i < nextCells.Count; i++) state.RotatingMask[nextCells[i]] = true;
             previousCells.Clear();
             previousCells.AddRange(nextCells);
-            return pushed;
+            owners.Clear();
+            owners.AddRange(nextOwners);
         }
 
-        private void Raster(int owner)
+        private void RasterObstacle(int owner, float angle, bool[] mask, List<int> cells, List<int> cellOwners)
         {
             RotatingObstacleState obstacle = obstacles[owner];
             float cell = simulation.CellSize;
@@ -80,9 +341,9 @@ namespace SE001.Simulation.Sand
             int maxX = Mathf.Min(simulation.State.Width - 1, Mathf.CeilToInt((obstacle.Position.x + radius) / cell));
             int minY = Mathf.Max(0, Mathf.FloorToInt((obstacle.Position.y - radius) / cell));
             int maxY = Mathf.Min(simulation.State.Height - 1, Mathf.CeilToInt((obstacle.Position.y + radius) / cell));
-            float angle = (obstacle.Angle + 45f) * Mathf.Deg2Rad;
-            float cos = Mathf.Cos(angle);
-            float sin = Mathf.Sin(angle);
+            float radians = (angle + 45f) * Mathf.Deg2Rad;
+            float cos = Mathf.Cos(radians);
+            float sin = Mathf.Sin(radians);
             for (int y = minY; y <= maxY; y++)
             for (int x = minX; x <= maxX; x++)
             {
@@ -93,50 +354,51 @@ namespace SE001.Simulation.Sand
                 bool first = Mathf.Abs(along) <= halfLength && Mathf.Abs(across) <= halfWidth;
                 bool second = Mathf.Abs(across) <= halfLength && Mathf.Abs(along) <= halfWidth;
                 if (!first && !second) continue;
-                int index = stateIndex(x, y);
-                if (nextMask[index]) continue;
-                nextMask[index] = true;
-                nextCells.Add(index);
-                owners.Add(owner);
+                int index = y * simulation.State.Width + x;
+                if (mask[index]) continue;
+                mask[index] = true;
+                cells.Add(index);
+                cellOwners?.Add(owner);
             }
         }
 
-        private int stateIndex(int x, int y) => y * simulation.State.Width + x;
-
-        private bool Push(int sourceIndex, RotatingObstacleState obstacle)
+        private void ClearScratch()
         {
-            SandSimulationState state = simulation.State;
-            int width = state.Width;
-            int sourceX = sourceIndex % width;
-            int sourceY = sourceIndex / width;
-            float relativeX = (sourceX + 0.5f) * simulation.CellSize - obstacle.Position.x;
-            float relativeY = (sourceY + 0.5f) * simulation.CellSize - obstacle.Position.y;
-            float sign = Mathf.Sign(obstacle.DegreesPerSecond);
-            float tangentX = -relativeY * sign;
-            float tangentY = relativeX * sign;
-            int limit = profile.pushSearchCells;
-            for (int radius = 1; radius <= limit; radius++)
+            ClearSweepMarks();
+            ClearReservedTargets();
+            grainMoves.Clear();
+            Array.Clear(contactTorques, 0, contactTorques.Length);
+        }
+
+        private void ClearSweepMarks()
+        {
+            for (int i = 0; i < sweptCells.Count; i++) sweptMask[sweptCells[i]] = false;
+            sweptCells.Clear();
+        }
+
+        private void ClearReservedTargets()
+        {
+            for (int i = 0; i < reservedTargetCells.Count; i++) reservedTargets[reservedTargetCells[i]] = false;
+            reservedTargetCells.Clear();
+        }
+
+        private static int EstimateBoundsCapacity(RotatingObstacleData item, float barWidth, float cell, int cellCount)
+        {
+            float radius = (item.barLength + barWidth) * item.scale * 0.5f;
+            int side = Mathf.CeilToInt(radius * 2f / cell) + 2;
+            return Mathf.Min(cellCount, Mathf.Max(16, side * side));
+        }
+
+        private readonly struct GrainMove
+        {
+            public GrainMove(int source, int target)
             {
-                int chosen = -1;
-                float best = float.NegativeInfinity;
-                for (int dy = -radius; dy <= radius; dy++)
-                for (int dx = -radius; dx <= radius; dx++)
-                {
-                    if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) != radius) continue;
-                    int x = sourceX + dx;
-                    int y = sourceY + dy;
-                    if (x < 0 || y < 0 || x >= width || y >= state.Height) continue;
-                    int target = stateIndex(x, y);
-                    if (nextMask[target] || !state.ValidMask[target] || state.StaticMask[target] ||
-                        state.CupWallMask[target] || state.DynamicMask[target] || state.Cells[target] != 0) continue;
-                    float score = dx * tangentX + dy * tangentY;
-                    if (score <= best) continue;
-                    best = score;
-                    chosen = target;
-                }
-                if (chosen >= 0) return simulation.TryRelocateGrain(sourceIndex, chosen, nextMask);
+                Source = source;
+                Target = target;
             }
-            return false;
+
+            public int Source { get; }
+            public int Target { get; }
         }
     }
 
@@ -148,8 +410,8 @@ namespace SE001.Simulation.Sand
             Position = data.position;
             Scale = data.scale;
             BarLength = data.barLength;
-            angle = data.initialAngle;
-            DegreesPerSecond = data.degreesPerSecond;
+            angle = Mathf.Repeat(data.initialAngle, 360f);
+            AngularVelocity = 0f;
         }
 
         public string StableId { get; }
@@ -158,7 +420,27 @@ namespace SE001.Simulation.Sand
         public float BarLength { get; }
         private float angle;
         public float Angle => angle;
-        public float DegreesPerSecond { get; }
-        public void Advance(float dt) => angle = Mathf.Repeat(angle + DegreesPerSecond * dt, 360f);
+        public float AngularVelocity { get; private set; }
+
+        public float Integrate(float torque, float dt, RotatingObstacleProfile profile)
+        {
+            float length = BarLength * Scale;
+            float width = Mathf.Max(0.001f, profile.barWidth * Scale);
+            float overlapSide = Mathf.Min(length, width);
+            float inertia = profile.momentOfInertiaScale *
+                (2f * length * width * (length * length + width * width) / 12f -
+                 overlapSide * overlapSide * overlapSide * overlapSide / 6f);
+            inertia = Mathf.Max(0.0001f, inertia);
+
+            float angularAccelerationDegrees = torque / inertia * Mathf.Rad2Deg;
+            float nextVelocity = AngularVelocity + angularAccelerationDegrees * dt;
+            nextVelocity *= Mathf.Exp(-Mathf.Max(0f, profile.angularDamping) * dt);
+            AngularVelocity = Mathf.Clamp(nextVelocity, -profile.maxAngularSpeed, profile.maxAngularSpeed);
+            if (Mathf.Abs(AngularVelocity) <= profile.restAngularSpeed) AngularVelocity = 0f;
+            return AngularVelocity * dt;
+        }
+
+        public void SetAngle(float value) => angle = Mathf.Repeat(value, 360f);
+        public void Stop() => AngularVelocity = 0f;
     }
 }

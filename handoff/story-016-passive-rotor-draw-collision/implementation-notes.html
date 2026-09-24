@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Story 016 — Passive Rotor + Draw Collision</title>
+</head>
+<body>
+<h1>Story 016 — Passive Rotor + Draw Collision</h1>
+
+<h2>Setup</h2>
+<p>V2 deterministic shell applied by SE001_Setup_PassiveRotor_DrawCollision_V2.ps1 at 2026-09-24. Initial invocation patched the shell and stopped because the existing Story 016 handoff directory required -Force. After verifying the directory was empty, reran with -AllowDirty -Force; script completed. Mechanical backups are under .tmp/story016-v2-backup/.</p>
+
+<h2>Mechanical changes already applied</h2>
+<ul>
+<li>Passive rotor Profile tuning fields + asset defaults.</li>
+<li>Legacy degreesPerSecond no longer required to be non-zero.</li>
+<li>Level Editor no longer authors autonomous Rotation °/s.</li>
+<li>Schema remains 5 and legacy field remains serialized.</li>
+</ul>
+
+<h2>C2C</h2>
+<pre>
+INIT: PASS — workspace SE-001, branch main, HEAD 8ef0733; connector workspace and local identity matched.
+PLAN: submitted after baseline; user approved on 2026-09-24.
+PLAN REVIEW: user approval received.
+EXECUTED: implementation + verification complete on 2026-09-24
+INDEPENDENT REVIEW: pending
+DONE: pending
+</pre>
+
+<h2>Pre-implementation baseline</h2>
+<ul>
+<li>Unity 6000.0.70f1, editor idle, no compile/domain reload pending. Console before tests: 0 error/warning entries.</li>
+<li>RotatingObstacleTests: PASS 2/2.</li>
+<li>SandSimulationTests + LevelTuningTests: 11/12; pre-existing failure BowlScaleEdit_FloorsEachCupCapacity_WithoutChangingSourceAmount.</li>
+<li>Draw/Phase-C/Level Editor groups: 24/42; 18 pre-existing failures. Baseline jobs: ddc29ae166814dc184e2726162e504ce and 5268bdba9ae74ed383ccd4ee1d6d403a; failures were captured in the C2C PLAN.</li>
+<li>Unity Test Framework emitted 10 Performance Testing setup/cleanup warnings and 5 TestResults-path Exception log entries after the baseline runs.</li>
+<li>Git baseline had no source changes; Story 016 handoff was untracked. No pre-existing handoff content was overwritten during the V2 setup because the directory was verified empty before forced generation.</li>
+</ul>
+
+<h2>Core implementation</h2>
+<p>Implemented. Rotor torque samples cardinal sand contacts on the current raster before source emission and SandSimulation.Step. The reaction force direction and pivot-to-contact lever arm produce signed torque. Composite cross inertia uses resolved dimensions, then profile damping, speed cap, and deterministic rest snap are applied. Legacy degreesPerSecond stays serialized but does not drive motion.</p>
+<p>Each angular update is subdivided by collisionSweepStepDegrees and a half-cell arc bound. Any candidate raster touching committed DynamicMask stops at the previous valid angle and clears angular velocity. Grain displacement is planned before mutation into unique adjacent cells outside validity/static/cup/draw/current/future/swept rotor geometry; no safe cell means the rotor step rolls back and keeps every grain. Shade, velocity, momentum, material, counts, and stroke mask are preserved.</p>
+<p>DrawStrokeCollisionResolver is shared by live pointer acceptance and commit. It samples long pointer segments at half-cell intervals and tests the same effective radius against board validity, static/cup/draw/rotor masks and resolved SourceDomain size/body offset. GameplayInputController latches first contact for the gesture. Commit revalidates the accepted path, consumes only accepted length, and stamps only that path. Preview and committed visuals now receive the same effective thickness.</p>
+
+<h2>Verification</h2>
+<p>Compile: PASS, Unity 6000.0.70f1, final refresh completed, Console 0 compile errors and 0 warnings. Focused tests: PASS 10/10, job a7f8b1beb1344192b249d871f5ec7ed9 (7 RotatingObstacleTests + 3 DrawStrokeCollisionResolverTests). Cases cover rest without contact, non-contact proximity, signed/farther torque, sustained acceleration, speed cap/damping/rest, stroke clamp/no overlap/opposite torque escape, grain metadata/accounting, first static/cup/draw/rotor contact, Source scale, open mouth, ink clipping and blocked starts.</p>
+<p>Regression: SandSimulationTests + LevelTuningTests 11/12, with only the same pre-existing BowlScaleEdit_FloorsEachCupCapacity_WithoutChangingSourceAmount failure (job cf0bd163a0e3430a8839939e50f6d155). Phase-C/Draw/Level Editor 24/42, with the same 18 pre-existing failures recorded at baseline (job 7456b5860fee44f5a4d4a88f134102bc). No new failure appeared in either group.</p>
+
+<h2>Performance</h2>
+<p>For Level_01, the simulation grid is 180x320 = 57,600 cells at 0.06 cell size. One rotor reserves four byte-per-cell scratch masks (~225 KiB), rotor/grain lists (~242 KiB using the bounded 6,889-cell raster capacity), and bounded search arrays (~4.9 KiB): about 472 KiB additional level memory, plus list headers. The draw path adds one reusable 128-point Vector2 buffer (~1 KiB); pointer input already owns its corresponding buffer.</p>
+<p>After the idle fast path, a stationary rotor performs contact-face sampling and integration without rerasterizing. A moving Level_01 rotor is capped at about 6 angular samples per 60 Hz step (2-degree setting plus half-cell arc limit); each sample scans a bounded raster box of at most about 6,889 cells. Work scales with rotor count, swept angle, and contact/swept cells. All simulation and pointer resolver scratch is allocated at level setup; no per-step/per-sample managed allocation is intended. GPU and draw calls do not change. Redmi 9A runtime profiling was not available, so the moving-contact worst case still needs device measurement.</p>
+
+<h2>Semantic deviations</h2>
+<p>NONE. Story-015 Source/Bowl resolution, Bowl masks, Required Amount policy, schema 5, and legacy degreesPerSecond serialization were preserved.</p>
+</body>
+</html>

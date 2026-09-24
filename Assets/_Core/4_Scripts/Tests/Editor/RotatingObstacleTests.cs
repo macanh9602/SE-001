@@ -33,32 +33,195 @@ namespace SE001.Tests
         }
 
         [Test]
-        public void Sweep_PushesGrainWithoutLoss_AndPreservesStrokeMask()
+        public void PassiveRotor_NoContactOrNearbySand_DoesNotUseLegacyMotor()
         {
-            SandSimulationProfile sandProfile = ScriptableObject.CreateInstance<SandSimulationProfile>();
+            CreatePassiveSetup(out SandSimulationProfile sandProfile, out SandSimulation simulation,
+                out RotatingObstacleProfile profile, out RotatingObstacleSystem obstacle);
+            try
+            {
+                RotatingObstacleState state = obstacle.GetState(0);
+                float initial = state.Angle;
+                Assert.That(obstacle.Advance(0.1f), Is.Zero);
+                Assert.That(state.Angle, Is.EqualTo(initial));
+                Assert.That(state.AngularVelocity, Is.Zero);
+
+                Assert.That(simulation.TryEmit(80, 80, 1), Is.True);
+                Assert.That(obstacle.Advance(0.1f), Is.Zero);
+                Assert.That(state.Angle, Is.EqualTo(initial));
+                Assert.That(state.AngularVelocity, Is.Zero);
+            }
+            finally { DestroySetup(sandProfile, simulation, profile); }
+        }
+
+        [Test]
+        public void PassiveRotor_RealContactProducesSignedTorqueAndFartherLeverIsStronger()
+        {
+            float near = ContactVelocityAt(58);
+            float far = ContactVelocityAt(65);
+            float left = ContactVelocityAt(42);
+
+            Assert.That(near, Is.LessThan(0f));
+            Assert.That(far, Is.LessThan(near), "The larger lever arm should produce a larger signed response.");
+            Assert.That(left, Is.GreaterThan(0f), "Mirroring the contact across the pivot should reverse torque.");
+        }
+
+        [Test]
+        public void PassiveRotor_SustainedContactContinuesToAccelerate()
+        {
+            CreatePassiveSetup(out SandSimulationProfile sandProfile, out SandSimulation simulation,
+                out RotatingObstacleProfile profile, out RotatingObstacleSystem obstacle);
+            try
+            {
+                profile.angularDamping = 0f;
+                profile.restAngularSpeed = 0f;
+                Assert.That(simulation.TryEmit(65, 53, 1), Is.True);
+                obstacle.Advance(0.01f);
+                float firstVelocity = obstacle.GetState(0).AngularVelocity;
+                obstacle.Advance(0.01f);
+                Assert.That(Mathf.Abs(obstacle.GetState(0).AngularVelocity), Is.GreaterThan(Mathf.Abs(firstVelocity)));
+            }
+            finally { DestroySetup(sandProfile, simulation, profile); }
+        }
+
+        [Test]
+        public void PassiveRotor_IntegrationCapsSpeedAndDampsToRest()
+        {
+            RotatingObstacleProfile profile = ScriptableObject.CreateInstance<RotatingObstacleProfile>();
+            RotatingObstacleState state = new RotatingObstacleState(new RotatingObstacleData
+            {
+                stableId = "cross", position = new Vector2(5f, 5f), scale = 1f, barLength = 4f, initialAngle = 12f,
+                degreesPerSecond = 360f
+            });
+            try
+            {
+                profile.angularDamping = 0f;
+                profile.maxAngularSpeed = 30f;
+                profile.restAngularSpeed = 0f;
+                state.Integrate(10000f, 0.1f, profile);
+                Assert.That(state.AngularVelocity, Is.EqualTo(30f).Within(0.001f));
+
+                profile.angularDamping = 20f;
+                for (int i = 0; i < 40; i++) state.Integrate(0f, 0.1f, profile);
+                Assert.That(state.AngularVelocity, Is.LessThan(0.01f));
+                profile.restAngularSpeed = 1f;
+                state.Integrate(0f, 0.1f, profile);
+                Assert.That(state.AngularVelocity, Is.Zero);
+            }
+            finally { Object.DestroyImmediate(profile); }
+        }
+
+        [Test]
+        public void Sweep_PreservesGrainAccountingAndFeelData_AndDoesNotAlterStrokeMask()
+        {
+            CreatePassiveSetup(out SandSimulationProfile sandProfile, out SandSimulation simulation,
+                out RotatingObstacleProfile profile, out RotatingObstacleSystem obstacle);
+            try
+            {
+                profile.sandTorqueScale = 1000f;
+                profile.angularDamping = 0f;
+                profile.restAngularSpeed = 0f;
+                profile.maxAngularSpeed = 240f;
+                simulation.SetDynamic(20, 20, true);
+                Assert.That(simulation.TryEmit(65, 53, 1), Is.True);
+                int source = simulation.State.Index(65, 53);
+                simulation.State.Shade[source] = 211;
+                simulation.State.Velocity[source] = 2.5f;
+                simulation.State.Momentum[source] = -0.75f;
+
+                obstacle.Advance(0.5f);
+
+                Assert.That(simulation.State.OccupiedCount, Is.EqualTo(1));
+                Assert.That(simulation.State.EmittedCount, Is.EqualTo(1));
+                Assert.That(simulation.State.DynamicMask[simulation.State.Index(20, 20)], Is.True);
+                int grain = FindGrain(simulation.State.Cells);
+                Assert.That(grain, Is.GreaterThanOrEqualTo(0));
+                Assert.That(simulation.State.Cells[grain], Is.EqualTo(1));
+                Assert.That(simulation.State.Shade[grain], Is.EqualTo(211));
+                Assert.That(simulation.State.Velocity[grain], Is.EqualTo(2.5f));
+                Assert.That(simulation.State.Momentum[grain], Is.EqualTo(-0.75f));
+            }
+            finally { DestroySetup(sandProfile, simulation, profile); }
+        }
+
+        [Test]
+        public void Sweep_ClampsBeforeCommittedStrokeAndOppositeTorqueCanMoveAway()
+        {
+            CreatePassiveSetup(out SandSimulationProfile sandProfile, out SandSimulation simulation,
+                out RotatingObstacleProfile profile, out RotatingObstacleSystem obstacle);
+            try
+            {
+                profile.sandTorqueScale = 1000f;
+                profile.angularDamping = 0f;
+                profile.restAngularSpeed = 0f;
+                simulation.SetDynamic(30, 54, true);
+                Assert.That(simulation.TryEmit(65, 53, 1), Is.True);
+                RotatingObstacleState state = obstacle.GetState(0);
+                float initialAngle = state.Angle;
+
+                obstacle.Advance(0.1f);
+
+                Assert.That(state.Angle, Is.LessThan(initialAngle));
+                Assert.That(state.Angle, Is.GreaterThan(initialAngle - 6f), "Sweep must clamp near first contact, not tunnel through.");
+                Assert.That(state.AngularVelocity, Is.Zero);
+                Assert.That(simulation.State.DynamicMask[simulation.State.Index(30, 54)], Is.True);
+                for (int i = 0; i < simulation.State.Cells.Length; i++)
+                    Assert.That(!(simulation.State.DynamicMask[i] && simulation.State.RotatingMask[i]), Is.True,
+                        "Rotor must not overlap the committed stroke.");
+
+                simulation.Remove(65, 53);
+                Assert.That(simulation.TryEmit(42, 53, 1), Is.True);
+                obstacle.Advance(0.01f);
+                Assert.That(state.AngularVelocity, Is.GreaterThan(0f), "Opposite sand torque can rotate away from the stroke.");
+                Assert.That(simulation.State.DynamicMask[simulation.State.Index(30, 54)], Is.True);
+            }
+            finally { DestroySetup(sandProfile, simulation, profile); }
+        }
+
+        private static float ContactVelocityAt(int x)
+        {
+            CreatePassiveSetup(out SandSimulationProfile sandProfile, out SandSimulation simulation,
+                out RotatingObstacleProfile profile, out RotatingObstacleSystem obstacle);
+            try
+            {
+                profile.angularDamping = 0f;
+                profile.restAngularSpeed = 0f;
+                Assert.That(simulation.TryEmit(x, 53, 1), Is.True);
+                obstacle.Advance(0.01f);
+                return obstacle.GetState(0).AngularVelocity;
+            }
+            finally { DestroySetup(sandProfile, simulation, profile); }
+        }
+
+        private static void CreatePassiveSetup(out SandSimulationProfile sandProfile, out SandSimulation simulation,
+            out RotatingObstacleProfile profile, out RotatingObstacleSystem obstacle)
+        {
+            sandProfile = ScriptableObject.CreateInstance<SandSimulationProfile>();
             sandProfile.cellSize = 0.1f;
             sandProfile.maxCells = 10000;
             LayoutMaskSet masks = new LayoutMaskSet(100, 100);
             for (int i = 0; i < masks.ValidMask.Length; i++) masks.ValidMask[i] = true;
-            SandSimulation simulation = new SandSimulation(sandProfile, masks);
-            RotatingObstacleProfile profile = ScriptableObject.CreateInstance<RotatingObstacleProfile>();
+            simulation = new SandSimulation(sandProfile, masks);
+            profile = ScriptableObject.CreateInstance<RotatingObstacleProfile>();
             profile.barWidth = 0.6f;
             profile.pushSearchCells = 12;
-            RotatingObstacleSystem obstacle = new RotatingObstacleSystem(simulation, profile,
+            profile.sandTorqueScale = 18f;
+            obstacle = new RotatingObstacleSystem(simulation, profile,
                 new List<RotatingObstacleData>
                 {
                     new RotatingObstacleData { stableId = "cross", position = new Vector2(5f, 5f),
-                        scale = 1f, barLength = 4f, degreesPerSecond = 90f }
+                        scale = 1f, barLength = 4f, initialAngle = 45f, degreesPerSecond = 90f }
                 });
-            simulation.SetDynamic(20, 20, true);
-            Assert.That(simulation.TryEmit(60, 50, 1), Is.True);
-            int pushed = obstacle.Advance(0.5f);
+        }
 
-            Assert.That(pushed, Is.EqualTo(1));
-            Assert.That(simulation.State.OccupiedCount, Is.EqualTo(1));
-            Assert.That(simulation.State.Cells[simulation.State.Index(60, 50)], Is.EqualTo(0));
-            Assert.That(simulation.State.DynamicMask[simulation.State.Index(20, 20)], Is.True);
-            Assert.That(simulation.State.RotatingMask[simulation.State.Index(60, 50)], Is.True);
+        private static int FindGrain(byte[] cells)
+        {
+            for (int i = 0; i < cells.Length; i++) if (cells[i] != 0) return i;
+            return -1;
+        }
+
+        private static void DestroySetup(SandSimulationProfile sandProfile, SandSimulation simulation,
+            RotatingObstacleProfile profile)
+        {
             simulation.Dispose();
             Object.DestroyImmediate(profile);
             Object.DestroyImmediate(sandProfile);

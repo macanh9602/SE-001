@@ -194,8 +194,8 @@ namespace SE001.Data
                     errors.Add($"rotatingObstacles[{i}] has a missing or duplicate stableId.");
                 if (item == null || !Finite(item.position) || !InsideBoard(item.position, level.board.size) ||
                     !Finite(item.scale) || item.scale <= 0f || !Finite(item.barLength) || item.barLength <= 0f ||
-                    !Finite(item.initialAngle) || !Finite(item.degreesPerSecond) || item.degreesPerSecond == 0f)
-                    errors.Add($"rotatingObstacles[{i}] has invalid position, scale, length, angle, or rotation speed.");
+                    !Finite(item.initialAngle) || !Finite(item.degreesPerSecond))
+                    errors.Add($"rotatingObstacles[{i}] has invalid position, scale, length, angle, or legacy rotation value.");
                 else if (level.schemaVersion < 4 ||
                     item.position.x - item.barLength * item.scale * 0.5f < 0f ||
                     item.position.y - item.barLength * item.scale * 0.5f < 0f ||

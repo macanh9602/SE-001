@@ -28,6 +28,8 @@ namespace SE001.System.Management
 
         private readonly List<SourceDomain> sources = new List<SourceDomain>();
         private readonly List<CupDomain> cups = new List<CupDomain>();
+        private readonly List<Vector2> acceptedStroke = new List<Vector2>(128);
+        private DrawStrokeCollisionResolver drawCollisionResolver;
         private RotatingObstacleSystem rotatingObstacles;
         private LevelContext context;
         private float stepAccumulator;
@@ -68,6 +70,7 @@ namespace SE001.System.Management
             cups.Clear();
             sources.AddRange(sourceValues);
             cups.AddRange(cupValues);
+            drawCollisionResolver = new DrawStrokeCollisionResolver(context.SandSimulation, sources);
             InkBudget = Mathf.Max(0f, context.DrawInkBudget);
             InkRemaining = InkBudget;
             for (int i = 0; i < cups.Count; i++) cups[i].RegisterWalls(context.SandSimulation, cellSize, wallThickness);
@@ -95,7 +98,38 @@ namespace SE001.System.Management
             rotatingObstacles = system;
         }
 
-        /// <summary>Stamps the stroke into the dynamic mask. Stroke is truncated when ink runs out.</summary>
+        public float EffectiveDrawThickness(float thickness)
+        {
+            return drawCollisionResolver != null
+                ? drawCollisionResolver.EffectiveRadius(thickness) * 2f
+                : Mathf.Max(0f, thickness);
+        }
+
+        /// <summary>Checks one live preview segment. False means first contact or ink exhaustion stops this gesture.</summary>
+        public bool TryAcceptDrawSegment(Vector2 start, Vector2 requestedEnd, float travelled, float thickness,
+            out Vector2 acceptedEnd)
+        {
+            acceptedEnd = start;
+            if (!bound || State != GameState.Playing || drawCollisionResolver == null || InkRemaining <= travelled)
+                return false;
+
+            float radius = drawCollisionResolver.EffectiveRadius(thickness);
+            Vector2 delta = requestedEnd - start;
+            float length = delta.magnitude;
+            float available = Mathf.Max(0f, InkRemaining - travelled);
+            bool withinInk = length <= available;
+            if (!withinInk && length > Mathf.Epsilon) requestedEnd = start + delta * (available / length);
+            bool clear = drawCollisionResolver.TryResolveSegment(start, requestedEnd, radius, out acceptedEnd);
+            return clear && withinInk;
+        }
+
+        public bool CanBeginDraw(Vector2 point, float thickness)
+        {
+            return bound && State == GameState.Playing && drawCollisionResolver != null &&
+                drawCollisionResolver.IsPointClear(point, drawCollisionResolver.EffectiveRadius(thickness));
+        }
+
+        /// <summary>Resolves first contact, consumes ink only for accepted length, and stamps the same path used by preview.</summary>
         public bool CommitStroke(IList<Vector2> points, float thickness)
         {
             if (!bound || State != GameState.Playing || points == null || points.Count < 2) return false;
@@ -107,20 +141,17 @@ namespace SE001.System.Management
 
             var sim = context.SandSimulation;
             float cell = sim.CellSize;
-            // >= 1.5 cells so the barrier is 3+ cells wide: diagonal CA moves cannot leak through.
-            float radius = Mathf.Max(thickness * 0.5f, cell * 1.5f);
+            float radius = drawCollisionResolver.EffectiveRadius(thickness);
+            if (!drawCollisionResolver.ResolveStroke(points, radius, InkRemaining, acceptedStroke, out float acceptedLength))
+                return false;
+
+            InkRemaining = Mathf.Max(0f, InkRemaining - acceptedLength);
             int r = Mathf.CeilToInt(radius / cell);
-            var accepted = new List<Vector2>(points.Count) { points[0] };
-
-            for (int i = 1; i < points.Count && InkRemaining > 0f; i++)
+            for (int i = 1; i < acceptedStroke.Count; i++)
             {
-                Vector2 a = points[i - 1];
-                Vector2 b = points[i];
+                Vector2 a = acceptedStroke[i - 1];
+                Vector2 b = acceptedStroke[i];
                 float length = Vector2.Distance(a, b);
-                if (length > InkRemaining) { b = a + (b - a) * (InkRemaining / length); length = InkRemaining; }
-                InkRemaining -= length;
-                accepted.Add(b);
-
                 int steps = Mathf.Max(1, Mathf.CeilToInt(length / (cell * 0.5f)));
                 for (int s = 0; s <= steps; s++)
                 {
@@ -128,16 +159,16 @@ namespace SE001.System.Management
                     int cx = Mathf.FloorToInt(p.x / cell);
                     int cy = Mathf.FloorToInt(p.y / cell);
                     for (int y = cy - r; y <= cy + r; y++)
-                        for (int x = cx - r; x <= cx + r; x++)
-                        {
-                            Vector2 center = new Vector2((x + 0.5f) * cell, (y + 0.5f) * cell);
-                            if ((center - p).sqrMagnitude <= radius * radius) sim.SetDynamic(x, y, true);
-                        }
+                    for (int x = cx - r; x <= cx + r; x++)
+                    {
+                        Vector2 center = new Vector2((x + 0.5f) * cell, (y + 0.5f) * cell);
+                        if ((center - p).sqrMagnitude <= radius * radius) sim.SetDynamic(x, y, true);
+                    }
                 }
             }
 
             strokeCount++;
-            StrokeCommitted?.Invoke(accepted, radius * 2f);
+            StrokeCommitted?.Invoke(acceptedStroke, radius * 2f);
             InkChanged?.Invoke(InkRemaining, InkBudget);
             return true;
         }
@@ -321,6 +352,8 @@ namespace SE001.System.Management
         {
             bound = false;
             rotatingObstacles = null;
+            drawCollisionResolver = null;
+            acceptedStroke.Clear();
             context = null;
             sources.Clear();
             cups.Clear();

@@ -145,10 +145,10 @@ namespace SE001.Editor.Level
                 if (float.IsNaN(obstacle.scale) || float.IsInfinity(obstacle.scale) || obstacle.scale <= 0f ||
                     float.IsNaN(obstacle.barLength) || float.IsInfinity(obstacle.barLength) || obstacle.barLength <= 0f ||
                     float.IsNaN(obstacle.degreesPerSecond) || float.IsInfinity(obstacle.degreesPerSecond) ||
-                    obstacle.degreesPerSecond == 0f || float.IsNaN(obstacle.initialAngle) || float.IsInfinity(obstacle.initialAngle))
+                    float.IsNaN(obstacle.initialAngle) || float.IsInfinity(obstacle.initialAngle))
                     Add(issues, LevelEditorIssueSeverity.Blocking, obstacle.stableId, "scale",
                         "Rotating Obstacle parameters are invalid.", "Rotating Obstacle",
-                        "Use a positive scale/length and a nonzero finite rotation speed.");
+                        "Use a positive scale/length and finite angle/legacy rotation values.");
                 else ValidateBounds(obstacle.stableId, LevelEditorSelectionKind.RotatingObstacle,
                     obstacle.position, LevelEditorGeometry.RotatingSize(obstacle), level.board.size,
                     masks, cellSize, issues);

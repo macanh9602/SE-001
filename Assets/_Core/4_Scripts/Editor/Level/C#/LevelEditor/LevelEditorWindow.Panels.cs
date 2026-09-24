@@ -203,8 +203,10 @@ namespace SE001.Editor.Level
                 FindRotatingObstacle(level, obstacle.stableId).barLength = Mathf.Max(0.01f, value), "Edit Bar Length"));
             AddFloatField("Initial angle", obstacle.initialAngle, "initialAngle", value => ApplyEdit(level =>
                 FindRotatingObstacle(level, obstacle.stableId).initialAngle = value, "Edit Initial Angle"));
-            AddFloatField("Rotation °/s", obstacle.degreesPerSecond, "degreesPerSecond", value => ApplyEdit(level =>
-                FindRotatingObstacle(level, obstacle.stableId).degreesPerSecond = value, "Edit Rotation Speed"));
+            Label passiveMotionNote = new Label(
+                "Passive rotor: sand contact drives rotation. Legacy Rotation °/s remains serialized for compatibility.");
+            passiveMotionNote.AddToClassList("le-inspector-note");
+            inspectorPane.Add(passiveMotionNote);
             inspectorPane.Add(MakeButton("Delete Rotating Obstacle", DeleteSelected, "le-button-danger"));
         }
 
