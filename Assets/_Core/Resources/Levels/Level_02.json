@@ -1,7 +1,7 @@
 {
     "schemaVersion": 5,
     "levelId": "Level_02",
-    "layoutId": "test_1",
+    "layoutId": "test_tool",
     "board": {
         "size": {
             "x": 10.800000190734864,
@@ -35,8 +35,8 @@
         {
             "stableId": "rotating_obstacle_eb03786eec78",
             "position": {
-                "x": 6.815615177154541,
-                "y": 8.280641555786133
+                "x": 2.862673759460449,
+                "y": 9.050695419311524
             },
             "scale": 1.0,
             "barLength": 4.0,
