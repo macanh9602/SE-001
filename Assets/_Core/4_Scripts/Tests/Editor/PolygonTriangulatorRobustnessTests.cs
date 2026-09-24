@@ -1,0 +1,84 @@
+using System.Collections.Generic;
+using System.IO;
+using NUnit.Framework;
+using SE001.Data;
+using SE001.Editor.Level;
+using SE001.Geometry;
+using UnityEngine;
+
+namespace SE001.Tests
+{
+    /// <summary>test_2.svg (2026-09-24): dense Illustrator corner curves stalled the ear clipper ("could not be triangulated").</summary>
+    public sealed class PolygonTriangulatorRobustnessTests
+    {
+        private const string Test2Svg =
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1080 1920\">" +
+            "  <path d=\"" +
+            "M1079.44,699.27v521.46c0,4.96-4.02,8.98-8.98,8.98h-347.66c-6.24,0-10.58-6.21-8.43-12.07l76.52-209.05c.95-2.59." +
+            "65-5.47-.79-7.81l-135.6-219.33c-.88-1.42-1.34-3.05-1.34-4.72v-129.57c0-4.96,4.02-8.98,8.98-8.98h16.13c4.96,0,8" +
+            ".98,4.02,8.98,8.98v88.18c0,4.96,4.02,8.98,8.98,8.98h163.65c4.96,0,8.98-4.02,8.98-8.98v-88.18c0-4.96,4.02-8.98," +
+            "8.98-8.98h16.13c4.96,0,8.98,4.02,8.98,8.98v34.14c0,4.96,4.02,8.98,8.98,8.98h158.54c4.96,0,8.98,4.02,8.98,8.98Z" + "\"/>" +
+            "  <path d=\"" +
+            "M338.88,1085.53v-163.51c0-2.38-.95-4.67-2.63-6.35l-133.76-133.75c-1.68-1.68-2.63-3.97-2.63-6.35v-128.4c0-4.96," +
+            "4.02-8.98,8.98-8.98h14.4c4.96,0,8.98,4.02,8.98,8.98v88.18c0,4.96,4.02,8.98,8.98,8.98h163.65c4.96,0,8.98-4.02,8" +
+            ".98-8.98v-88.18c0-4.96,4.02-8.98,8.98-8.98h17.86c4.96,0,8.98,4.02,8.98,8.98v130.36c0,1.16-.23,2.31-.66,3.39l-5" +
+            "2.58,128.97c-.44,1.08-.66,2.23-.66,3.39v173.42c0,1.41.33,2.81.97,4.07l63.95,125.9c3.03,5.97-1.31,13.05-8.01,13" +
+            ".05h-214.94c-7.67,0-11.81-9-6.82-14.82l105.82-123.52c1.39-1.63,2.16-3.7,2.16-5.84Z" + "\"/>" +
+            "  <path d=\"" +
+            "M284.88,950.6v113.26c0,2.08-.72,4.09-2.04,5.69l-128.62,156.87c-1.71,2.08-4.25,3.29-6.94,3.29H8.42c-4.96,0-8.98" +
+            "-4.02-8.98-8.98v-521.46c0-4.96,4.02-8.98,8.98-8.98h134.12c4.96,0,8.98,4.02,8.98,8.98v110.53c0,2.38.95,4.67,2.6" +
+            "3,6.35l128.09,128.1c1.68,1.68,2.63,3.97,2.63,6.35Z" + "\"/>" +
+            "  <path d=\"" +
+            "M733.57,1026.66l-78.17,197.37c-1.36,3.42-4.67,5.67-8.35,5.67h-116.41c-3.52,0-6.72-2.06-8.18-5.27l-72.01-158.71" +
+            "c-.53-1.17-.8-2.43-.8-3.71v-119.5c0-.96.15-1.91.45-2.82l52.51-159.04c.3-.91.45-1.86.45-2.82v-78.58c0-4.96,4.02" +
+            "-8.98,8.98-8.98h89.37c4.96,0,8.98,4.02,8.98,8.98v80.02l-4.19,88.01c-.11,2.29.66,4.54,2.16,6.28l123.66,143.93c2" +
+            ".17,2.53,2.77,6.06,1.54,9.16Z" + "\"/>" +
+            "  <path d=\"" +
+            "M1080.56,258.76v485.79h-82.54v-345.39c0-38.05-30.85-68.9-68.9-68.9H150.88c-38.05,0-68.9,30.85-68.9,68.9v345.39" +
+            "H-.56V0h1080v258.76h1.11Z" + "\"/>" +
+            "</svg>";
+
+        [Test]
+        public void Test2Svg_AllContoursTriangulate_AreaPreserved()
+        {
+            string path = Path.Combine(Application.temporaryCachePath, "SE001", "test_2_triangulation.svg");
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            File.WriteAllText(path, Test2Svg);
+            Assert.That(PhaseBSvgImporter.TryParse(path, new PhaseBSvgImportSettings(), out SE001LevelJson level, out string error), Is.True, error);
+            List<List<Vector2>> contours = new List<List<Vector2>>();
+            for (int i = 0; i < level.board.wallContours.Count; i++) contours.Add(level.board.wallContours[i].points);
+            for (int i = 0; i < level.staticObstacles.Count; i++)
+                for (int j = 0; j < level.staticObstacles[i].contours.Count; j++) contours.Add(level.staticObstacles[i].contours[j].points);
+            Assert.That(contours.Count, Is.EqualTo(5));
+            for (int c = 0; c < contours.Count; c++)
+            {
+                List<Vector2> polygon = contours[c];
+                int[] triangles = PolygonTriangulator.Triangulate(polygon);
+                Assert.That(triangles.Length % 3, Is.EqualTo(0));
+                float triangleArea = 0f;
+                for (int t = 0; t < triangles.Length; t += 3)
+                {
+                    Vector2 a = polygon[triangles[t]];
+                    Vector2 b = polygon[triangles[t + 1]];
+                    Vector2 d = polygon[triangles[t + 2]];
+                    triangleArea += Mathf.Abs((b.x - a.x) * (d.y - a.y) - (b.y - a.y) * (d.x - a.x)) * 0.5f;
+                }
+
+                float polygonArea = Mathf.Abs(PolygonUtility.SignedArea(polygon));
+                Assert.That(triangleArea, Is.EqualTo(polygonArea).Within(polygonArea * 0.001f + 0.0001f), "contour " + c + " overlaps or leaves gaps");
+            }
+        }
+
+        [Test]
+        public void DuplicateAndCollinearPoints_StillTriangulate()
+        {
+            List<Vector2> polygon = new List<Vector2>
+            {
+                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(2f, 0f),
+                new Vector2(2f, 2f), new Vector2(1f, 1f), new Vector2(0f, 2f), new Vector2(0f, 1f)
+            };
+            int[] triangles = PolygonTriangulator.Triangulate(polygon);
+            Assert.That(triangles.Length, Is.EqualTo(9), "degenerate points are skipped, shape keeps 3 triangles");
+        }
+    }
+}

@@ -82,7 +82,7 @@ namespace SE001.Editor.Level
 
             inspectorPane.Add(new Label("Layout") { name = "layout-header" });
             List<string> readyIds = new List<string>();
-            int selectedIndex = 0;
+            int selectedIndex = -1;
             for (int i = 0; i < layoutLibrary.Entries.Count; i++)
             {
                 LayoutBakeEntry entry = layoutLibrary.Entries[i];
@@ -92,10 +92,26 @@ namespace SE001.Editor.Level
             }
             if (readyIds.Count > 0)
             {
+                // The level's layout is missing/not Ready: show it as a placeholder instead of silently displaying the
+                // first Ready layout. Otherwise picking that layout raised no change event and the level kept the
+                // missing id (2026-09-24: test_2 shown, level still on test_tool).
+                string missingChoice = null;
+                if (selectedIndex < 0)
+                {
+                    missingChoice = string.IsNullOrEmpty(Document.layoutId)
+                        ? "(none selected)"
+                        : Document.layoutId + " (missing)";
+                    readyIds.Insert(0, missingChoice);
+                    selectedIndex = 0;
+                }
+
                 PopupField<string> layoutField = new PopupField<string>("Ready layout", readyIds, selectedIndex);
                 inspectorPane.Add(layoutField);
                 inspectorFields["layoutId"] = layoutField;
-                layoutField.RegisterValueChangedCallback(evt => SelectLayout(evt.newValue));
+                layoutField.RegisterValueChangedCallback(evt =>
+                {
+                    if (evt.newValue != missingChoice) SelectLayout(evt.newValue);
+                });
             }
             else inspectorPane.Add(new Label("No Ready layout is available. Open Layout Bake to create one.") { name = "layout-empty" });
             inspectorPane.Add(MakeButton("Open Layout Bake", OpenLayoutBake, "le-button-secondary"));

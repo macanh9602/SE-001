@@ -1,7 +1,7 @@
 {
     "schemaVersion": 4,
     "levelId": "Level_01",
-    "layoutId": "test_tool",
+    "layoutId": "test_1",
     "board": {
         "size": {
             "x": 10.800000190734864,
@@ -10,55 +10,55 @@
     },
     "sources": [
         {
-            "stableId": "source_99309e8f141d",
+            "stableId": "source_0cf56b7f7e42",
             "materialId": 1,
             "position": {
-                "x": 2.702895402908325,
-                "y": 15.347240447998047
+                "x": 3.0898396968841554,
+                "y": 13.997525215148926
             },
-            "logicalAmount": 20,
+            "logicalAmount": 10,
             "startsOpen": false
         },
         {
-            "stableId": "source_1d58e419567c",
+            "stableId": "source_a43b13710b84",
             "materialId": 2,
             "position": {
-                "x": 8.07329273223877,
-                "y": 12.338871002197266
+                "x": 7.607486724853516,
+                "y": 14.04886245727539
             },
-            "logicalAmount": 20,
+            "logicalAmount": 10,
             "startsOpen": false
         }
     ],
     "cups": [
         {
-            "stableId": "cup_638cfc7f4c59",
+            "stableId": "cup_6e1ebc0740b6",
             "acceptedMaterialId": 1,
             "position": {
-                "x": 2.790750741958618,
-                "y": 3.421128511428833
+                "x": 3.2695188522338869,
+                "y": 3.0249996185302736
             },
             "requiredAmount": 5
         },
         {
-            "stableId": "cup_c69006beebce",
+            "stableId": "cup_d53deb4d0bf0",
             "acceptedMaterialId": 2,
             "position": {
-                "x": 8.407773971557618,
-                "y": 5.238579273223877
+                "x": 7.992513179779053,
+                "y": 3.1790106296539308
             },
             "requiredAmount": 5
         }
     ],
     "rotatingObstacles": [
         {
-            "stableId": "rotating_obstacle_74bd9e135fad",
+            "stableId": "rotating_obstacle_c6e2a897468f",
             "position": {
-                "x": 2.844888210296631,
-                "y": 8.763923645019532
+                "x": 5.473154067993164,
+                "y": 8.065025329589844
             },
-            "scale": 1.0,
-            "barLength": 4.0,
+            "scale": 1.440000057220459,
+            "barLength": 2.75,
             "initialAngle": 0.0,
             "degreesPerSecond": 60.0
         }
