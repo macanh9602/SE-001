@@ -30,37 +30,39 @@ namespace SE001.Editor.Level
             if (string.IsNullOrWhiteSpace(absolutePath)) return;
             SE001LevelJson level;
             string projectPath;
+            bool upgraded;
             string error;
-            if (!LevelEditorDocumentService.TryOpen(absolutePath, out level, out projectPath, out error))
+            if (!LevelEditorDocumentService.TryOpen(absolutePath, out level, out projectPath, out upgraded, out error))
             {
                 ShowNotification(new GUIContent("Open failed: " + error));
                 return;
             }
 
-            ReplaceOpenDocument(level, projectPath);
+            ReplaceOpenDocument(level, projectPath, upgraded);
         }
 
         private void OpenSavedLevel(string projectPath)
         {
             if (!ConfirmDiscardIfDirty("Open another level?")) return;
             SE001LevelJson level;
+            bool upgraded;
             string error;
-            if (!LevelEditorDocumentService.TryOpenProjectPath(projectPath, out level, out error))
+            if (!LevelEditorDocumentService.TryOpenProjectPath(projectPath, out level, out upgraded, out error))
             {
                 ShowNotification(new GUIContent("Open failed: " + error));
                 RefreshLayoutList();
                 return;
             }
 
-            ReplaceOpenDocument(level, projectPath);
+            ReplaceOpenDocument(level, projectPath, upgraded);
         }
 
-        private void ReplaceOpenDocument(SE001LevelJson level, string projectPath)
+        private void ReplaceOpenDocument(SE001LevelJson level, string projectPath, bool upgraded)
         {
             if (level == null) return;
 
             int repaired = LevelEditorStableIds.NormalizeInMemory(level);
-            documentHost.ReplaceDocument(level, projectPath, repaired > 0);
+            documentHost.ReplaceDocument(level, projectPath, upgraded || repaired > 0);
             viewState.selectedStableId = string.Empty;
             viewState.selectionKind = LevelEditorSelectionKind.None;
             derivedState.Clear();
@@ -128,7 +130,7 @@ namespace SE001.Editor.Level
             }
             string fileName = documentHost.Level.levelId;
             string path = EditorUtility.SaveFilePanelInProject(
-                "Save Level", fileName, "json", "Save the schema-4 level JSON.", LevelEditorDocumentService.LevelsFolder);
+                "Save Level", fileName, "json", "Save the schema-5 level JSON.", LevelEditorDocumentService.LevelsFolder);
             if (!string.IsNullOrWhiteSpace(path)) SaveTo(path);
         }
 
@@ -236,8 +238,8 @@ namespace SE001.Editor.Level
                 ShowNotification(new GUIContent("Choose a Ready layout before adding a Source."));
                 return;
             }
-            Vector2 size = LevelEditorGeometry.SourceVisualSize();
-            Vector2 position = FindOpenCenter(size, false, LevelEditorGeometry.SourceVisualOffset());
+            Vector2 size = LevelEditorGeometry.SourceVisualSize(Document);
+            Vector2 position = FindOpenCenter(size, false, LevelEditorGeometry.SourceVisualOffset(null, Document));
             string id = LevelEditorStableIds.Create("source");
             ApplyEdit(level => level.sources.Add(new SourceData
             {
@@ -258,8 +260,8 @@ namespace SE001.Editor.Level
                 return;
             }
             CupProfile profile = Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
-            Vector2 size = profile != null ? profile.bodySize : new Vector2(2f, 2f);
-            Vector2 position = FindOpenCenter(size, false, LevelEditorGeometry.CupVisualOffset());
+            Vector2 size = LevelEditorGeometry.CupSize(null, Document);
+            Vector2 position = FindOpenCenter(size, false, LevelEditorGeometry.CupVisualOffset(Document));
             string id = LevelEditorStableIds.Create("cup");
             ApplyEdit(level => level.cups.Add(new CupData
             {
@@ -326,15 +328,15 @@ namespace SE001.Editor.Level
             {
                 SourceData source = Document.sources[i];
                 if (source != null && LevelEditorGeometry.Overlaps(
-                        position, size, source.position + LevelEditorGeometry.SourceVisualOffset(source),
-                        LevelEditorGeometry.SourceVisualSize())) return false;
+                        position, size, source.position + LevelEditorGeometry.SourceVisualOffset(source, Document),
+                        LevelEditorGeometry.SourceVisualSize(Document))) return false;
             }
             for (int i = 0; i < Document.cups.Count; i++)
             {
                 CupData cup = Document.cups[i];
                 if (cup != null && LevelEditorGeometry.Overlaps(
-                        position, size, cup.position + LevelEditorGeometry.CupVisualOffset(),
-                        LevelEditorGeometry.CupSize(cup))) return false;
+                        position, size, cup.position + LevelEditorGeometry.CupVisualOffset(Document),
+                        LevelEditorGeometry.CupSize(cup, Document))) return false;
             }
             return true;
         }

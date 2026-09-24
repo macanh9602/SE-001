@@ -308,3 +308,11 @@ Status: Accepted - 2026-09-24
 The Level Editor passes the current document as a one-shot editor session override. `LevelManager`, `LevelSpawner` and `LevelDataLoader` continue to own normal runtime loading and validation; no temporary JSON is written to `Resources`. The override is consumed once, cleared on return to Edit Mode, and the editor document remains dirty/context-preserving.
 
 Trade-off: this adds a small editor-only bridge and session state, but avoids a second preview runtime, keeps gameplay behavior aligned with production, and adds no runtime CPU, GPU, GC, draw-call or memory cost when the override is absent.
+
+## D-013 — Per-level Source and Bowl tuning
+
+Status: Accepted — 2026-09-24; supersedes the Source tuning and Bowl sizing ownership in D-011.
+
+GD chose one uniform Source Scale and one uniform Bowl Scale shared by their respective entities in each level. Source scale affects art and tap area around the authored nozzle; Bowl scale affects art, sink geometry and capacity around the authored bottom centre. Source Emission Rate and Stream Width are independent per-level controls with Level Editor guidance. Changing Bowl scale does not change grains per logical unit, so the same Required Amount appears less full in a larger Bowl.
+
+Schema 5 stores all four values in level JSON. Schema 3/4 remain runtime-readable using scale 1 and SourceProfile stream values. The Level Editor resolves those values when opening old files and writes schema 5 on save. Profile assets retain base art size and legacy stream defaults; level JSON owns these four values for schema 5. Resolution happens at level load or editor rebuild, with no per-frame allocation or extra draw calls. Large Bowl or stream settings still require Redmi 9A profiling.

@@ -7,7 +7,7 @@ namespace SE001.Data
     [Serializable]
     public sealed class SE001LevelJson
     {
-        public int schemaVersion = 4;
+        public int schemaVersion = 5;
         public string levelId = string.Empty;
         public string layoutId = string.Empty;
         public BoardData board = new BoardData();
@@ -15,6 +15,10 @@ namespace SE001.Data
         public List<SourceData> sources = new List<SourceData>();
         public List<CupData> cups = new List<CupData>();
         public List<RotatingObstacleData> rotatingObstacles = new List<RotatingObstacleData>();
+        public float sourceScale = 1f;
+        public float bowlScale = 1f;
+        public float sourceEmissionRate;
+        public int sourceStreamWidth;
         public float drawInkBudget;
         public bool requiresDrawing;
 

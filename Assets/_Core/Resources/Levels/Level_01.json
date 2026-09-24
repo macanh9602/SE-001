@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 4,
+    "schemaVersion": 5,
     "levelId": "Level_01",
     "layoutId": "test_1",
     "board": {
@@ -13,20 +13,20 @@
             "stableId": "source_0cf56b7f7e42",
             "materialId": 1,
             "position": {
-                "x": 3.0898396968841554,
-                "y": 13.997525215148926
+                "x": 2.9614975452423097,
+                "y": 15.30661678314209
             },
-            "logicalAmount": 10,
+            "logicalAmount": 12,
             "startsOpen": false
         },
         {
             "stableId": "source_a43b13710b84",
             "materialId": 2,
             "position": {
-                "x": 7.607486724853516,
-                "y": 14.04886245727539
+                "x": 7.941175937652588,
+                "y": 15.383622169494629
             },
-            "logicalAmount": 10,
+            "logicalAmount": 5,
             "startsOpen": false
         }
     ],
@@ -35,17 +35,17 @@
             "stableId": "cup_6e1ebc0740b6",
             "acceptedMaterialId": 1,
             "position": {
-                "x": 3.2695188522338869,
-                "y": 3.0249996185302736
+                "x": 3.3721923828125,
+                "y": 12.624998092651368
             },
-            "requiredAmount": 5
+            "requiredAmount": 12
         },
         {
             "stableId": "cup_d53deb4d0bf0",
             "acceptedMaterialId": 2,
             "position": {
-                "x": 7.992513179779053,
-                "y": 3.1790106296539308
+                "x": 7.658823013305664,
+                "y": 12.624998092651368
             },
             "requiredAmount": 5
         }
@@ -63,6 +63,10 @@
             "degreesPerSecond": 60.0
         }
     ],
+    "sourceScale": 1.0,
+    "bowlScale": 1.5,
+    "sourceEmissionRate": 16.0,
+    "sourceStreamWidth": 6,
     "drawInkBudget": 20.0,
     "requiresDrawing": false
 }

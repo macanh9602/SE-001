@@ -80,6 +80,16 @@ namespace SE001.Editor.Level
 
             AddFloatField("Ink budget", Document.drawInkBudget, "drawInkBudget", value => ApplyEdit(level => level.drawInkBudget = value, "Edit Ink Budget"));
 
+            AddInspectorSectionHeader("Source and Bowl");
+            AddFloatField("Source Scale", Document.sourceScale, "sourceScale", value => ApplyEdit(
+                level => level.sourceScale = value, "Edit Source Scale"), LevelTuningEditorText.SourceScale);
+            AddFloatField("Bowl Scale", Document.bowlScale, "bowlScale", value => ApplyEdit(
+                level => level.bowlScale = value, "Edit Bowl Scale"), LevelTuningEditorText.BowlScale);
+            AddFloatField("Emission Rate", Document.sourceEmissionRate, "sourceEmissionRate", value => ApplyEdit(
+                level => level.sourceEmissionRate = value, "Edit Emission Rate"), LevelTuningEditorText.EmissionRate);
+            AddIntField("Stream Width", Document.sourceStreamWidth, "sourceStreamWidth", value => ApplyEdit(
+                level => level.sourceStreamWidth = value, "Edit Stream Width"), LevelTuningEditorText.StreamWidth);
+
             inspectorPane.Add(new Label("Layout") { name = "layout-header" });
             List<string> readyIds = new List<string>();
             int selectedIndex = -1;
@@ -121,7 +131,7 @@ namespace SE001.Editor.Level
         {
             AddEntityHeader(EntityDisplayName("Source", Document.sources.IndexOf(source) + 1), source.stableId);
             AddInspectorSectionHeader("Appearance");
-            AddColorField(JarPreviewKind.Source, LevelEditorGeometry.SourceSize(source), source.materialId, "Color", "materialId", value => ApplyEdit(
+            AddColorField(JarPreviewKind.Source, LevelEditorGeometry.SourceSize(source, Document), source.materialId, "Color", "materialId", value => ApplyEdit(
                 level => FindSource(level, source.stableId).materialId = value, "Edit Source Color"));
 
             AddInspectorSectionHeader("Gameplay");
@@ -142,7 +152,7 @@ namespace SE001.Editor.Level
         {
             AddEntityHeader(EntityDisplayName("Cup", Document.cups.IndexOf(cup) + 1), cup.stableId);
             AddInspectorSectionHeader("Appearance");
-            AddColorField(LevelEditorGeometry.ReceiverPreviewKind(), LevelEditorGeometry.CupSize(cup), cup.acceptedMaterialId,
+            AddColorField(LevelEditorGeometry.ReceiverPreviewKind(), LevelEditorGeometry.CupSize(cup, Document), cup.acceptedMaterialId,
                 "Accepted color", "acceptedMaterialId", value => ApplyEdit(
                 level => FindCup(level, cup.stableId).acceptedMaterialId = value, "Edit Cup Color"));
 
@@ -196,9 +206,17 @@ namespace SE001.Editor.Level
             inspectorPane.Add(section);
         }
 
-        private void AddFloatField(string label, float value, string key, Action<float> onCommit)
+        private void AddFloatField(string label, float value, string key, Action<float> onCommit, string tooltip = null)
         {
-            FloatField field = new FloatField(label) { value = value, isDelayed = true };
+            FloatField field = new FloatField(label) { value = value, isDelayed = true, tooltip = tooltip };
+            inspectorPane.Add(field);
+            inspectorFields[key] = field;
+            field.RegisterValueChangedCallback(evt => onCommit(evt.newValue));
+        }
+
+        private void AddIntField(string label, int value, string key, Action<int> onCommit, string tooltip)
+        {
+            IntegerField field = new IntegerField(label) { value = value, isDelayed = true, tooltip = tooltip };
             inspectorPane.Add(field);
             inspectorFields[key] = field;
             field.RegisterValueChangedCallback(evt => onCommit(evt.newValue));

@@ -34,6 +34,18 @@ namespace SE001.Editor.Level
             if (level.board == null || !FinitePositive(level.board.size))
                 Add(issues, LevelEditorIssueSeverity.Blocking, string.Empty, "board",
                     "The board size is invalid.", "Board settings", "Enter a positive width and height.");
+            if (!Finite(level.sourceScale) || level.sourceScale <= 0f ||
+                !Finite(level.bowlScale) || level.bowlScale <= 0f ||
+                !Finite(level.sourceEmissionRate) || level.sourceEmissionRate <= 0f ||
+                !Finite(level.sourceEmissionRate * 60f) || level.sourceStreamWidth <= 0 ||
+                (cellSize > 0f && FinitePositive(level.board.size) &&
+                 level.sourceStreamWidth > Mathf.CeilToInt(level.board.size.x / cellSize)))
+            {
+                Add(issues, LevelEditorIssueSeverity.Blocking, string.Empty, "sourceScale",
+                    "Source or Bowl tuning is invalid.", "Level settings",
+                    "Use positive scales/rate and a Stream Width between one cell and the board width.");
+                return;
+            }
 
             if (string.IsNullOrWhiteSpace(level.layoutId))
             {
@@ -66,10 +78,10 @@ namespace SE001.Editor.Level
                         "The active Bowl receiver profile is missing or not baked.", "Receiver profile",
                         "Run the Jar Materials setup before authoring Bowl levels.");
                 else if (cellSize > 0f && bowlProfile.wallThicknessPixels *
-                    bowlProfile.WorldPixelsPerPixel(bowlProfile.defaultWorldWidth) < cellSize)
+                    bowlProfile.WorldPixelsPerPixel(LevelTuning.BowlSize(level, bowlProfile).x) < cellSize)
                     Add(issues, LevelEditorIssueSeverity.Warning, string.Empty, "receiverStyle",
                         "Bowl is too small for the current sand grid.", "Receiver profile",
-                        "Increase the global Bowl width or use a finer sand grid.");
+                        "Increase Bowl Scale or use a finer sand grid.");
             }
             for (int i = 0; i < level.sources.Count; i++)
             {
@@ -77,8 +89,8 @@ namespace SE001.Editor.Level
                 if (source == null) continue;
                 ValidateId(source.stableId, "Source", i, ids, issues);
                 ValidateColor(source.materialId, colors, source.stableId, "Color", issues);
-                Vector2 size = LevelEditorGeometry.SourceVisualSize();
-                Vector2 center = source.position + LevelEditorGeometry.SourceVisualOffset(source);
+                Vector2 size = LevelEditorGeometry.SourceVisualSize(level);
+                Vector2 center = source.position + LevelEditorGeometry.SourceVisualOffset(source, level);
                 ValidateBounds(source.stableId, LevelEditorSelectionKind.Source, center, size, level.board.size, masks, cellSize, issues);
                 if (source.logicalAmount <= 0)
                     Add(issues, LevelEditorIssueSeverity.Warning, source.stableId, "amount",
@@ -94,9 +106,9 @@ namespace SE001.Editor.Level
                 if (cup == null) continue;
                 ValidateId(cup.stableId, "Cup", i, ids, issues);
                 ValidateColor(cup.acceptedMaterialId, colors, cup.stableId, "Accepted color", issues);
-                Vector2 size = LevelEditorGeometry.CupSize(cup);
+                Vector2 size = LevelEditorGeometry.CupSize(cup, level);
                 ValidateBounds(cup.stableId, LevelEditorSelectionKind.Cup,
-                    cup.position + LevelEditorGeometry.CupVisualOffset(), size, level.board.size, masks, cellSize, issues);
+                    cup.position + LevelEditorGeometry.CupVisualOffset(level), size, level.board.size, masks, cellSize, issues);
                 if (cup.requiredAmount <= 0)
                     Add(issues, LevelEditorIssueSeverity.Warning, cup.stableId, "requiredAmount",
                         "This Cup does not require sand.", "Cup", "Set Required Amount above zero for a collection goal.");
@@ -104,7 +116,8 @@ namespace SE001.Editor.Level
                 {
                     ReceiverStyle style = runtimeProfile != null ? runtimeProfile.receiverStyle : ReceiverStyle.Cup;
                     int grainsPerUnit = CupDomain.GrainsPerUnitFor(sandProfile.grainsPerUnit, style, bowlProfile, cellSize);
-                    CupDomain capacityProbe = new CupDomain(cup, cupProfile, grainsPerUnit, cellSize, jarProfile, style, bowlProfile);
+                    CupDomain capacityProbe = new CupDomain(cup, cupProfile, grainsPerUnit, cellSize, jarProfile, style,
+                        bowlProfile, level);
                     if (capacityProbe.Required > capacityProbe.Capacity)
                     {
                         float logicalCapacity =
@@ -147,8 +160,8 @@ namespace SE001.Editor.Level
                 {
                     CupData cup = level.cups[cupIndex];
                     if (cup == null || !LevelEditorGeometry.Overlaps(
-                            source.position + LevelEditorGeometry.SourceVisualOffset(source), LevelEditorGeometry.SourceVisualSize(),
-                            cup.position + LevelEditorGeometry.CupVisualOffset(), LevelEditorGeometry.CupSize(cup))) continue;
+                            source.position + LevelEditorGeometry.SourceVisualOffset(source, level), LevelEditorGeometry.SourceVisualSize(level),
+                            cup.position + LevelEditorGeometry.CupVisualOffset(level), LevelEditorGeometry.CupSize(cup, level))) continue;
                     Add(issues, LevelEditorIssueSeverity.Blocking, source.stableId, "position",
                         "Source and Cup overlap.", "Source and Cup placement", "Move one entity so their footprints do not overlap.");
                 }
@@ -223,6 +236,11 @@ namespace SE001.Editor.Level
             return Finite(value) && value.x > 0f && value.y > 0f;
         }
 
+        private static bool Finite(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value);
+        }
+
         private static bool Finite(Vector2 value)
         {
             return !float.IsNaN(value.x) && !float.IsInfinity(value.x) &&
@@ -247,31 +265,30 @@ namespace SE001.Editor.Level
 
     internal static class LevelEditorGeometry
     {
-        public static Vector2 SourceSize(SourceData source)
+        public static Vector2 SourceSize(SourceData source, SE001LevelJson level = null)
         {
             SourceProfile profile = UnityEngine.Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
-            Vector2 fallback = profile != null ? profile.bodySize : new Vector2(0.8f, 1.2f);
-            return fallback;
+            return profile != null ? LevelTuning.SourceSize(level, profile) : new Vector2(0.8f, 1.2f);
         }
 
-        public static Vector2 SourceVisualSize()
+        public static Vector2 SourceVisualSize(SE001LevelJson level = null)
         {
-            Vector2 body = SourceSize(null);
+            Vector2 body = SourceSize(null, level);
             JarVisualProfile visual = UnityEngine.Resources.Load<JarVisualProfile>("Profiles/JarVisualProfile");
             if (visual == null) return body;
             float ratio = body.y / Mathf.Max(0.001f, visual.sourceBodyHeightPixels);
             return new Vector2(visual.sourceBodyWidthPixels * ratio, visual.sourceCompositeHeightPixels * ratio);
         }
 
-        public static Vector2 SourceVisualOffset(SourceData authored = null)
+        public static Vector2 SourceVisualOffset(SourceData authored = null, SE001LevelJson level = null)
         {
-            return SourceVisualOffset(authored != null && authored.startsOpen);
+            return SourceVisualOffset(authored != null && authored.startsOpen, level);
         }
 
-        public static Vector2 SourceVisualOffset(bool pouring)
+        public static Vector2 SourceVisualOffset(bool pouring, SE001LevelJson level = null)
         {
-            Vector2 body = SourceSize(null);
-            Vector2 composite = SourceVisualSize();
+            Vector2 body = SourceSize(null, level);
+            Vector2 composite = SourceVisualSize(level);
             if (pouring)
                 return new Vector2(0f, composite.y * 0.5f);
             SourceProfile source = UnityEngine.Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
@@ -281,9 +298,9 @@ namespace SE001.Editor.Level
             return new Vector2(0f, bodyCenter + extra * 0.5f);
         }
 
-        public static Vector2 CupVisualOffset()
+        public static Vector2 CupVisualOffset(SE001LevelJson level = null)
         {
-            return new Vector2(0f, CupSize(null).y * 0.5f);
+            return new Vector2(0f, CupSize(null, level).y * 0.5f);
         }
 
         public static Vector2 VisualOffsetFor(SE001LevelJson level, string stableId,
@@ -293,24 +310,24 @@ namespace SE001.Editor.Level
             {
                 for (int i = 0; i < level.sources.Count; i++)
                     if (level.sources[i] != null && level.sources[i].stableId == stableId)
-                        return SourceVisualOffset(level.sources[i]);
-                return SourceVisualOffset();
+                        return SourceVisualOffset(level.sources[i], level);
+                return SourceVisualOffset(null, level);
             }
-            return kind == LevelEditorSelectionKind.Cup ? CupVisualOffset() : Vector2.zero;
+            return kind == LevelEditorSelectionKind.Cup ? CupVisualOffset(level) : Vector2.zero;
         }
 
         public static Vector2 VisualSizeFor(SE001LevelJson level, string stableId, LevelEditorSelectionKind kind)
         {
-            return kind == LevelEditorSelectionKind.Source ? SourceVisualSize() : SizeFor(level, stableId, kind);
+            return kind == LevelEditorSelectionKind.Source ? SourceVisualSize(level) : SizeFor(level, stableId, kind);
         }
 
-        public static Vector2 CupSize(CupData cup)
+        public static Vector2 CupSize(CupData cup, SE001LevelJson level = null)
         {
             GameplayRuntimeProfile runtime = UnityEngine.Resources.Load<GameplayRuntimeProfile>(
                 "Profiles/PhaseCGameplayRuntimeProfile");
             BowlVisualProfile bowl = UnityEngine.Resources.Load<BowlVisualProfile>("Profiles/BowlVisualProfile");
             if (runtime != null && runtime.receiverStyle == ReceiverStyle.Bowl && bowl != null)
-                return bowl.WorldSize;
+                return LevelTuning.BowlSize(level, bowl);
             CupProfile profile = UnityEngine.Resources.Load<CupProfile>("Profiles/PhaseCCupProfile");
             return profile != null ? profile.bodySize : new Vector2(2f, 2f);
         }
@@ -364,12 +381,12 @@ namespace SE001.Editor.Level
             if (kind == LevelEditorSelectionKind.Source)
             {
                 for (int i = 0; i < level.sources.Count; i++)
-                    if (level.sources[i] != null && level.sources[i].stableId == stableId) return SourceSize(level.sources[i]);
+                    if (level.sources[i] != null && level.sources[i].stableId == stableId) return SourceSize(level.sources[i], level);
             }
             if (kind == LevelEditorSelectionKind.Cup)
             {
                 for (int i = 0; i < level.cups.Count; i++)
-                    if (level.cups[i] != null && level.cups[i].stableId == stableId) return CupSize(level.cups[i]);
+                    if (level.cups[i] != null && level.cups[i].stableId == stableId) return CupSize(level.cups[i], level);
             }
             if (kind == LevelEditorSelectionKind.RotatingObstacle)
             {

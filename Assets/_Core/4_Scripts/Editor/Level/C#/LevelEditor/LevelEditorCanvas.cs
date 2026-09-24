@@ -14,6 +14,7 @@ namespace SE001.Editor.Level
         private readonly VisualElement surface;
         private readonly Dictionary<VisualElement, EntityHandle> handles = new Dictionary<VisualElement, EntityHandle>();
         private LayoutDefinition layout;
+        private SE001LevelJson currentLevel;
         private LayoutMaskSet masks;
         private Texture2D maskTexture;
         private LayoutMaskSet previewMask;
@@ -63,6 +64,7 @@ namespace SE001.Editor.Level
             LevelEditorSelectionKind currentSelectedKind)
         {
             layout = selectedLayout;
+            currentLevel = level;
             masks = selectedMasks;
             selectedId = currentSelectedId ?? string.Empty;
             selectedKind = currentSelectedKind;
@@ -139,7 +141,7 @@ namespace SE001.Editor.Level
                 SourceData source = level.sources[i];
                 if (source == null) continue;
                 AddEntity(JarPreviewKind.Source, source.stableId, source.materialId, source.position,
-                    LevelEditorGeometry.SourceVisualSize(), ResolveSourceFill(source), source.startsOpen);
+                    LevelEditorGeometry.SourceVisualSize(level), ResolveSourceFill(source), source.startsOpen);
             }
 
             for (int i = 0; i < level.cups.Count; i++)
@@ -147,7 +149,7 @@ namespace SE001.Editor.Level
                 CupData cup = level.cups[i];
                 if (cup == null) continue;
                 AddEntity(LevelEditorGeometry.ReceiverPreviewKind(), cup.stableId, cup.acceptedMaterialId, cup.position,
-                    ResolveCupSize(cup), 0f);
+                    ResolveCupSize(cup, level), 0f);
             }
 
             for (int i = 0; i < level.rotatingObstacles.Count; i++)
@@ -179,7 +181,7 @@ namespace SE001.Editor.Level
             Image image = new Image { image = preview, scaleMode = ScaleMode.ScaleToFit };
             image.AddToClassList("le-entity");
             Vector2 visualOffset = kind == JarPreviewKind.Source
-                ? LevelEditorGeometry.SourceVisualOffset(pouring) : LevelEditorGeometry.CupVisualOffset();
+                ? LevelEditorGeometry.SourceVisualOffset(pouring, currentLevel) : LevelEditorGeometry.CupVisualOffset(currentLevel);
             image.userData = new EntityHandle(stableId, selectionKind, size, visualOffset);
             image.RegisterCallback<PointerDownEvent>(OnEntityPointerDown);
             surface.Add(image);
@@ -358,9 +360,9 @@ namespace SE001.Editor.Level
             return Mathf.Abs(left.x - right.x) <= 0.0005f && Mathf.Abs(left.y - right.y) <= 0.0005f;
         }
 
-        private static Vector2 ResolveCupSize(CupData cup)
+        private static Vector2 ResolveCupSize(CupData cup, SE001LevelJson level)
         {
-            return LevelEditorGeometry.CupSize(cup);
+            return LevelEditorGeometry.CupSize(cup, level);
         }
 
         private static float ResolveSourceFill(SourceData source)

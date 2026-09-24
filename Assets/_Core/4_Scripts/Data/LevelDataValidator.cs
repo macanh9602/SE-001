@@ -97,13 +97,22 @@ namespace SE001.Data
             }
             level.EnsureCollections();
             if (level.schemaVersion <= 0) errors.Add("schemaVersion must be positive.");
-            if (level.schemaVersion > 4) errors.Add("schemaVersion is newer than the supported runtime schema.");
+            if (level.schemaVersion > 5) errors.Add("schemaVersion is newer than the supported runtime schema.");
             if (string.IsNullOrWhiteSpace(level.levelId)) errors.Add("levelId is required.");
             if (!Finite(level.board.size) || level.board.size.x <= 0f || level.board.size.y <= 0f)
                 errors.Add("board.size must be finite and positive.");
             if (level.drawInkBudget < 0f || float.IsNaN(level.drawInkBudget) ||
                 float.IsInfinity(level.drawInkBudget))
                 errors.Add("drawInkBudget must be finite and non-negative.");
+            if (level.schemaVersion >= 5 &&
+                (!Finite(level.sourceScale) || level.sourceScale <= 0f ||
+                 !Finite(level.bowlScale) || level.bowlScale <= 0f ||
+                 !Finite(level.sourceEmissionRate) || level.sourceEmissionRate <= 0f ||
+                 !Finite(level.sourceEmissionRate * 60f) ||
+                 level.sourceStreamWidth <= 0 ||
+                 (Finite(level.board.size) && cellSize > 0f &&
+                  level.sourceStreamWidth > Mathf.CeilToInt(level.board.size.x / cellSize))))
+                errors.Add("Level Source/Bowl tuning must have positive finite scales and emission rate, and positive stream width.");
             bool usesBakedLayout = level.schemaVersion >= 3;
             if (usesBakedLayout)
             {

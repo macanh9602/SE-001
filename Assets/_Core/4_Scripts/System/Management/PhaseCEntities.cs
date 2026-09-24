@@ -16,7 +16,8 @@ namespace SE001.Gameplay
         private float openingTimer;
         private float emitAccumulator;
 
-        public SourceDomain(SourceData data, SourceProfile profile, int grainsPerUnit, JarVisualProfile visualProfile = null)
+        public SourceDomain(SourceData data, SourceProfile profile, int grainsPerUnit, JarVisualProfile visualProfile = null,
+            SE001LevelJson level = null)
         {
             StableId = data.stableId;
             MaterialId = (byte)data.materialId;
@@ -24,10 +25,10 @@ namespace SE001.Gameplay
             remaining = Initial;
             openDelay = profile.valveOpenDelay;
             // emissionRate is grains per 60 Hz step (sand-feel-lab 'rate'); converted to grains/second.
-            grainsPerSecond = profile.emissionRate * 60f;
-            streamWidthCells = Mathf.Max(1, profile.streamWidth);
+            grainsPerSecond = LevelTuning.EmissionRate(level, profile) * 60f;
+            streamWidthCells = LevelTuning.StreamWidth(level, profile);
             Position = data.position;
-            Size = profile.bodySize;
+            Size = LevelTuning.SourceSize(level, profile);
             BodyOffset = new Vector2(0f, JarVisualGeometry.SourceBodyOffsetY(Size.y, profile, visualProfile));
             state = remaining == 0 ? SourceValveState.Empty : data.startsOpen ? SourceValveState.Open : SourceValveState.Closed;
         }
@@ -137,7 +138,8 @@ namespace SE001.Gameplay
             float cellSize,
             JarVisualProfile visualProfile,
             ReceiverStyle style,
-            BowlVisualProfile valueBowlProfile)
+            BowlVisualProfile valueBowlProfile,
+            SE001LevelJson level = null)
         {
             StableId = data.stableId;
             AcceptedMaterialId = (byte)data.acceptedMaterialId;
@@ -145,7 +147,7 @@ namespace SE001.Gameplay
             receiverStyle = style;
             bowlProfile = valueBowlProfile;
             Size = style == ReceiverStyle.Bowl && valueBowlProfile != null
-                ? valueBowlProfile.WorldSize : profile.bodySize;
+                ? LevelTuning.BowlSize(level, valueBowlProfile) : profile.bodySize;
             RequiredLogical = Mathf.Max(1, data.requiredAmount);
             taper = profile.taper;
             fillLine = profile.fillLine;

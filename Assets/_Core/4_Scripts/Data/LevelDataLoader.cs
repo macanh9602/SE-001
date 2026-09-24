@@ -21,7 +21,7 @@ namespace SE001.Data
                 if (asset == null) throw new InvalidOperationException("Canonical level JSON was not found: " + levelId);
                 level = SE001LevelJson.FromJson(asset.text);
             }
-            if (level.schemaVersion != 3 && level.schemaVersion != 4)
+            if (level.schemaVersion != 3 && level.schemaVersion != 4 && level.schemaVersion != 5)
                 throw new FormatException("Level " + levelId + " uses unsupported schema " + level.schemaVersion + ". Open it in the Level Editor and select a baked layout.");
             ColorProfile colorProfile = Resources.Load<ColorProfile>("Profiles/PhaseCColorProfile");
             if (colorProfile == null) throw new InvalidOperationException("Phase C ColorProfile asset is missing.");

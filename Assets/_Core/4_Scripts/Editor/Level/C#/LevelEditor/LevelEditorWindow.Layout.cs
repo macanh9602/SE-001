@@ -304,7 +304,7 @@ namespace SE001.Editor.Level
                 SourceData source = Document.sources[i];
                 if (source == null || shownSources >= viewState.visibleSources) continue;
                 AddEntityRow(sourcesGroup, EntityDisplayName("Source", i + 1), source.stableId,
-                    LevelEditorSelectionKind.Source, source.materialId, LevelEditorGeometry.SourceSize(source));
+                    LevelEditorSelectionKind.Source, source.materialId, LevelEditorGeometry.SourceSize(source, Document));
                 shownSources++;
             }
             if (Document.sources.Count > viewState.visibleSources)
@@ -319,7 +319,7 @@ namespace SE001.Editor.Level
                 CupData cup = Document.cups[i];
                 if (cup == null || shownCups >= viewState.visibleCups) continue;
                 AddEntityRow(cupsGroup, EntityDisplayName("Cup", i + 1), cup.stableId,
-                    LevelEditorSelectionKind.Cup, cup.acceptedMaterialId, LevelEditorGeometry.CupSize(cup));
+                    LevelEditorSelectionKind.Cup, cup.acceptedMaterialId, LevelEditorGeometry.CupSize(cup, Document));
                 shownCups++;
             }
             if (Document.cups.Count > viewState.visibleCups)

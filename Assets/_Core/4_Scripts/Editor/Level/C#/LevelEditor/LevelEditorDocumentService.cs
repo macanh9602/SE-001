@@ -75,7 +75,8 @@ namespace SE001.Editor.Level
                 SE001LevelJson level;
                 string openedPath;
                 string error;
-                if (TryOpen(files[i], out level, out openedPath, out error))
+                bool upgraded;
+                if (TryOpen(files[i], out level, out openedPath, out upgraded, out error))
                 {
                     result.Add(new SavedLevelDescriptor
                     {
@@ -176,10 +177,12 @@ namespace SE001.Editor.Level
             return "Level_" + number.ToString("00", CultureInfo.InvariantCulture);
         }
 
-        public static bool TryOpen(string absolutePath, out SE001LevelJson level, out string projectPath, out string error)
+        public static bool TryOpen(string absolutePath, out SE001LevelJson level, out string projectPath,
+            out bool upgraded, out string error)
         {
             level = null;
             projectPath = string.Empty;
+            upgraded = false;
             error = string.Empty;
 
             try
@@ -198,13 +201,20 @@ namespace SE001.Editor.Level
                     return false;
                 }
                 SE001LevelJson parsed = SE001LevelJson.FromJson(json);
-                if (parsed.schemaVersion != 3 && parsed.schemaVersion != 4)
+                if (parsed.schemaVersion != 3 && parsed.schemaVersion != 4 && parsed.schemaVersion != 5)
                 {
                     error = "Level uses unsupported schema " + parsed.schemaVersion + ".";
                     return false;
                 }
 
-                parsed.schemaVersion = 4;
+                SourceProfile sourceProfile = Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
+                if (sourceProfile == null)
+                {
+                    error = "SourceProfile is required to upgrade level tuning.";
+                    return false;
+                }
+                upgraded = parsed.schemaVersion < 5;
+                LevelTuning.UpgradeToSchema5(parsed, sourceProfile);
 
                 parsed.EnsureCollections();
                 level = parsed;
@@ -218,10 +228,11 @@ namespace SE001.Editor.Level
             }
         }
 
-        public static bool TryOpenProjectPath(string projectPath, out SE001LevelJson level, out string error)
+        public static bool TryOpenProjectPath(string projectPath, out SE001LevelJson level,
+            out bool upgraded, out string error)
         {
             string openedProjectPath;
-            return TryOpen(ToAbsolutePath(projectPath), out level, out openedProjectPath, out error);
+            return TryOpen(ToAbsolutePath(projectPath), out level, out openedProjectPath, out upgraded, out error);
         }
 
         public static bool TrySave(SE001LevelJson level, string projectPath, out string error)
@@ -235,9 +246,9 @@ namespace SE001.Editor.Level
                     return false;
                 }
 
-                if (level.schemaVersion != 4)
+                if (level.schemaVersion != 5)
                 {
-                    error = "Only schema-4 levels can be saved by the production Level Editor.";
+                    error = "Only schema-5 levels can be saved by the production Level Editor.";
                     return false;
                 }
 

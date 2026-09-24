@@ -12,7 +12,7 @@ namespace SE001.Tests
         [Test]
         public void Schema4_StoresObstacleAndOmitsGlobalJarSettings()
         {
-            SE001LevelJson level = new SE001LevelJson();
+            SE001LevelJson level = new SE001LevelJson { schemaVersion = 4 };
             level.sources.Add(new SourceData { stableId = "source", materialId = 1, logicalAmount = 10 });
             level.cups.Add(new CupData { stableId = "cup", acceptedMaterialId = 1, requiredAmount = 5 });
             level.rotatingObstacles.Add(new RotatingObstacleData

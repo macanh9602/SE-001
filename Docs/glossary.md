@@ -8,7 +8,10 @@
 | Sand | Material rơi và repose trên grid | `Sand` | ParticleSystem |
 | Source | Entity phát finite material stream | `Source` | VFX emitter vô hạn |
 | Cup | Entity nhận material và phát semantic collection result | `Cup` | Collider authority |
-| Source body size | Width/height authored cho thân source; cùng chi phối visual và tap hit-area | `SourceData.size` | Kích thước stream |
+| Source Scale | Hệ số kích thước thân mọi Source trong level; cùng chi phối visual và tap hit-area | `SE001LevelJson.sourceScale` | Emission Rate, Stream Width |
+| Bowl Scale | Hệ số kích thước mọi Bowl trong level; cùng chi phối visual và vùng nhận cát | `SE001LevelJson.bowlScale` | Required Amount |
+| Emission Rate | Tốc độ phát cát chung cho Source trong level, theo grain mỗi simulation step | `SE001LevelJson.sourceEmissionRate` | Kích thước Source |
+| Stream Width | Bề rộng dòng cát chung cho Source trong level, theo sand cell | `SE001LevelJson.sourceStreamWidth` | Kích thước Source |
 | Player obstacle | Obstacle rasterize từ path người chơi vào mask | `PlayerObstacle` | Collider per cell |
 | Static obstacle | Obstacle authored trong level data | `StaticObstacle` | Generated mesh |
 | Settled | Trạng thái simulation không còn movement vượt threshold contract | `Settled` | Một frame không render |

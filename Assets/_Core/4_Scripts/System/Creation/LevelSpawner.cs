@@ -133,10 +133,12 @@ namespace SE001.System.Creation
             int grainsPerUnit = CupDomain.GrainsPerUnitFor(
                 baseGrainsPerUnit, gameplayProfile.receiverStyle, gameplayProfile.bowlVisualProfile, profile.cellSize);
             for (int i = 0; i < levelData.sources.Count; i++)
-                sources.Add(new SourceDomain(levelData.sources[i], sourceProfile, grainsPerUnit, gameplayProfile.jarVisualProfile));
+                sources.Add(new SourceDomain(levelData.sources[i], sourceProfile, grainsPerUnit,
+                    gameplayProfile.jarVisualProfile, levelData));
             for (int i = 0; i < levelData.cups.Count; i++)
                 cups.Add(new CupDomain(levelData.cups[i], cupProfile, grainsPerUnit, profile.cellSize,
-                    gameplayProfile.jarVisualProfile, gameplayProfile.receiverStyle, gameplayProfile.bowlVisualProfile));
+                    gameplayProfile.jarVisualProfile, gameplayProfile.receiverStyle, gameplayProfile.bowlVisualProfile,
+                    levelData));
             for (int i = 0; i < cups.Count; i++)
             {
                 if (cups[i].Required <= cups[i].Capacity) continue;

@@ -25,6 +25,8 @@ source-of-truth.
 | `sources` | array | Stable material source definitions; có thể rỗng |
 | `cups` | array | Stable collection target definitions; có thể rỗng |
 | `rotatingObstacles` | array | Per-level Cross obstacles with position, scale, length, initial angle and signed rotation speed |
+| `sourceScale`, `bowlScale` | float | Schema 5: positive uniform scale shared by each type in this level; 1 uses Profile size |
+| `sourceEmissionRate`, `sourceStreamWidth` | float, int | Schema 5: shared Source stream tuning, independent of scale |
 
 Schema owner là Level Data feature. JSON nằm tại `Assets/_Core/Resources/Levels/`. Array index không
 phải identity; mọi entity dùng stable string ID.
@@ -45,20 +47,20 @@ truth thay thế.
 ### Source
 
 - Stable ID, material ID, authored position.
-- Body size, emission rate and stream width resolve only from `SourceProfile`.
+- Body size is `SourceProfile.bodySize × sourceScale`; rate and stream width come from schema-5 level JSON.
 - Logical material/grain amount.
-- Level JSON does not store body size, emission rate or stream width.
+- Source nozzle position and logical amount do not change when scale changes.
 
 Visual anchor có thể hỗ trợ alignment nhưng không quyết định logical emission position/count.
 
 ### Cup
 
 - Stable ID, accepted material ID.
-- Authored position; outside width/height resolve only from `CupProfile.bodySize`.
+- Authored position; Bowl style uses `BowlVisualProfile.WorldSize × bowlScale`, while Cup style keeps `CupProfile.bodySize`.
 
 ### Phase C position and material contract
 
-`SourceData.position` is the authored nozzle position. `SourceProfile.bodySize` drives both presentation bounds and tap hit-area. `CupData.position` is the centre of the cup's outside bottom; `CupProfile.bodySize` defines the outside mouth/height rectangle. `materialId` must resolve in `ColorProfile` before a level can spawn. Runtime sand, masks and collected counts are generated state and are not serialized back into level JSON.
+`SourceData.position` is the authored nozzle position. Resolved Source size drives both presentation bounds and tap hit-area. `CupData.position` is the centre of the receiver's outside bottom; resolved Bowl size drives presentation and sink geometry. `materialId` must resolve in `ColorProfile` before a level can spawn. Runtime sand, masks and collected counts are generated state and are not serialized back into level JSON.
 - Required count.
 - Foreign-material tolerance chỉ khi gameplay contract yêu cầu.
 
@@ -92,7 +94,8 @@ Visual cup mesh không quyết định sink geometry.
 | Simulation/feel tunable | Feature Profile | Chỉ khi story/data contract cho phép | Một resolver duy nhất |
 | Entity placement/count/geometry | Không | Level JSON | Level loader |
 | Presentation prefab/material | `PrefabProfile` | Không | Factory/profile |
-| Source/Cup body size, Source emission/stream, Cross bar width | Feature Profiles | Không | Runtime/editor profile lookup |
+| Source/Bowl base size, Cup body size, Cross bar width | Feature Profiles | Source/Bowl scale only | `LevelTuning` + runtime/editor geometry |
+| Source emission/stream | `SourceProfile` for schema 3/4 migration | Schema-5 level JSON | `LevelTuning` |
 | Cross placement, scale, length, phase and speed | Không | Level JSON | RotatingObstacleSystem |
 
 Không giữ hai nguồn cho cùng một sự thật. Optional override phải phân biệt rõ unset với giá trị hợp lệ.
@@ -104,6 +107,7 @@ Không giữ hai nguồn cho cùng một sự thật. Optional override phải p
 - Board-space entity geometry hữu hạn, nằm trong contract của `LayoutDefinition`.
 - Schema 3 có `layoutId`, không chứa `board.wallContours` hoặc `staticObstacles`.
 - Schema 4 adds `rotatingObstacles` and removes Source/Cup size plus Source emission/stream overrides. The runtime can load schema 3 with current global Profile values; the Level Editor upgrades schema 3 in memory and saves schema 4.
+- Schema 5 adds shared Source/Bowl scales plus Source emission rate and stream width. Runtime loads schema 3/4 with scale 1 and SourceProfile stream values; Level Editor upgrades them in memory and saves schema 5. Bowl scale changes physical capacity while grains per logical unit remain based on the global Bowl profile.
 - Runtime load đọc bit-packed `LayoutMaskAsset`; cell size/hash lệch phải block với lỗi rõ ràng.
 - Static mask seed trước dynamic mask và trước Source emission.
 - Runtime và Editor preview dùng cùng board mapper/rasterizer, có parity tests.

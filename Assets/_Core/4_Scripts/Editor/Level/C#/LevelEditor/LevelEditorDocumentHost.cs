@@ -17,11 +17,16 @@ namespace SE001.Editor.Level
 
         public void InitializeNew(string levelId)
         {
+            SourceProfile sourceProfile = Resources.Load<SourceProfile>("Profiles/PhaseCSourceProfile");
+            if (sourceProfile == null)
+                throw new global::System.InvalidOperationException("SourceProfile is required to initialize level tuning.");
             level = new SE001LevelJson
             {
-                schemaVersion = 4,
+                schemaVersion = 5,
                 levelId = string.IsNullOrWhiteSpace(levelId) ? "Level_01" : levelId,
-                board = new BoardData()
+                board = new BoardData(),
+                sourceEmissionRate = sourceProfile.emissionRate,
+                sourceStreamWidth = sourceProfile.streamWidth
             };
             level.EnsureCollections();
             currentPath = string.Empty;
